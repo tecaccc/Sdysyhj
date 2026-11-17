@@ -1,0 +1,9 @@
+[env] HOME=/tmp/tmp.x5l4lJMfm8 MOCKLOG=/tmp/tmp.ObFrKZShno SCENARIO=stream ARGS=tc009.cjs
+PASS  TC-009(b) calls.jsonl 含 abort 调用  |  [{"ts":1794920387185,"pid":3642017,"event":"command","type":"abort","args":{}},{"ts":1794920387185,"pid":3642017,"event":"abort_called"}]
+FAIL  TC-009(c) 状态流 streaming→aborted→idle  |  idle→starting→streaming→aborted
+PASS  TC-009(e1) 中止轮保留（message_final 存在且标记 aborted）  |  [{"id":"m2","aborted":true}]
+PASS  TC-009(d) 中止后恢复可输入（发送按钮可见/Stop 隐藏）  |  send.hidden=false, stop.hidden=true
+PASS  TC-009(e2) 历史带『已中止』标记  |  ⏹ 已中止
+
+=== TC-009: 4/5 assertions passed ===
+FAILED: TC-009(c) 状态流 streaming→aborted→idle

@@ -1,0 +1,2 @@
+./run.sh tc035.cjs
+node /tmp/vharness/defect-cmd05-prod-layout.cjs（生产布局复现）

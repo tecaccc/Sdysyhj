@@ -1,0 +1,7 @@
+[env] HOME=/tmp/tmp.8DxIy1mMwh MOCKLOG=/tmp/tmp.ULpkhybrVQ SCENARIO=stream ARGS=tc026.cjs
+PASS  TC-026(b1) 生成 prompt 素材含文件路径  |  {"kind":"input_prefill","text":"@src/a.ts\n\n选区（L2-L3）：\n```\nconst selected = 1;\n```"}
+PASS  TC-026(b2) 选区场景含选区文本  |  {"kind":"input_prefill","text":"@src/a.ts\n\n选区（L2-L3）：\n```\nconst selected = 1;\n```"}
+PASS  TC-026(b3) 选区含行号标注 L2-L3  |  {"kind":"input_prefill","text":"@src/a.ts\n\n选区（L2-L3）：\n```\nconst selected = 1;\n```"}
+PASS  TC-026(b4) explorer 发送含文件路径  |  {"kind":"input_prefill","text":"@src/b.ts"}
+
+=== TC-026: 4/4 assertions passed ===

@@ -1,0 +1,21 @@
+===== TC-044 隐藏文件扫描 =====
+--- HOME 隐藏文件（豁免 $HOME/.pi）---
+/tmp/tmp.nzx34LVqce/.npm
+/tmp/tmp.nzx34LVqce/.local
+/tmp/tmp.nzx34LVqce/.local/share/vitest/.vitest-secret-token
+--- WORKSPACE 隐藏文件（豁免 .vscode）---
+/tmp/sdysyhj-verify/.git
+/tmp/sdysyhj-verify/.gitignore
+/tmp/sdysyhj-verify/.vscodeignore
+/tmp/sdysyhj-verify/node_modules/@anthropic-ai/sdk/src/lib/.keep
+/tmp/sdysyhj-verify/node_modules/@anthropic-ai/sdk/.github
+/tmp/sdysyhj-verify/node_modules/@earendil-works/pi-tui/node_modules/.bin
+/tmp/sdysyhj-verify/node_modules/@earendil-works/pi-ai/dist/providers/data/.manifest.json
+/tmp/sdysyhj-verify/node_modules/@protobufjs/pool/.npmignore
+/tmp/sdysyhj-verify/node_modules/buffer-equal-constant-time/.npmignore
+/tmp/sdysyhj-verify/node_modules/buffer-equal-constant-time/.travis.yml
+/tmp/sdysyhj-verify/node_modules/extend/.editorconfig
+/tmp/sdysyhj-verify/node_modules/extend/.eslintrc
+/tmp/sdysyhj-verify/node_modules/extend/.jscs.json
+/tmp/sdysyhj-verify/node_modules/extend/.travis.yml
+/tmp/sdysyhj-verify/node_modules/isexe/.npmignore

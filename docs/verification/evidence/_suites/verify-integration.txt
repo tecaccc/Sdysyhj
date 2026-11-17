@@ -1,0 +1,13 @@
+
+> sdysyhj@0.1.0 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/sdysyhj-verify
+
+
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+   Start at  20:59:32
+   Duration  1.14s (tests 94%, import 4%, transform 1%, worker 1%)
+

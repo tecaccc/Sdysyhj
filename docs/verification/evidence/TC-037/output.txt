@@ -1,0 +1,9 @@
+[env] HOME=/tmp/tmp.zi5EGQjGUF MOCKLOG=/tmp/tmp.m3vyd6OORT SCENARIO=stream ARGS=tc037.cjs
+PASS  TC-037(a) 重开后状态仍为 streaming  |  streaming
+PASS  TC-037(b) 重开后继续收到后续 delta  |  deltas=3
+PASS  TC-037(c1) abort 生效（calls.jsonl 含 abort）
+FAIL  TC-037(c2) 状态流（TC-009(c) 口径：streaming→aborted→idle）  |  streaming→aborted
+PASS  TC-037(c3) 中止轮保留带已中止标记  |  [true]
+
+=== TC-037: 4/5 assertions passed ===
+FAILED: TC-037(c2) 状态流（TC-009(c) 口径：streaming→aborted→idle）

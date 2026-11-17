@@ -1,0 +1,9 @@
+[env] HOME=/tmp/tmp.BRa8m97GYx MOCKLOG=/tmp/tmp.hFhBYJo7jR SCENARIO=stream ARGS=tc005.cjs
+PASS  TC-005-host thinking t1..t4 顺序  |  ["t1","t2","t3","t4"]
+PASS  TC-005-host 随后 text d1..d3 顺序  |  ["d1","d2","d3"]
+PASS  TC-005-host thinking 先于 text
+PASS  TC-005(a) thinking 默认折叠（details 无 open 属性）
+PASS  TC-005(b) 展开体流式内容 t1..t4 依序  |  "t1t2t3t4"
+PASS  TC-005(c) thinking 后 d1..d3 渲染  |  "think-check\n" / "d1d2d3\n"
+
+=== TC-005: 6/6 assertions passed ===

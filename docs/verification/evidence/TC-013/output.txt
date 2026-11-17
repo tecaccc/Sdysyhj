@@ -1,0 +1,16 @@
+[env] HOME=/tmp/tmp.CfcDolN9Ip MOCKLOG=/tmp/tmp.MEIh4alDnh SCENARIO=stream ARGS=tc013.cjs
+PASS  TC-013a(a) 可读错误描述（含错误类别/原因）  |  [{"title":"⚠ 模型返回错误：provider error: rate limited (429) — retry later","hint":"请检查 provider 配置与额度（`pi auth` / `pi config`），或更换模型后重试。"}]
+PASS  TC-013a(b) 修复指引 ≥1 条可行动建议  |  请检查 provider 配置与额度（`pi auth` / `pi config`），或更换模型后重试。
+PASS  TC-013a(c) UI 不卡死、恢复可输入（末状态 idle）  |  idle→starting→streaming→idle
+--- SC-013a 错误卡片: [{"title":"⚠ 模型返回错误：provider error: rate limited (429) — retry later","hint":"请检查 provider 配置与额度（`pi auth` / `pi config`），或更换模型后重试。"}]
+PASS  TC-013b(a) 崩溃可读错误描述  |  [{"title":"⚠ Pi 子进程异常退出（code=3），已自动重启一次。","hint":"若反复崩溃：请运行 `pi auth` 检查凭证、确认 sdysyhj.piPath 设置，并查看 Output「Sdysyhj」日志。"}]
+PASS  TC-013b(b) 修复指引 ≥1 条可行动建议  |  若反复崩溃：请运行 `pi auth` 检查凭证、确认 sdysyhj.piPath 设置，并查看 Output「Sdysyhj」日志。
+PASS  TC-013b(c) 崩溃恢复后可继续对话
+--- SC-013b 错误卡片: [{"title":"⚠ Pi 子进程异常退出（code=3），已自动重启一次。","hint":"若反复崩溃：请运行 `pi auth` 检查凭证、确认 sdysyhj.piPath 设置，并查看 Output「Sdysyhj」日志。"}]
+PASS  TC-013c(a) 无凭证错误描述  |  [{"title":"⚠ 模型返回错误：未配置凭证：no auth found（请先运行 pi auth 完成登录）","hint":"请检查 provider 配置与额度（`pi auth` / `pi config`），或更换模型后重试。"}]
+PASS  TC-013c(d) 指引指向凭证配置（auth/凭证/登录）  |  请检查 provider 配置与额度（`pi auth` / `pi config`），或更换模型后重试。
+PASS  TC-013c(b) 指引 ≥1 条可行动建议  |  请检查 provider 配置与额度（`pi auth` / `pi config`），或更换模型后重试。
+PASS  TC-013c(c) UI 不卡死、恢复可输入（末状态 idle）  |  idle→starting→streaming→idle
+--- SC-013c 错误卡片: [{"title":"⚠ 模型返回错误：未配置凭证：no auth found（请先运行 pi auth 完成登录）","hint":"请检查 provider 配置与额度（`pi auth` / `pi config`），或更换模型后重试。"}]
+
+=== TC-013: 10/10 assertions passed ===

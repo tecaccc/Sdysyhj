@@ -1,0 +1,48 @@
+
+===== TC-009 step1: abort command registered =====
+OK: abort command registered
+
+===== TC-016 step1: new session command registered =====
+OK: new session command registered
+
+===== TC-021 step1: no multi-session commands =====
+OK: no multi-session commands
+
+===== TC-026 step1: context menus registered =====
+MISSING context menu entry
+
+===== TC-030: 5 commands registered =====
+OK: 5 commands registered
+
+===== TC-030 (supp): Command Palette menu visibility (manifest 检查) =====
+menus keys: explorer/context, editor/context
+NOTE: no explicit contributes.menus["Command Palette"] — 所有 contributes.commands 默认对命令面板可见（VS Code 平台默认行为），以 TC-045/命令调用佐证
+
+===== TC-042 step1: engines.vscode >= 1.85 =====
+OK engines.vscode=^1.85.0
+
+===== TC-042 step2: 打包清单（vsce 可用性探测） =====
+vsce NOT available offline (npx --no-install fails) — 记入遗留问题（离线环境无法执行 vsce ls）；以 .vscodeignore + 依赖清单静态核对代替
+--- .vscodeignore ---
+.vscode/**
+.vscode-test/**
+src/**
+webview/**
+test/**
+docs/**
+node_modules/.bin/**
+node_modules/**/test/**
+node_modules/**/*.ts
+node_modules/**/*.map
+.gitignore
+esbuild.mjs
+tsconfig.json
+**/*.vsix
+media/*.map
+media/main.js.map
+*.log
+--- 原生依赖探测（应为空）---
+deps: @earendil-works/pi-coding-agent,dompurify,highlight.js,marked,@types/node,@types/vscode,esbuild,typescript,vitest
+native-ish deps: (none)
+
+STATIC RESULT: FAIL=1

@@ -1,0 +1,7 @@
+[env] HOME=/tmp/tmp.0gXCFH5ln4 MOCKLOG=/tmp/tmp.4Bo7YjZ1ow SCENARIO=stream ARGS=tc_sess.cjs 021
+PASS  TC-021(b1) 连续新建 3 会话各产生一次 session_reset  |  resets=3
+PASS  TC-021(b2) 任意时刻活动会话数 = 1（状态模型仅单 sessionId）  |  {"sessionId":"mocksessd280gv"}
+PASS  TC-021(b3) 新建仅切换单活动会话（spawn 仅一 --session）  |  ["--mode","rpc"]
+PASS  TC-021(c) 新建后历史清空（仅历史项切换，不产生多活动会话）  |  0
+
+=== TC-021: 4/4 assertions passed ===

@@ -1,0 +1,16 @@
+
+> sdysyhj@0.1.0 verify:unit
+> vitest run test/unit
+
+
+ RUN  v5.1.0 /tmp/sdysyhj-verify
+
+
+ Test Files  9 passed (9)
+      Tests  79 passed (79)
+   Start at  20:59:30
+   Duration  756ms (tests 55%, import 27%, worker 10%, transform 8%)
+
+    Isolate  9 workers spawned · ~157ms startup each (spawn + environment, per file)
+             at least ~314ms faster with isolate: false — reuses workers across files instead of one per file
+

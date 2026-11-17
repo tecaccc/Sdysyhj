@@ -1,0 +1,8 @@
+[env] HOME=/tmp/tmp.Zk8qjYjvqw MOCKLOG=/tmp/tmp.5ii6xQtMPf SCENARIO=stream ARGS=tc023.cjs
+PASS  TC-023(a) SC-023a 单根工作区：子进程 cwd == W1  |  cwd=/tmp/vharness/wsA
+PASS  TC-023(b) SC-023b 多根工作区：cwd == 第一个文件夹 W1  |  cwd=/tmp/vharness/wsA
+PASS  TC-023(c1) SC-023c 无工作区：允许聊天且 cwd == 用户主目录  |  cwd=/tmp/tmp.Zk8qjYjvqw, homedir=/tmp/tmp.Zk8qjYjvqw
+PASS  TC-023(c2) 无工作区产生『文件工具受限』提示  |  [{"kind":"toast","text":"未打开工作区：仍可聊天，但文件工具受限（cwd = 用户主目录）。"}]
+PASS  TC-023(c3) 无工作区仍可对话（收到流式回复）
+
+=== TC-023: 5/5 assertions passed ===

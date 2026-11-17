@@ -1,0 +1,5 @@
+[env] HOME=/tmp/tmp.yfGKBxKjXu MOCKLOG=/tmp/tmp.nLUFHWlEuo SCENARIO=stream ARGS=tc_models.cjs 028
+PASS  TC-028(a) set_thinking_level 与 cycle_thinking_level 调用被记录  |  ["get_available_thinking_levels","set_thinking_level","get_available_thinking_levels","cycle_thinking_level"]
+PASS  TC-028(b) 状态栏等级字段值发生变化  |  before=high after=medium
+
+=== TC-028: 2/2 assertions passed ===

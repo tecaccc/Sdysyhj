@@ -1,0 +1,8 @@
+[env] HOME=/tmp/tmp.oJrxbdjHD0 MOCKLOG=/tmp/tmp.BvxzJBzwNP SCENARIO=stream ARGS=tc001.cjs
+PASS  TC-001(a) deltas>=8 且顺序 d1..d8  |  ["d1","d2","d3","d4","d5","d6","d7","d8"]
+PASS  TC-001(b) 末增量后出现完成事件  |  lastDelta@15, completion@16
+PASS  TC-001(c) 状态流 idle→streaming→idle（可含 starting）  |  idle→starting→streaming→idle
+PASS  TC-001(d) 首增量距发送 <2s（计时上界）  |  elapsed<=256ms
+PASS  calls.jsonl 含 prompt 'stream-check'
+
+=== TC-001: 5/5 assertions passed ===

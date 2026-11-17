@@ -1,0 +1,15 @@
+[env] HOME=/tmp/tmp.0qGdVjgDHs MOCKLOG=/tmp/tmp.4MRIzf48W4 SENTINEL=PI_TEST_SENTINEL_7f3a9c21
+--- auth.json（注入点，豁免扫描）---
+{"api_key":"PI_TEST_SENTINEL_7f3a9c21"}
+verify:unit exit=0
+verify:integration exit=0
+battery exit=0
+--- rg 扫描开始（期望无命中，rg exit=1）---
+/tmp/sdysyhj-verify/docs/test-cases.md:export SENTINEL="PI_TEST_SENTINEL_7f3a9c21"   # 哨兵假凭证（仅测试用，非真实 key）
+rg exit=0（1=无命中）
+--- 同时扫描 /tmp/vharness 构建产物与脚本目录（豁免 run.sh 注入点与本脚本）---
+rg2 exit=1（1=无命中）
+--- 脱敏痕迹（期望命中 [REDACTED]）---
+/tmp/tmp.4MRIzf48W4/logs/channel-crash.txt:api_key":"[REDACTED]
+/tmp/tmp.4MRIzf48W4/logs/battery.txt:api_key":"[REDACTED]
+TC-039 RESULT: FAIL（存在哨兵明文）

@@ -1,0 +1,91 @@
+
+ RUN  v5.1.0 /tmp/sdysyhj-verify
+
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 启动后加载状态与历史 5ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt → 流式 → settled 全链路；run_state 转移 starting→streaming→idle 3ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > message_end 为权威终稿，覆盖流式增量 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > abort：agent_settled(aborted) → run_state=aborted，历史保留 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 运行中发送 → steer 排队（FR-CHAT-06） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 运行中发送 follow-up 模式 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 工具卡片：执行状态 + 输出截断保留尾部 + 复制全部取全量（FR-CHAT-04） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 工具失败状态（isError） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 子进程崩溃自动重启一次并提示（NFR-02）；再次崩溃进入 error 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt 被拒：错误展示 + 恢复可输入（FR-CHAT-05/07） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > provider 报错（stopReason=error）展示可读信息与指引 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 外部修改检测：watcher 回调 → external_change（FR-SESS-07） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 历史重建：工具结果绑定到卡片（FR-SESS-03） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 模型切换后 model_info 更新（FR-MOD-01） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinking 等级切换/循环（FR-MOD-02） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 会话命名（FR-SESS-04） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 新建/切换会话：session_reset + 历史重建（FR-SESS-01/03） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinkingDefault 在新建会话时透传（FR-MOD-02：枚举不固化） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinkingDefault 为空时不干预 pi 自身设置 0ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 启动 spawn 正确的命令与参数 6ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 请求带 id，乱序响应正确关联 16ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 事件分发到 onEvent 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 无法解析的行进入 onAnomaly（协议异常日志，FR-CMD-02） 12ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > U+2028/U+2029 不破坏帧（严格 LF 切分） 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 子进程退出时挂起请求被拒绝，错误含 stderr 23ms
+ ✓ test/unit/sessionStore.test.ts > encodeSessionDirName > 与 pi 一致：去首分隔符、[/\\:] → '-'，外裹 --…-- 4ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 解析标题（session_info 名称优先）、消息数、时间 3ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 无命名时标题取首条用户消息摘要 1ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 按修改时间倒序；mostRecentSession 返回最新 3ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 目录不存在返回空数组 1ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 损坏行跳过不致命 1ms
+ ✓ test/unit/sessionStore.test.ts > defaultSessionsRoot > 环境变量优先 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > 外部修改/删除可检测；无变化不误报 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > markSynced 同步基线（本端写入不误报） 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > start/stop 定时检查触发回调 81ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 请求超时拒绝 32ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > stop() 关闭 stdin 触发有序退出 1ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > prompt 成功返回 disposition；失败返回 error 23ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > stdin 每个命令一行 JSON（JSONL） 12ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 有可用 pi → 优先 PATH 3ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 无 pi → 回退内置运行时（node + cli.js） 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > bundled 模式：直接内置 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 与内置均不可用 → PiRuntimeError 含可行动指引 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > piPath 显式指定 → 按该路径启动 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径不存在 → 含错误详情的可行动指引 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径启动失败（探测不过）→ 错误含详情 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > path 模式未配置 piPath → 提示配置 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH pi 版本低于最低支持 → 回退内置运行时（FR-CMD-05 判据） 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径版本低于最低支持 → 含详情的可行动错误 1ms
+ ✓ test/unit/runtime.test.ts > isVersionAtLeast > 点分版本比较（缺省段按 0） 1ms
+ ✓ test/unit/redact.test.ts > redactSecrets > api_key 键值对脱敏 5ms
+ ✓ test/unit/redact.test.ts > redactSecrets > Authorization / Bearer 脱敏 1ms
+ ✓ test/unit/redact.test.ts > redactSecrets > sk- 前缀 token 脱敏 1ms
+ ✓ test/unit/redact.test.ts > redactSecrets > JWT 脱敏 0ms
+ ✓ test/unit/redact.test.ts > redactSecrets > 普通文本不动 1ms
+ ✓ test/unit/redact.test.ts > redactSecrets > 空串安全 0ms
+ ✓ test/unit/redact.test.ts > createRedactingLogger > 所有级别写入前脱敏 1ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 按 LF 切分多行 3ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > U+2028/U+2029 在行内不触发切分（readline 的坑） 1ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 容忍 CRLF 行尾（剥掉 \r） 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 跨 chunk 的行正确拼接 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 多字节 UTF-8 字符跨 chunk 不撕裂 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > end() 冲刷未换行的尾部 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 空行被忽略 0ms
+ ✓ test/unit/config.test.ts > readConfig > 默认值 5ms
+ ✓ test/unit/config.test.ts > readConfig > 合法值解析 1ms
+ ✓ test/unit/config.test.ts > readConfig > thinkingDefault 透传不固化（枚举以 pi 侧为准） 1ms
+ ✓ test/unit/config.test.ts > readConfig > 非法值回退默认 1ms
+ ✓ test/unit/config.test.ts > readConfig > outputTailLines 默认 200（FR-CHAT-04），并钳制范围 1ms
+ ✓ test/unit/text.test.ts > truncateToTail > 超过行数时仅保留尾部 3ms
+ ✓ test/unit/text.test.ts > truncateToTail > 未超限不动 1ms
+ ✓ test/unit/text.test.ts > truncateToTail > 空文本安全 1ms
+ ✓ test/unit/text.test.ts > summarizeToolArgs > bash → 命令 0ms
+ ✓ test/unit/text.test.ts > summarizeToolArgs > 文件类工具 → 路径 0ms
+ ✓ test/unit/text.test.ts > summarizeToolArgs > 通用 → 紧凑 JSON 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 解析 response 记录 2ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 解析事件记录 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 非法 JSON 返回 parseError 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 无 type 字段返回 parseError 0ms
+
+ Test Files  9 passed (9)
+      Tests  79 passed (79)
+   Start at  20:59:34
+   Duration  765ms (tests 52%, import 27%, transform 10%, worker 10%)
+
+    Isolate  9 workers spawned · ~156ms startup each (spawn + environment, per file)
+             at least ~311ms faster with isolate: false — reuses workers across files instead of one per file
+

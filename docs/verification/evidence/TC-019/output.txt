@@ -1,0 +1,6 @@
+[env] HOME=/tmp/tmp.5jpmKj7Xqv MOCKLOG=/tmp/tmp.CvMOyGhaI6 SCENARIO=stream ARGS=tc_sess.cjs 019
+PASS  TC-019(a) calls.jsonl 含 set_session_name('TC-019-name')  |  [{"ts":1794920403745,"pid":3642219,"event":"command","type":"set_session_name","args":{"name":"TC-019-name"}}]
+PASS  TC-019(b) 会话状态名更新  |  {"kind":"session_name","name":"TC-019-name"}
+PASS  TC-019(c) 历史列表项标题同步为 TC-019-name  |  ["TC-019-name"]
+
+=== TC-019: 3/3 assertions passed ===

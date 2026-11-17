@@ -1,0 +1,1 @@
+./run.sh tc032.cjs

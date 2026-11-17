@@ -1,0 +1,6 @@
+[env] HOME=/tmp/tmp.YjLLhRnS0i MOCKLOG=/tmp/tmp.Dr7nVy6axi SCENARIO=stream ARGS=tc036.cjs
+PASS  TC-036(a) 600 delta 零丢失且按序  |  count=600, first=b1 , last=b600 
+PASS  TC-036(b) 完整渲染耗时 ≤30s  |  elapsed=25ms
+PASS  TC-036(c) 渲染批处理：全量重渲染次数 ≤ 60  |  renders=1, deltas=600, renderedTextLen=2893
+
+=== TC-036: 3/3 assertions passed ===

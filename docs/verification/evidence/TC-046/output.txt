@@ -1,0 +1,8 @@
+[env] HOME=/tmp/tmp.SKV32KM5lh MOCKLOG=/tmp/tmp.2WeyCTsm5s SCENARIO=stream ARGS=tc_sess.cjs 046
+PASS  TC-046(a1) 重载后历史完整恢复（3 条 marker）
+FAIL  TC-046(a2) 消息数 4（历史列表消息计数字段）  |  用户发送=4, 列表计数(user+assistant)=8 expected=4
+PASS  TC-046(a3) JSONL 连续续写（同一文件 wc -l 递增）  |  before=7 after=9 file=/tmp/tmp.SKV32KM5lh/.pi/agent/sessions/--tmp-vharness-wsA--/1794920411628_mocksessm14j8j.jsonl
+history list after reload: [{"title":"TC-046-M1","messageCount":8}]
+
+=== TC-046: 2/3 assertions passed ===
+FAILED: TC-046(a2) 消息数 4（历史列表消息计数字段）

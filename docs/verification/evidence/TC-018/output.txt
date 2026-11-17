@@ -1,0 +1,6 @@
+[env] HOME=/tmp/tmp.DNY5On9mXw MOCKLOG=/tmp/tmp.yWH4N3oKEU SCENARIO=stream ARGS=tc_sess.cjs 018
+PASS  TC-018(a) 切回 A 渲染历史含前 2 条消息 marker
+PASS  TC-018(b) 会话状态快照切换前后相等（含压缩状态字段）  |  before={"model":"mock-alpha","thinkingLevel":"high","isCompacting":false,"sessionFile":"/tmp/tmp.DNY5On9mXw/.pi/agent/sessions/--tmp-vharness-wsA--/1794920402154_mocksessgixsij.jsonl","sessionId":"mocksessgixsij","sessionName":""} after={"model":"mock-alpha","thinkingLevel":"high","isCompacting":false,"sessionFile":"/tmp/tmp.DNY5On9mXw/.pi/agent/sessions/--tmp-vharness-wsA--/1794920402154_mocksessgixsij.jsonl","sessionId":"mocksessgixsij","sessionName":""}
+PASS  TC-018(c) 第 3 条消息续写同一会话 JSONL（wc -l 递增）  |  before=5 after=7 file=/tmp/tmp.DNY5On9mXw/.pi/agent/sessions/--tmp-vharness-wsA--/1794920402154_mocksessgixsij.jsonl
+
+=== TC-018: 3/3 assertions passed ===

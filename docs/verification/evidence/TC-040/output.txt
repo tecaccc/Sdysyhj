@@ -1,0 +1,45 @@
+[env] HOME=/tmp/tmp.kgyqv2b4vA MOCKLOG=/tmp/tmp.quJsdb2hce SCENARIO=stream ARGS=tc040.cjs
+--- payload #1: <script>window.xss=1</script>
+    rendered: 
+PASS  XSS#1(a) 无 script 元素
+PASS  XSS#1(b) 无 on* 事件属性
+PASS  XSS#1(c) href/src 无 javascript:/data:text/html
+PASS  XSS#1(d) window.xss === undefined（未执行）  |  window.xss=undefined
+--- payload #2: <img src=x onerror="window.xss=1">
+    rendered: <img src="x">
+PASS  XSS#2(a) 无 script 元素
+PASS  XSS#2(b) 无 on* 事件属性
+PASS  XSS#2(c) href/src 无 javascript:/data:text/html
+PASS  XSS#2(d) window.xss === undefined（未执行）  |  window.xss=undefined
+--- payload #3: [x](javascript:window.xss=1)
+    rendered: <p><a rel="noopener noreferrer">x</a></p> 
+PASS  XSS#3(a) 无 script 元素
+PASS  XSS#3(b) 无 on* 事件属性
+PASS  XSS#3(c) href/src 无 javascript:/data:text/html
+PASS  XSS#3(d) window.xss === undefined（未执行）  |  window.xss=undefined
+--- payload #4: <a href="javascript:window.xss=1">x</a>
+    rendered: <p><a>x</a></p> 
+PASS  XSS#4(a) 无 script 元素
+PASS  XSS#4(b) 无 on* 事件属性
+PASS  XSS#4(c) href/src 无 javascript:/data:text/html
+PASS  XSS#4(d) window.xss === undefined（未执行）  |  window.xss=undefined
+--- payload #5: <iframe src="javascript:window.xss=1"></iframe>
+    rendered: 
+PASS  XSS#5(a) 无 script 元素
+PASS  XSS#5(b) 无 on* 事件属性
+PASS  XSS#5(c) href/src 无 javascript:/data:text/html
+PASS  XSS#5(d) window.xss === undefined（未执行）  |  window.xss=undefined
+--- payload #6: <svg onload="window.xss=1"></svg>
+    rendered: <p></p> 
+PASS  XSS#6(a) 无 script 元素
+PASS  XSS#6(b) 无 on* 事件属性
+PASS  XSS#6(c) href/src 无 javascript:/data:text/html
+PASS  XSS#6(d) window.xss === undefined（未执行）  |  window.xss=undefined
+--- payload #7: [x](data:text/html,<script>window.xss=1</script>)
+    rendered: <p><a rel="noopener noreferrer">x</a></p> 
+PASS  XSS#7(a) 无 script 元素
+PASS  XSS#7(b) 无 on* 事件属性
+PASS  XSS#7(c) href/src 无 javascript:/data:text/html
+PASS  XSS#7(d) window.xss === undefined（未执行）  |  window.xss=undefined
+
+=== TC-040: 28/28 assertions passed ===

@@ -1,0 +1,1 @@
+步骤1见 ../_static/output.txt（TC-042 step1 段）；步骤2 vsce 离线不可用 → 遗留；三平台 CI checklist → 遗留。

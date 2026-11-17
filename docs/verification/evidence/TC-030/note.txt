@@ -1,0 +1,1 @@
+静态断言见 ../_static/output.txt（TC-030 段）；命令注册佐证见 TC-027/TC-016 output（命令实际可执行）。

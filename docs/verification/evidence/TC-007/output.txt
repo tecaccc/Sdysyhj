@@ -1,0 +1,14 @@
+[env] HOME=/tmp/tmp.Ek5lQvI1Da MOCKLOG=/tmp/tmp.yUYKejYaDA SCENARIO=stream ARGS=tc007.cjs
+PASS  TC-007(a1) 3 张工具卡（read/edit/bash）  |  ["read","edit","bash"]
+PASS  TC-007(a2) bash 卡摘要含命令 seq 1 20000  |  seq 1 20000
+PASS  TC-007(a3) 卡片均含关键参数摘要  |  ["a.ts","a.ts","a.ts · x","a.ts · x","seq 1 20000","seq 1 20000"]
+PASS  TC-007(b) 每卡状态 running→success  |  {"read":["running","running","running","success"],"edit":["running","running","running","success"],"bash":["running","running","running","success"]}
+PASS  TC-007(c1) bash 输出标记截断  |  outputTruncated=true
+PASS  TC-007(c2) 展示文本为原输出尾段（以 20000 结尾）且远小于全量  |  shownLen=1199, origLen=108893, tail="\n19999\n20000"
+PASS  TC-007(d) 复制内容 = 完整输出（长度≈原输出且含尾部）  |  copiedLen=108893, origLen=108893
+PASS  TC-007(e1) webview 3 张工具卡  |  cards=3
+PASS  TC-007(e2) bash 卡含完整入参（seq 1 20000）与出参字段
+PASS  TC-007(e3) 卡片为 details 可展开结构
+PASS  TC-007(e4) 截断时展示复制全部按钮
+
+=== TC-007: 11/11 assertions passed ===

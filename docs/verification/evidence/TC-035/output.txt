@@ -1,0 +1,26 @@
+[env] HOME=/tmp/tmp.vUf7V7oSWD MOCKLOG=/tmp/tmp.PhOr3H9Px3 SCENARIO=stream ARGS=tc035.cjs
+PASS  TC-035(a1) SC-035a 启动 PATH 中的 pi（pi-invocations.log 非空）  |  logBytes=21
+PASS  TC-035(a2) 运行时来源 = path（日志佐证）  |  [info  2026-11-17T13:00:20.104Z] pi 运行时：PATH pi 1.99.0（source=path）
+PASS  TC-035(a3) 对话成功（≥8 deltas）
+PASS  TC-035(b1) SC-035b 使用内置运行时（source=bundled）  |  [info  2026-11-17T13:00:20.402Z] pi 运行时：内置运行时 dist（source=bundled）
+PASS  TC-035(b2) 内置运行时完成对话（mock provider 收到请求且 ≥8 deltas）  |  openaiCalls=1
+PASS  TC-035(c1) 按显式路径启动（invocations.log 增长）
+PASS  TC-035(c2) 运行时来源 = explicit（日志佐证）  |  [info  2026-11-17T13:00:20.855Z] pi 运行时：显式指定 pi 1.99.0（source=explicit）
+SC-035d error: {"kind":"error","message":"指定的 pi 路径不存在：/nonexistent/pi","hint":"请在设置 sdysyhj.piPath 中填写有效的 pi 可执行文件完整路径，或改用自动模式。"}
+PASS  TC-035(d1) 展示含错误详情（路径 /nonexistent/pi）  |  {"kind":"error","message":"指定的 pi 路径不存在：/nonexistent/pi","hint":"请在设置 sdysyhj.piPath 中填写有效的 pi 可执行文件完整路径，或改用自动模式。"}
+PASS  TC-035(d2) 可行动指引（设置/回退建议）  |  请在设置 sdysyhj.piPath 中填写有效的 pi 可执行文件完整路径，或改用自动模式。
+
+=== TC-035: 9/9 assertions passed ===
+[env] HOME=/tmp/tmp.lfykqmkrgq MOCKLOG=/tmp/tmp.4Voh4ZsFsX SCENARIO=stream ARGS=defect-cmd05-prod-layout.cjs
+HOST->WEBVIEW: {"kind":"config","tailLines":200,"sendMode":"steer","workspaceLabel":"tmp.lfykqmkrgq"}
+HOST->WEBVIEW: {"kind":"toast","text":"未打开工作区：仍可聊天，但文件工具受限（cwd = 用户主目录）。"}
+HOST->WEBVIEW: {"kind":"model_info","model":"unknown/unknown","thinkingLevel":"off","sessionName":""}
+HOST->WEBVIEW: {"kind":"run_state","state":"idle"}
+HOST->WEBVIEW: {"kind":"history_loaded","messages":[]}
+--- Output Channel ---
+[info  2026-11-17T13:00:21.222Z] 激活：cwd=/tmp/tmp.lfykqmkrgq（无工作区，文件工具受限）
+[info  2026-11-17T13:00:21.229Z] pi 运行时：内置运行时 dist（source=bundled）
+[info  2026-11-17T13:00:21.596Z] PiBridge 已启动（内置运行时 dist，cwd=/tmp/tmp.lfykqmkrgq）
+[info  2026-11-17T13:00:21.596Z] Sdysyhj 已激活
+--- 打包布局内置运行时实际存在 ---
+/tmp/vpkg/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js exists = true

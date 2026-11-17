@@ -1,0 +1,9 @@
+[env] HOME=/tmp/tmp.3707uaiq42 MOCKLOG=/tmp/tmp.k4Yv2eIaDW SCENARIO=stream ARGS=tc_sess.cjs 022
+PASS  TC-022(a1) ≤5s 内发出外部修改提示  |  latency=4149ms
+PASS  TC-022(a2) 提示文案含刷新类关键词/陈旧提示  |  当前会话在插件之外被修改（如终端 pi 写入同一会话）。
+PASS  TC-022(a3) webview 横幅含『刷新』入口  |  ⚠ 当前会话在插件之外被修改（如终端 pi 写入同一会话）。 当前显示可能为陈旧状态。刷新忽略
+(b) 观察：未刷新情况下 prompt 被受理=true；自动刷新=false；横幅驻留=true
+FAIL  TC-022(b) 下一次交互被提示拦截 或 触发自动刷新（二者其一）  |  拦截=false 自动刷新=false（prompt 被受理=true）
+
+=== TC-022: 3/4 assertions passed ===
+FAILED: TC-022(b) 下一次交互被提示拦截 或 触发自动刷新（二者其一）

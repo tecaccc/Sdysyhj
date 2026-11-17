@@ -1,0 +1,9 @@
+[env] HOME=/tmp/tmp.a5kIjtGJPB MOCKLOG=/tmp/tmp.OxANvd5inq SCENARIO=stream ARGS=tc_sess.cjs 016
+sessions-after.txt:
+/tmp/tmp.a5kIjtGJPB/.pi/agent/sessions/--tmp-vharness-wsA--/1794920396815_mocksessnjra8g.jsonl
+PASS  TC-016(a1) 会话 A 的 JSONL 文件保留  |  files=1
+PASS  TC-016(a2) 旧会话含已发消息内容（marker 命中）  |  /tmp/tmp.a5kIjtGJPB/.pi/agent/sessions/--tmp-vharness-wsA--/1794920396815_mocksessnjra8g.jsonl
+PASS  TC-016(b) A、B 为不同会话 id（文件互异）  |  mocksessnjra8g vs mocksesstsgmik
+PASS  TC-016(c) 会话文件仅位于 $HOME/.pi/ 下  |  ["/tmp/tmp.a5kIjtGJPB/.pi/agent/sessions/--tmp-vharness-wsA--/1794920396815_mocksessnjra8g.jsonl"]
+
+=== TC-016: 4/4 assertions passed ===

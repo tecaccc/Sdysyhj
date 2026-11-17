@@ -1,0 +1,1 @@
+bash /tmp/vharness/t_static.sh

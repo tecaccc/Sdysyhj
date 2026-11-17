@@ -1,0 +1,1 @@
+bash /tmp/vharness/t_files041.sh（TC-044 段：隐藏文件扫描）

@@ -1,0 +1,33 @@
+
+ RUN  v5.1.0 /tmp/sdysyhj-verify
+
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > prompt → 事件流 → agent_settled 全链路 74ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 启动 → prompt → 工具调用链 → settled（含 thinking/tool 卡片事件） 94ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > auto：PATH 上的假 pi 可用 → source=path，含版本 12ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > auto：PATH pi 启动失败（exit≠0）→ 回退内置运行时 6ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > auto：PATH 无 pi → 内置运行时（真实 node_modules 中的 cli.js） 4ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > 显式 piPath 指向假 pi → source=explicit 6ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > 显式 piPath 启动失败 → 含详情的可行动错误 4ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > defaultProbe：不存在的命令 → ok=false 2ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 响应 id 关联与命令覆盖（get_state/set_model/thinking/session_name） 57ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 帧解析：delta 内 U+2028/U+2029 不破坏记录 60ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 错误运行（ERROR）：错误展示 + 状态恢复 76ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > abort：LONG 运行中中止 → agent_settled(aborted) 73ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 运行中 prompt 无 streamingBehavior 被拒；steer/followUp 排队 58ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 子进程崩溃 → 自动重启一次；再崩溃 → error 态 + 可行动指引（NFR-02/FR-CHAT-07） 132ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 会话切换：历史恢复（session_reset + history_loaded） 59ms
+ ✓ test/integration/runtime-resolve.test.ts > 内置运行时冒烟（离线） > bundled cli.js --version 可执行 393ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > switch_session 恢复消息（FR-SESS-03 数据面） 46ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 未识别命令返回 success:false（错误处理） 53ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 新建会话清空历史（FR-SESS-01） 66ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > stop() 后进程退出、后续请求拒绝 157ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > steer 插话排队（FR-CHAT-06） 93ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > dispose 强制停止子进程（无僵尸） 243ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > NFR-01 代理：≥600 delta 零丢失 + 全量渲染 ≤30s 70ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > FR-SESS-03：切换会话重放历史与会话 JSONL 一致（含压缩状态条目） 41ms
+
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+   Start at  20:59:36
+   Duration  1.10s (tests 92%, import 4%, transform 2%, worker 1%)
+
