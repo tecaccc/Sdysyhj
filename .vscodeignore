@@ -1,0 +1,17 @@
+.vscode/**
+.vscode-test/**
+src/**
+webview/**
+test/**
+docs/**
+node_modules/.bin/**
+node_modules/**/test/**
+node_modules/**/*.ts
+node_modules/**/*.map
+.gitignore
+esbuild.mjs
+tsconfig.json
+**/*.vsix
+media/*.map
+media/main.js.map
+*.log

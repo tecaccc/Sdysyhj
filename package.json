@@ -1,0 +1,171 @@
+{
+  "name": "sdysyhj",
+  "displayName": "Sdysyhj",
+  "description": "Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code: chat-based coding agent inside the editor",
+  "version": "0.1.0",
+  "publisher": "sdysyhj",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sdysyhj/sdysyhj"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onView:sdysyhj.chatView"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sdysyhj",
+          "title": "Sdysyhj",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "sdysyhj": [
+        {
+          "type": "webview",
+          "id": "sdysyhj.chatView",
+          "name": "Chat"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "sdysyhj.openChat",
+        "title": "Open Chat",
+        "category": "Sdysyhj",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "sdysyhj.newSession",
+        "title": "New Session",
+        "category": "Sdysyhj",
+        "icon": "$(add)"
+      },
+      {
+        "command": "sdysyhj.abort",
+        "title": "Abort",
+        "category": "Sdysyhj",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "sdysyhj.showHistory",
+        "title": "Show Session History",
+        "category": "Sdysyhj",
+        "icon": "$(history)"
+      },
+      {
+        "command": "sdysyhj.reportIssue",
+        "title": "Report Issue",
+        "category": "Sdysyhj"
+      },
+      {
+        "command": "sdysyhj.renameSession",
+        "title": "Rename Session",
+        "category": "Sdysyhj"
+      },
+      {
+        "command": "sdysyhj.switchModel",
+        "title": "Switch Model",
+        "category": "Sdysyhj"
+      },
+      {
+        "command": "sdysyhj.switchThinking",
+        "title": "Switch Thinking Level",
+        "category": "Sdysyhj"
+      },
+      {
+        "command": "sdysyhj.sendToPi",
+        "title": "Send to Pi",
+        "category": "Sdysyhj"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "sdysyhj.sendToPi",
+          "group": "navigation@100"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "sdysyhj.sendToPi",
+          "group": "navigation@100"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Sdysyhj",
+      "properties": {
+        "sdysyhj.piRuntime": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "path",
+            "bundled"
+          ],
+          "enumDescriptions": [
+            "Prefer pi on PATH, fall back to the bundled runtime",
+            "Always use the executable configured in sdysyhj.piPath",
+            "Always use the bundled pi runtime shipped with the extension"
+          ],
+          "default": "auto",
+          "description": "How the pi runtime is resolved (FR-CMD-05)."
+        },
+        "sdysyhj.piPath": {
+          "type": "string",
+          "default": "",
+          "description": "Explicit path to the pi executable. Used when sdysyhj.piRuntime is 'path', or as a first candidate in 'auto' mode."
+        },
+        "sdysyhj.thinkingDefault": {
+          "type": "string",
+          "default": "",
+          "description": "新建会话时应用的 thinking 等级，原样透传给 pi（合法枚举以 pi 的 get_available_thinking_levels 返回为准）。空 = 继承 pi 自身设置。"
+        },
+        "sdysyhj.outputTailLines": {
+          "type": "number",
+          "default": 200,
+          "minimum": 10,
+          "description": "工具输出卡片保留的尾部行数（默认 200）；“复制全部”始终取完整输出。"
+        },
+        "sdysyhj.sendMode": {
+          "type": "string",
+          "enum": [
+            "steer",
+            "followUp"
+          ],
+          "default": "steer",
+          "description": "Default queue mode for messages sent while the agent is running."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "typecheck": "tsc --noEmit",
+    "verify:unit": "vitest run test/unit",
+    "verify:integration": "vitest run test/integration"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "1.5.2",
+    "dompurify": "3.4.18",
+    "highlight.js": "11.12.0",
+    "marked": "18.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/vscode": "1.85.0",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  }
+}

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+media/main.js
+media/main.css
+media/*.map
+*.vsix
+.DS_Store
+*.log
