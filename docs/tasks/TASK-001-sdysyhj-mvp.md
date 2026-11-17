@@ -72,6 +72,10 @@
 - 2026-11-17 总调度：派发 ⑤ 测试 Agent（核验，全新上下文，invocation `b022d8e6`）：干净检出标签、按 TC-001~046 逐条执行、产出 verification-plan.md + report-e9ae693.md；UI 手工项标 MANUAL 不计 FAIL（列遗留），三平台项列遗留
 - 2026-11-17 测试 Agent（核验）：交付 report-e9ae693.md + verification-plan.md + evidence/（49 项）；权限核验通过；总结论 **FAIL**（PASS 25 / FAIL 8 / SKIP 3 / MANUAL 10；逐 FR：PASS 18 / PARTIAL 5 / FAIL 2（FR-CMD-05、FR-CMD-02）/ 二期 2）；commit `38aef45`
 - 2026-11-17 总调度：报告完整性检查通过（§6 契约齐备）；启动失败回路第 1 轮，并行派发：研发 Agent（修复 #1/#2/#3/#4/#6，invocation `b996966f`）、产品 Agent（基线 v0.2.2 口径澄清，invocation `8f4d019e`）、测试 Agent（用例基线 4 项修正，invocation `61bd44fa`）
+- 2026-11-17 产品 Agent：交付 requirements.md v0.2.2（口径 #11-#13）；权限核验通过；commit `7b22af1`
+- 2026-11-17 测试 Agent：交付 test-cases.md v0.2（消息数口径 + 3 项断言方法学修正，矩阵不变，盲写保持）；权限核验通过；commit `3be510a`
+- 2026-11-17 研发 Agent：交付第 1 轮修复件（#1 打包布局解析重写、#2 stderr/异常接线、#3 状态回 idle、#4 stale 拦截、#6 四类日志；回归测试 +10 单测/+5 集成；FR 追溯表同步）
+- 2026-11-17 总调度 ④ 交付验收（修复件）：**退回**。写权限 ✅、追溯表 26/26 ✅、build/unit 89 ✅，但 verify:integration 复跑间歇失败 2/6 次（defects-regression#2 MOCK-STDERR：stderr 原文与 agent_settled 时序竞态）→ 违反确定性要求，退回研发（invocation `844ac41f`）：要求产品侧顺序保证或有界确定性等待 + 并行负载下 10 连跑全绿
 - 2026-11-17 交付检查待办：研发 Agent 施工中已产生 node_modules/、package.json、package-lock.json（未跟踪）；收产物时核验 .gitignore 已覆盖 node_modules，且测试约定（verify:unit/verify:integration）未被改名
 
 ## 7. 收产物检查记录（②'）
