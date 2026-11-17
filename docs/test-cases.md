@@ -1,6 +1,6 @@
 # Sdysyhj 测试用例基线（docs/test-cases.md）
 
-> 产出：测试 Agent（写用例阶段，TASK-001）｜ 状态：**待审批点 2 裁决** ｜ 版本：v0.1
+> 产出：测试 Agent（写用例阶段，TASK-001）｜ 状态：**待审批点 2 裁决** ｜ 版本：v0.2（2026-11-17 修订）
 >
 > **依据（唯一）**：docs/requirements.md v0.2（需求基线）。
 > **参考**：docs/agent-workflow.md §6（产物契约）、§4（自测命令约定 `npm run verify:unit` / `npm run verify:integration`）。
@@ -14,7 +14,7 @@
 ### 0.1 标准命令（agent-workflow §4 约定）
 
 - 自测/核验套件：`npm run verify:unit`（单元）、`npm run verify:integration`（集成）。
-- 用例中的动态行为一律以"套件场景（SC-xxx）+ 行为断言"表达；静态/结构检查一律以可直接执行的 shell/node 脚本表达。
+- 用例中的动态行为一律以"逻辑场景（SC-xxx）+ 行为断言"表达（**实现无关**）；静态/结构检查一律以可直接执行的 shell/node 脚本表达。SC-xxx 仅为逻辑场景名，"逻辑场景 ↔ 实际套件输出"的映射由核验剧本（verification-plan.md）在核验时建立；断言以 `npm run verify:unit` / `npm run verify:integration` 输出与行为证据为准。
 
 ### 0.2 公共前置 ENV-SETUP（所有 TC 默认继承，不再重复全文）
 
@@ -27,18 +27,20 @@ npm ci                                 # 仅安装依赖；除此之外核验全
 export HOME="$(mktemp -d)"             # 隔离 ~/.pi/agent（settings/auth/models/会话），不触宿主真实配置
 export WORKSPACE="$(pwd)"
 export MOCKLOG="$(mktemp -d)"          # mock 调用记录 + 证据输出目录
-export SENTINEL="PI_TEST_SENTINEL_7f3a9c21"   # 哨兵假凭证（仅测试用，非真实 key）
+export SENTINEL="PI_TEST_SENTINEL_$(head -c8 /dev/urandom | od -An -tx1 | tr -d ' \n')"   # 哨兵假凭证：执行时随机生成（仅测试用，非真实 key；禁止使用文档内固定字面值）
 ```
 
 **环境约束（硬性）**：
 
-1. 测试**不得依赖真实 API key**：凭证相关场景只用哨兵假凭证或空 HOME（未配置凭证）。
+1. 测试**不得依赖真实 API key**：凭证相关场景只用哨兵假凭证（执行时随机生成）或空 HOME（未配置凭证）。
 2. 测试**不得依赖外网**：模型/provider 侧一律本地 mock（进程内 stub 或 127.0.0.1），执行期不发起任何外部请求；仅 `npm ci` 允许访问依赖 registry（或离线缓存）。
 3. 会话/配置只落临时 HOME；测试结束不得污染仓库与宿主环境。
 
 ### 0.3 MOCK 场景目录（确定性 stub 行为规范）
 
-mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要）追加到 `$MOCKLOG/calls.jsonl`，供断言使用。
+mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要）记录为**可检查的调用记录**，供断言使用——记录载体实现形式不限（如 `$MOCKLOG/calls.jsonl` 仅为示例实现之一，不构成格式契约）；断言以 verify:unit/verify:integration 输出与行为证据为准，mock 调用记录仅作辅助证据。
+
+> 下文各 TC 中出现的 `$MOCKLOG/calls.jsonl` 均指上述"mock 调用记录"（实现形式不限）；SC-xxx 均为逻辑场景名，与实际套件输出的映射由核验剧本（verification-plan.md）在核验时建立。
 
 | 场景 | 确定性行为 | 主要用途 |
 |---|---|---|
@@ -63,7 +65,7 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 ### 0.5 套件与临时断言脚本约定
 
 1. 优先执行 `npm run verify:unit` 与 `npm run verify:integration`，两者退出码必须为 0，输出全文存证。
-2. 套件输出按场景名 SC-xxx 定位，对应场景必须 PASS。
+2. SC-xxx 为逻辑场景名（实现无关）；"逻辑场景 ↔ 实际套件输出"的映射由核验剧本（verification-plan.md）在核验时建立，对应逻辑场景必须 PASS。
 3. 套件未覆盖的断言：核验 Agent 依据交付的 **FR 追溯表**（研发交付物）定位被测入口，在**仓库外临时目录**编写一次性断言脚本执行（不得修改仓库任何文件）；脚本全文 + 输出即证据。
 4. 证据统一存 `docs/verification/evidence/<TC-id>/`（核验阶段产物）。
 
@@ -201,9 +203,9 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 #### TC-017 ｜ FR-SESS-02（P0）｜ 历史列表展示标题/时间/消息数并可切换 ｜ 自动
 - **前置条件**：ENV-SETUP；MOCK-STREAM。
 - **操作步骤**：
-  1. 场景 SC-017 准备 fixture：通过插件自身依次新建 3 个会话，分别发送 2/5/9 条消息（消息文本含序号 marker）。
+  1. 场景 SC-017 准备 fixture：通过插件自身依次新建 3 个会话，分别发送 2/5/9 个 prompt（prompt 文本含序号 marker；每 prompt 经 MOCK-STREAM 产生 1 条 user 消息 + 1 条 assistant 回复）。
   2. 触发 "Show Session History"（命令注册断言同 TC-030）打开历史列表并任选一项切换。
-- **期望结果**：(a) 列表恰含 3 项；(b) 每项含标题、时间、消息数三个字段，消息数与 fixture 一致（2/5/9）；(c) 选择某项触发会话切换事件（活动会话 id 变更）。
+- **期望结果**：(a) 列表恰含 3 项；(b) 每项含标题、时间、消息数三个字段，消息数与 fixture 一致——**口径（总调度裁决 2026-11-17，需求基线 v0.2.2）：消息数 = 会话内消息总数（user + assistant 合计）**；期望值计算说明：SC-017 各会话分别发送 2/5/9 个 prompt，MOCK-STREAM 每 prompt 产生 1 条 user + 1 条 assistant，故期望值为 **4/10/18**（user 2/5/9 + assistant 2/5/9）；(c) 选择某项触发会话切换事件（活动会话 id 变更）。
 - **判定方式**：PASS = (a)-(c) 全成立；FAIL = 任一不成立。
 - **说明**："点击切换"的点击手势本身不可自动观察，本 TC 以切换事件断言替代（自动兜底）；视觉项并入 TC-018 证据。
 
@@ -280,12 +282,24 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 #### TC-026 ｜ FR-FILE-03（P1）｜ 资源管理器/编辑器右键"发送到 Pi" ｜ 自动（P1 尽力）
 - **前置条件**：ENV-SETUP。
 - **操作步骤**：
-  1. 菜单注册断言：
+  1. 菜单注册断言（**结构化解析**扩展清单 JSON 的菜单贡献项，断言菜单入口指向"发送到 Pi"命令；**不断言标题字面文本**）：
      ```bash
-     node -e 'const p=require("./package.json");const m=JSON.stringify((p.contributes&&p.contributes.menus)||{});if(!/发送到 pi|send to pi/i.test(m)){console.error("MISSING context menu entry");process.exit(1)}if(!/"explorer\/context"|\"editor\/context\"/.test(m)){console.error("MISSING explorer/editor context menu group");process.exit(1)}console.log("OK: context menus registered")'
+     export SEND_CMD="${SEND_CMD:-}"   # 取值 = FR 追溯表中 FR-FILE-03 对应命令 id；追溯表未给出时留空，脚本退化为命令 id 语义匹配
+     node -e "
+     const p=require('./package.json');
+     const c=p.contributes||{};
+     const ids=(c.commands||[]).map(x=>x.command);
+     const SEND_CMD=process.env.SEND_CMD||ids.find(id=>/send/i.test(id));
+     if(!SEND_CMD||ids.indexOf(SEND_CMD)<0){console.error('FAIL: 发送命令未定位/未注册');process.exit(1)}
+     const menus=c.menus||{};
+     for(const g of ['explorer/context','editor/context']){
+       if(!(menus[g]||[]).some(i=>i.command===SEND_CMD)){console.error('FAIL: '+g+' 缺少指向发送命令的菜单入口');process.exit(1)}
+     }
+     console.log('OK: explorer/editor context menus reference registered send command');
+     "
      ```
   2. `npm run verify:unit`（命令处理逻辑：文件路径 / 选区 → prompt 素材）。
-- **期望结果**：(a) 脚本 exit 0（explorer/context 与 editor/context 均注册）；(b) 生成 prompt 素材含文件路径；选区场景含选区文本。
+- **期望结果**：(a) 脚本 exit 0——explorer/context 与 editor/context 各存在至少一个菜单入口，其 `command` 字段指向 FR-FILE-03 的"发送到 Pi"命令（FR 追溯表 id，仅结构化字段断言、不比对标题字面文本），且该命令已在 contributes.commands 注册；(b) 生成 prompt 素材含文件路径；选区场景含选区文本。
 - **判定方式**：PASS = (a)-(b) 全成立；FAIL = 任一不成立。
 
 ### FR-MOD-01 切换模型（P1）
@@ -409,19 +423,22 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 #### TC-039 ｜ NFR-03 ｜ 日志脱敏（不得明文输出凭证） ｜ 自动
 - **前置条件**：ENV-SETUP。
 - **操作步骤**：
-  1. 注入哨兵假凭证（格式以 pi 约定为准，凭证本体用 `$SENTINEL`）：
+  1. 生成并注入哨兵假凭证（**执行时随机生成哨兵值**，禁止使用文档内固定字面值——见 ENV-SETUP；格式以 pi 约定为准，凭证本体用 `$SENTINEL`）：
      ```bash
      mkdir -p "$HOME/.pi/agent"
      printf '{"api_key":"%s"}\n' "$SENTINEL" > "$HOME/.pi/agent/auth.json"
      ```
   2. 触发尽量多的日志路径：`npm run verify:unit && npm run verify:integration`（含 SC-013、SC-031、SC-035 等），并保存 Output Channel 转储到 `$MOCKLOG/logs/`。
-  3. 脱敏断言：
+  3. 脱敏断言（断言对象**仅限被测产物/日志**：构建产物、Output Channel 转储、会话/状态文件；docs/（含本用例文档）为哨兵定义源显式排除；且哨兵为执行时随机值，不存在自命中）：
      ```bash
-     rg -F "$SENTINEL" "$MOCKLOG/logs" "$WORKSPACE" --hidden -g '!node_modules' -g '!*auth.json' -g '!docs/verification/**'
-     test $? -eq 1    # rg 无命中时退出码 1
+     for d in "$MOCKLOG/logs" "$HOME/.pi" "$WORKSPACE/dist" "$WORKSPACE/out" "$WORKSPACE/build"; do
+       [ -e "$d" ] || continue
+       if rg -F "$SENTINEL" "$d" --hidden -g '!*auth.json'; then echo "FAIL: 明文泄漏 in $d"; exit 1; fi
+     done
+     echo "OK: 被测产物/日志中无哨兵明文"
      ```
-- **期望结果**：一切日志/输出/构建产物（排除凭证注入点本身与 mock 期望载荷）均无哨兵明文。
-- **判定方式**：PASS = rg 无命中（exit 1）且套件绿；FAIL = 任一命中（附命中行与文件路径为证据）。
+- **期望结果**：被测产物与日志（构建产物、Output Channel 转储、`$HOME/.pi` 会话/状态文件）均无哨兵明文；排除项仅限凭证注入点 auth.json 本身、mock 期望载荷与定义源文档 docs/。
+- **判定方式**：PASS = 扫描脚本输出 OK（零命中）且套件绿；FAIL = 任一命中（附命中行与文件路径为证据）。
 
 #### TC-040 ｜ NFR-03 ｜ Webview 渲染消毒（防 XSS） ｜ 自动
 - **前置条件**：ENV-SETUP；载荷集 PAYLOAD-XSS：
@@ -498,8 +515,8 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 
 #### TC-046 ｜ §8-3（复合：FR-SESS-03）｜ 宿主重启后历史恢复 ｜ 自动
 - **前置条件**：ENV-SETUP；MOCK-STREAM。
-- **操作步骤**：`npm run verify:integration`（场景 SC-046：会话 A 发 3 条消息 → 模拟窗口重载（workbench/host+webview 重建）→ 从历史选 A → 发第 4 条）。
-- **期望结果**：上下文完整恢复（同 TC-018 断言）、消息数 4、JSONL 连续续写。
+- **操作步骤**：`npm run verify:integration`（场景 SC-046：会话 A 发送 3 个 prompt → 模拟窗口重载（workbench/host+webview 重建）→ 从历史选 A → 再发第 4 个 prompt）。
+- **期望结果**：上下文完整恢复（同 TC-018 断言）、消息总数 = **8**（口径：user + assistant 合计，总调度裁决 2026-11-17，基线 v0.2.2；计算说明：MOCK-STREAM 每 prompt 产生 1 条 user + 1 条 assistant，共 4 个 prompt → user 4 + assistant 4 = 8）、JSONL 连续续写。
 - **判定方式**：PASS = 断言全成立；FAIL = 上下文丢失/另起会话。
 
 > §8-2 由 TC-001/003/005/007 覆盖；§8-4 由 TC-038（崩溃恢复）+ TC-042（三平台）覆盖；§8-5（P0 逐条勾选）由全部 P0 自动 TC 覆盖。
@@ -558,11 +575,11 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 2. **P0 逐条可判定**：16 条 P0 FR 全部具备**自动判定** TC（TC-001/003/005/007/009/013/014/016/017/018/021/023/024/030/031/035），每条给出确定性命令/脚本与 PASS/FAIL 判据。
 3. **P1 尽力覆盖**：7 条 P1 FR 全部有自动 TC（TC-011/019/022/026/027/028/029），判定依赖 mock 调用记录与状态断言，可无人执行。
 4. **P2 显式列出**：FR-SESS-05（TC-020）、FR-CMD-04（TC-034）整条延后；FR-CMD-03 拆分——TC-032（MVP"文本直发生效"）本期判定、TC-033（'/' 补全）延后。三条 P2 均在矩阵中标注 📅 二期/延后，不计入 MVP 门禁。
-5. **安全要求**：NFR-03 的**日志脱敏**（TC-039，哨兵凭证全局 rg 零命中）与**防 XSS**（TC-040，7 载荷×4 断言）各有独立自动 TC；另附 TC-041（会话数据位置）、TC-031(d)（日志通道脱敏交叉）加固。
+5. **安全要求**：NFR-03 的**日志脱敏**（TC-039，随机哨兵在被测产物/日志中 rg 零命中）与**防 XSS**（TC-040，7 载荷×4 断言）各有独立自动 TC；另附 TC-041（会话数据位置）、TC-031(d)（日志通道脱敏交叉）加固。
 6. **UI 交互项纪律**：共 8 项 UI 手工 checklist TC（TC-002/004/006/008/010/012/015/025），均标注证据类型（截图/录屏/命令调用日志/剪贴板落盘），且其 FR **均另有自动 TC 兜底**（TC-001/003/005/007/009/011/014/024）；"点击 Stop/点击切换"类手势一律以命令注册断言、RPC 调用记录、状态事件断言做自动兜底判定。
 7. **环境约束**：全部用例可在**无真实 API key、无外网**（仅 npm ci 例外）下执行：临时 HOME 隔离凭证与会话、本地 mock 场景（MOCK-*）、哨兵假凭证；标准自测命令仅约定 `npm run verify:unit` / `npm run verify:integration`。
 8. **盲写纪律**：用例仅从 docs/requirements.md v0.2 推导；本阶段仅产出 docs/test-cases.md，未读取实现侧内容，无 git 写操作。
-9. **遗留**：5 处需求歧义/缺漏（下节）已上报总调度，未自行脑补实现；其中 #2/#3（截断阈值、性能量化）影响断言阈值固化，用例当前只断言行为存在性，待基线明确后可收紧。
+9. **遗留**：11 项需求歧义/缺漏（下节）已上报总调度，未自行脑补实现；其中 #2/#3（截断阈值、性能量化）影响断言阈值固化，用例当前只断言行为存在性，待基线明确后可收紧。
 
 ---
 
@@ -581,6 +598,15 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 | 9 | §8-1 | "从零安装插件"在离线/CI 环境的等价物未定义 | TC-045 以 `vsce package` + 本地安装 vsix 近似 | 确认离线等价口径 |
 | 10 | FR-MOD-02 | thinking 等级枚举值未定义（§7 显示 "high"） | TC-028 仅断言"可切换+持久"，不断言具体枚举 | 基线补充枚举取值 |
 | 11 | FR-CHAT-05/SESS-02 等 | "点击 Stop/点击"类手势与自动化边界 | 一律给自动兜底（命令/事件/状态断言）+ UI checklist 项 | 无需修改需求，仅备忘核验时 UI 项凭证据判定 |
+
+---
+
+## 修订记录
+
+| 日期 | 版本 | 改动点 |
+|---|---|---|
+| 2026-11-17 | v0.1 | 初稿（盲写产出）。 |
+| 2026-11-17 | v0.2 | 消息数口径修正（总调度裁决：FR-SESS-02"消息数"= 会话内消息总数 user+assistant 合计；TC-017(b) 期望值 2/5/9 → 4/10/18、TC-046 期望值 4 → 8，均附计算说明）+ 3 项断言方法学修正（① TC-026 菜单断言改结构化解析、不断言标题字面文本；② TC-039 哨兵执行时随机生成、断言对象限定被测产物/日志并排除定义源文档，消除自命中；③ §0 中 SC-xxx/calls.jsonl 契约改实现无关表述，逻辑场景↔套件输出映射移交核验剧本建立）。 |
 
 ---
 
