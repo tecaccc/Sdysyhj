@@ -24,8 +24,8 @@
 | ③b 盲写测试用例 | 仅依据需求基线写 `docs/test-cases.md` | 测试 Agent（fresh context，禁读 src/） | ✅ 完成（TC-001~046） |
 | 【审批点2】测试用例 | 总调度审查覆盖度与可判定性 | **总调度裁决**（人类授权） | ✅ 2026-11-17 通过 |
 | ④ 研发交付 | 自测全绿 + FR 追溯表 + 标签 `ready-for-verify` | 研发 Agent | ✅ 验收通过（`e9ae693`，标签已打） |
-| ⑤ 独立核验 | 干净工作区检出标签，逐 TC 执行出报告 | 测试 Agent（核验，全新上下文） | 🔄 进行中（invocation `b022d8e6`） |
-| ⑥ 闭环/失败回路 | PASS → 交付总结；FAIL → 缺陷清单回研发（≤2 轮） | 总调度 | ⬜ |
+| ⑤ 独立核验 | 干净工作区检出标签，逐 TC 执行出报告 | 测试 Agent（核验，全新上下文） | ✅ 报告已收（`report-e9ae693`：**FAIL**） |
+| ⑥ 闭环/失败回路 | PASS → 交付总结；FAIL → 缺陷清单回研发（≤2 轮） | 总调度 | 🔄 **失败回路第 1 轮**（三路修复中） |
 
 ## 3. 审批点记录
 
@@ -36,8 +36,10 @@
 
 ## 4. 失败回路与裁决
 
-- 重试计数：0 / 2
-- 裁决记录：无
+- 重试计数：**1 / 2**（第 1 轮修复中）
+- 裁决记录：
+  - 2026-11-17 口径裁决（核验歧义）：① 运行状态= idle/streaming，"已中止"为消息级标记，中止后回 idle（缺陷 #3 定为产品缺陷）；② 消息数= user+assistant 总数（缺陷 #5 解除）；③ FR-SESS-07 仅提示不拦截 = 静默继续，不满足（缺陷 #4 维持产品缺陷）。均为口径澄清，无范围/优先级变化，无需人类通报；基线 v0.2.2 同步。
+  - 2026-11-17 缺陷归属：产品缺陷 #1/#2/#3/#4/#6 → 研发 Agent；用例基线缺陷（TC-026a/TC-039/§0 契约/消息数口径）→ 测试 Agent；均不构成结论冲突，无需上报人类。
 
 ## 5. 权限核验约定（写权限矩阵 → git 历史）
 
@@ -68,6 +70,8 @@
 - 2026-11-17 研发 Agent：完成 MVP 交付（基线 v0.2.1 口径全对齐：版本下限判据、thinking 透传、600-delta 零丢失集成测试、JSONL 一致性重放等）；自测 build/unit 79/integration 24 全绿
 - 2026-11-17 总调度 ④ 交付验收：**通过**。复核项：① 复跑自测一致（build ✅ / unit 9 文件 79 用例 ✅ / integration 3 文件 24 用例 ✅）；② FR 追溯表 26/26；③ 写权限合规（tracked 仅 docs/technical-design.md 变更 + 允许范围内工程文件）；④ .gitignore 覆盖 node_modules；⑤ verify:unit/verify:integration 脚本名未改。交付 commit `e9ae693`，标签 `ready-for-verify` 已打
 - 2026-11-17 总调度：派发 ⑤ 测试 Agent（核验，全新上下文，invocation `b022d8e6`）：干净检出标签、按 TC-001~046 逐条执行、产出 verification-plan.md + report-e9ae693.md；UI 手工项标 MANUAL 不计 FAIL（列遗留），三平台项列遗留
+- 2026-11-17 测试 Agent（核验）：交付 report-e9ae693.md + verification-plan.md + evidence/（49 项）；权限核验通过；总结论 **FAIL**（PASS 25 / FAIL 8 / SKIP 3 / MANUAL 10；逐 FR：PASS 18 / PARTIAL 5 / FAIL 2（FR-CMD-05、FR-CMD-02）/ 二期 2）；commit `38aef45`
+- 2026-11-17 总调度：报告完整性检查通过（§6 契约齐备）；启动失败回路第 1 轮，并行派发：研发 Agent（修复 #1/#2/#3/#4/#6，invocation `b996966f`）、产品 Agent（基线 v0.2.2 口径澄清，invocation `8f4d019e`）、测试 Agent（用例基线 4 项修正，invocation `61bd44fa`）
 - 2026-11-17 交付检查待办：研发 Agent 施工中已产生 node_modules/、package.json、package-lock.json（未跟踪）；收产物时核验 .gitignore 已覆盖 node_modules，且测试约定（verify:unit/verify:integration）未被改名
 
 ## 7. 收产物检查记录（②'）
