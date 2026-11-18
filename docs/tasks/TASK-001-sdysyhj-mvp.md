@@ -78,6 +78,7 @@
 - 2026-11-17 总调度 ④ 交付验收（修复件）：**退回**。写权限 ✅、追溯表 26/26 ✅、build/unit 89 ✅，但 verify:integration 复跑间歇失败 2/6 次（defects-regression#2 MOCK-STDERR：stderr 原文与 agent_settled 时序竞态）→ 违反确定性要求，退回研发（invocation `844ac41f`）：要求产品侧顺序保证或有界确定性等待 + 并行负载下 10 连跑全绿
 - 2026-11-17 事件记录：修复任务首派（invocation `844ac41f`）因模型服务端瞬态故障（503 system_memory_overloaded）中断，未产生有效改动（工作区检查与退回时一致，无污染）；同任务已重发（invocation `24aab952`）继续执行
 - 2026-11-17 事件记录 2：重发任务再次因 503 中断（服务端内存 91.1%）；本次中断前已产生部分进展（新增 test/unit/stderr-ordering.test.ts，方向=方案1 产品侧顺序保证；rpcClient/piBridge 增量修改，变更量 366+/40- → 424+/44-），现场保留待续做；总调度策略：退避 270s 后重发（定时器已臂），不计失败回路重试次数（基础设施抖动≠产品缺陷回路）
+- 2026-11-18 09:35 定时器触发：退避期满，重发研发 Agent 续做竞态修复（invocation `4bf06c71`，从现场部分改动续做，方向=方案 1 顺序保证）
 - 2026-11-17 交付检查待办：研发 Agent 施工中已产生 node_modules/、package.json、package-lock.json（未跟踪）；收产物时核验 .gitignore 已覆盖 node_modules，且测试约定（verify:unit/verify:integration）未被改名
 
 ## 7. 收产物检查记录（②'）
