@@ -126,26 +126,45 @@ export const defaultProbe: RuntimeProbe = (command, args, env) =>
 
 /**
  * 解析内置运行时入口：<pkg>/dist/bundle/cli.js（官方 bin）或 <pkg>/dist/cli.js。
- * 兼容 esbuild bundle（require.resolve 可用）与 node_modules 平铺布局。
+ * 打包布局（<ext>/dist/extension.js + <ext>/node_modules）与开发布局均需覆盖：
+ *   ① Node exports 解析（包未限制 exports 条件时可用）；
+ *   ② 从 baseDir 逐级向上探测 node_modules（不依赖 exports 映射，兼容仅 `import`
+ *      条件的包与 CJS bundle，修复打包形态解析失败）。
  */
-export function defaultResolveBundledCli(): string | null {
+export function defaultResolveBundledCli(baseDir?: string, exists: (p: string) => boolean = (p) => fs.existsSync(p)): string | null {
   const candidates: string[] = [];
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const entry = require.resolve("@earendil-works/pi-coding-agent");
-    const distDir = path.dirname(entry); // <pkg>/dist
-    candidates.push(path.join(distDir, "bundle", "cli.js"), path.join(distDir, "cli.js"));
-    candidates.push(path.join(distDir, "..", "dist", "bundle", "cli.js"), path.join(distDir, "..", "dist", "cli.js"));
-  } catch {
-    // exports 限制或未安装时走相对路径兜底
+  const pkgSub = path.join("@earendil-works", "pi-coding-agent");
+  const inPackage = (pkgRoot: string): string[] => [
+    path.join(pkgRoot, "dist", "bundle", "cli.js"),
+    path.join(pkgRoot, "dist", "cli.js"),
+  ];
+
+  // ① exports 解析（仅当未显式指定 baseDir：require 以模块位置解析，开发环境可用时优先）
+  if (baseDir === undefined) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const entry = require.resolve("@earendil-works/pi-coding-agent");
+      const distDir = path.dirname(entry); // <pkg>/dist
+      candidates.push(path.join(distDir, "bundle", "cli.js"), path.join(distDir, "cli.js"));
+      candidates.push(...inPackage(path.dirname(distDir)));
+    } catch {
+      // exports 限制（如仅 `import` 条件）或未安装时走路径探测
+    }
   }
-  candidates.push(
-    path.join(__dirname, "..", "..", "node_modules", "@earendil-works", "pi-coding-agent", "dist", "bundle", "cli.js"),
-    path.join(__dirname, "..", "..", "node_modules", "@earendil-works", "pi-coding-agent", "dist", "cli.js")
-  );
+
+  // ② 从 baseDir（默认 bundle 所在目录）向上逐级探测 node_modules，
+  //    不依赖 exports 映射，兼容仅 `import` 条件的包与 CJS bundle（打包布局 <ext>/dist → <ext>/node_modules）
+  let dir = path.resolve(baseDir ?? __dirname);
+  for (let i = 0; i < 8; i += 1) {
+    candidates.push(...inPackage(path.join(dir, "node_modules", pkgSub)));
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+
   for (const candidate of candidates) {
     try {
-      if (fs.existsSync(candidate)) return candidate;
+      if (exists(candidate)) return candidate;
     } catch {
       // 继续
     }

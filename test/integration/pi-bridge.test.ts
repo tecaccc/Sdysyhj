@@ -178,7 +178,12 @@ describe("PiBridge + mock 子进程集成", () => {
     await waitFor(() => events.some((e) => e.kind === "toast"), 4000, "steer queued");
 
     await bridge.abort();
-    await waitFor(() => bridge.getRunState() === "aborted", 8000, "aborted");
+    await waitFor(() => bridge.getRunState() === "idle", 8000, "aborted → idle（口径 A）");
+    const flow = events
+      .filter((e) => e.kind === "run_state")
+      .map((e) => (e as unknown as { state: string }).state)
+      .join("→");
+    expect(flow).toContain("streaming→aborted→idle");
     expect(events.some((e) => e.kind === "message_final")).toBe(true);
 
     await bridge.dispose();

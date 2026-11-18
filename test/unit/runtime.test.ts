@@ -1,9 +1,13 @@
 // 运行时来源解析单测（FR-CMD-05）：PATH 优先 / 内置回退 / 显式指定 + 可行动错误。
 
-import { describe, expect, it } from "vitest";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import { afterAll, describe, expect, it } from "vitest";
 import {
   MIN_SUPPORTED_PI_VERSION,
   PiRuntimeError,
+  defaultResolveBundledCli,
   isVersionAtLeast,
   resolvePiRuntime,
   type ProbeResult,
@@ -141,5 +145,66 @@ describe("isVersionAtLeast", () => {
     expect(isVersionAtLeast("0.83.9", "0.84.0")).toBe(false);
     expect(isVersionAtLeast("0.84.0", "0.84.0")).toBe(true);
     expect(isVersionAtLeast("2.0", "1.99.99")).toBe(true);
+  });
+});
+
+describe("defaultResolveBundledCli 打包布局（缺陷#1 回归）", () => {
+  const layouts: string[] = [];
+
+  function makeProdLayout(opts: { deepBase?: boolean; legacyCli?: boolean }): { extRoot: string; baseDir: string; cli: string } {
+    const extRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sdysyhj-prodlayout-"));
+    layouts.push(extRoot);
+    const pkgRoot = path.join(extRoot, "node_modules", "@earendil-works", "pi-coding-agent");
+    const cli = path.join(pkgRoot, "dist", opts.legacyCli ? "cli.js" : path.join("bundle", "cli.js"));
+    fs.mkdirSync(path.dirname(cli), { recursive: true });
+    fs.writeFileSync(cli, "// fake bundled cli\n");
+    // 扩展 bundle 位于 <ext>/dist（或更深子目录）
+    const baseDir = path.join(extRoot, "dist", ...(opts.deepBase ? ["nested", "more"] : []));
+    fs.mkdirSync(baseDir, { recursive: true });
+    return { extRoot, baseDir, cli };
+  }
+
+  afterAll(() => {
+    for (const dir of layouts) fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("<ext>/dist + <ext>/node_modules 布局（vsix 形态）可解析", () => {
+    const { baseDir, cli } = makeProdLayout({});
+    expect(defaultResolveBundledCli(baseDir)).toBe(cli);
+  });
+
+  it("<pkg>/dist/cli.js 旧式入口可解析", () => {
+    const { baseDir, cli } = makeProdLayout({ legacyCli: true });
+    expect(defaultResolveBundledCli(baseDir)).toBe(cli);
+  });
+
+  it("bundle 位于更深层目录时向上走 node_modules 仍可解析", () => {
+    const { baseDir, cli } = makeProdLayout({ deepBase: true });
+    expect(defaultResolveBundledCli(baseDir)).toBe(cli);
+  });
+
+  it("布局内无内置运行时 → null（由上层报可行动错误）", () => {
+    const empty = fs.mkdtempSync(path.join(os.tmpdir(), "sdysyhj-emptylayout-"));
+    layouts.push(empty);
+    // 注入 exists 判定，隔离环境噪声（如祖先 node_modules）
+    expect(defaultResolveBundledCli(path.join(empty, "dist"), () => false)).toBeNull();
+    // 真实 fs 判定：布局本身不含运行时（若祖先链命中外部包则返回的路径不在布局内）
+    const resolved = defaultResolveBundledCli(path.join(empty, "dist"));
+    expect(resolved === null || !resolved.startsWith(empty)).toBe(true);
+  });
+
+  it("resolvePiRuntime 在打包布局下自动回退内置运行时", async () => {
+    const { baseDir, cli } = makeProdLayout({});
+    const rt = await resolvePiRuntime(
+      { piRuntime: "auto", piPath: "" },
+      {
+        probe: async () => ({ ok: false, error: "ENOENT" }), // 模拟 PATH 无 pi
+        resolveBundledCli: () => defaultResolveBundledCli(baseDir),
+        env: {},
+      }
+    );
+    expect(rt.source).toBe("bundled");
+    expect(rt.baseArgs[0]).toBe(cli);
+    expect(fs.existsSync(rt.baseArgs[0])).toBe(true);
   });
 });

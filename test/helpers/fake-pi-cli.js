@@ -12,6 +12,8 @@
 //   "TOOL"       → 完整工具调用链（thinking + toolcall + tool_execution + toolResult + 第二轮回复）
 //   "LONG"       → 持续流式输出直到 abort
 //   "FLOOD"      → 一次性输出 600 个 text delta（NFR-01 代理判据：零丢失）
+//   "STDERR"     → stderr 输出 E2E-STDERR-MARKER 行 + stdout 输出非法 JSONL 行（FR-CMD-02）
+//   "STDERRKEY"  → stderr 输出含凭证样文本（验证日志脱敏）
 //   "UNICODE"    → text delta 内含 U+2028/U+2029（帧解析边界）
 //   其他         → 简单文本流式回复 "Hello world"
 
@@ -261,6 +263,15 @@ function finishLong(aborted) {
   send({ type: "agent_settled", aborted: aborted === true });
 }
 
+function runStderr(withKey) {
+  process.stderr.write("E2E-STDERR-MARKER mock diagnostic line\n");
+  if (withKey) {
+    process.stderr.write('{"api_key":"sk-mocksecret123456"}\n');
+  }
+  process.stdout.write("{invalid-jsonl-line\n"); // 非法 JSONL：客户端应记协议异常
+  runSimpleText();
+}
+
 function runCrash() {
   send({ type: "agent_start" });
   send({ type: "message_start", message: assistantMessage([], "pending") });
@@ -293,6 +304,8 @@ function handleCommand(cmd) {
       else if (message === "TOOL") runTool();
       else if (message === "LONG") runLong();
       else if (message === "FLOOD") runFlood();
+      else if (message === "STDERR") runStderr(false);
+      else if (message === "STDERRKEY") runStderr(true);
       else if (message === "UNICODE") runUnicode();
       else runSimpleText();
       return;

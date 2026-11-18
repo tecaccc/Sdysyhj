@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**已实现（MVP）** ｜ 版本：v0.1-draft ｜ 对应需求：docs/requirements.md v0.2.1
+> 状态：**已实现（MVP）** ｜ 版本：v0.1-draft ｜ 对应需求：docs/requirements.md v0.2.2
 
 ---
 
@@ -260,9 +260,9 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 - 输入框 slash command / skill 自动补全、MCP 管理 UI
 - VS Code Chat API 可选适配层
 
-## 10. FR 追溯表（实现映射，依据需求基线 v0.2.1）
+## 10. FR 追溯表（实现映射，依据需求基线 v0.2.2）
 
-实现文件位置以本仓库为准；未实现项标注原因。P0 全部实现，P1 全部实现，P2 标“二期”（不计 MVP 门禁）。验收口径按基线 v0.2.1 对齐（大输出默认尾部 200 行；“可用 pi”含最低版本判据；历史重放与会话 JSONL 一致；FR-CHAT-08 仅状态展示；thinking 枚举透传不固化）。
+实现文件位置以本仓库为准；未实现项标注原因。P0 全部实现，P1 全部实现，P2 标“二期”（不计 MVP 门禁）。验收口径按基线 v0.2.2 对齐（大输出默认尾部 200 行；“可用 pi”含最低版本判据；历史重放与会话 JSONL 一致；FR-CHAT-08 仅状态展示；thinking 枚举透传不固化；运行状态 settled 后回 idle、『已中止』为消息级标记；FR-SESS-07 外部修改后拦截交互直至刷新；消息数=消息总数 user+assistant）。
 
 ### 10.1 聊天（FR-CHAT）
 
@@ -272,10 +272,10 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | FR-CHAT-02 | P0 | ✅ 已实现 | `webview/render/markdown.ts`（marked + highlight.js 语言高亮 + DOMPurify 消毒） | 支持标题/列表/表格/代码块/链接/行内代码；输出经消毒（NFR-03） |
 | FR-CHAT-03 | P0 | ✅ 已实现 | `webview/render/messages.ts`（`ThinkingBlockView`：`<details>` 默认折叠，展开后流式）；`src/bridge/piBridge.ts`（thinking_delta） | — |
 | FR-CHAT-04 | P0 | ✅ 已实现 | `webview/render/messages.ts`（`ToolCardView`：工具名/摘要/状态/展开输入输出）；`src/util/text.ts`（`truncateToTail`/`summarizeToolArgs`）；`src/bridge/piBridge.ts`（`tool_execution_*` 翻译、`getToolOutput` 宿主全量缓存）；`src/panel/chatPanel.ts`（`copy_output` → `vscode.env.clipboard`） | bash 展示命令与输出；默认保留尾部 200 行（`sdysyhj.outputTailLines` 默认 200），“复制全部”取完整输出 |
-| FR-CHAT-05 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（`abort`：RPC `abort`，`agent_settled(aborted)` → `run_state: aborted`）；`webview/main.ts`（Stop 按钮，中止后恢复可输入 + “已中止”标记）；`src/extension.ts`（`sdysyhj.abort` 命令） | 历史保留 |
+| FR-CHAT-05 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（`abort`：RPC `abort`，`agent_settled(aborted)` → 瞬态 `aborted` 后回 `idle`）；`webview/main.ts`（Stop 按钮，中止后恢复可输入 + “已中止”标记）；`src/extension.ts`（`sdysyhj.abort` 命令） | 历史保留；状态流 streaming→aborted→idle（v0.2.2 口径 A：『已中止』为消息级标记，运行状态最终回 idle） |
 | FR-CHAT-06 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（`sendPrompt` 运行中 → `steer`/`followUp`）；`webview/main.ts`（插话模式下拉：steer/follow-up） | 默认模式取 `sdysyhj.sendMode` |
 | FR-CHAT-07 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（error 事件：prompt 被拒、`stopReason=error`、崩溃恢复）；`src/bridge/rpcTransport.ts`（`PiRuntimeError` 含可行动指引与详情）；`webview/main.ts`（`showError` 错误卡片 + hint） | 未配置凭证/子进程崩溃/provider 报错均有可读信息与修复指引 |
-| FR-CHAT-08 | P0 | ✅ 已实现 | `webview/main.ts`（头部 `status-line`）；`src/extension.ts`（VS Code 状态栏 `refreshStatusBar`）；`src/panel/messages.ts`（`run_state`/`model_info`/`session_name`） | 仅负责四字段（模型/thinking/运行状态/会话名）展示与状态流转（idle/streaming/aborted/error）；点击切换交互归属 FR-MOD-01/02 |
+| FR-CHAT-08 | P0 | ✅ 已实现 | `webview/main.ts`（头部 `status-line`）；`src/extension.ts`（VS Code 状态栏 `refreshStatusBar`）；`src/panel/messages.ts`（`run_state`/`model_info`/`session_name`） | 仅负责四字段（模型/thinking/运行状态/会话名）展示与状态流转（idle→starting→streaming→aborted/idle/error，settled 后回 idle，v0.2.2 口径 A）；点击切换交互归属 FR-MOD-01/02 |
 
 ### 10.2 会话管理（FR-SESS）
 
@@ -287,7 +287,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | FR-SESS-04 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（`renameSession`：RPC `set_session_name` + `session_info_changed`）；`src/panel/chatPanel.ts`（`showRenameInput`）；`webview/main.ts`（点会话名重命名） | — |
 | FR-SESS-05 | P2 | ⏭ 二期 | — | 依赖 pi 分支树 UI（`fork`/`get_tree`），UI 延后到二期 |
 | FR-SESS-06 | P0 | ✅ 已实现 | 单活动会话 + 历史切换（`webview/main.ts` 单消息流；无并行标签） | — |
-| FR-SESS-07 | P1 | ✅ 已实现 | `src/session/sessionStore.ts`（`SessionFileWatcher`：mtime/size 对比，空闲轮询）；`src/bridge/piBridge.ts`（`external_change` 事件）；`webview/main.ts`（提示横幅 + 刷新按钮） | 本端写入 `markSynced` 豁免；检测后提示刷新，不静默继续 |
+| FR-SESS-07 | P1 | ✅ 已实现 | `src/session/sessionStore.ts`（`SessionFileWatcher`：mtime/size 对比，2.5s 轮询）；`src/bridge/piBridge.ts`（`external_change` 事件 + `sessionStale` 拦截）；`webview/main.ts`（提示横幅 + 刷新按钮） | v0.2.2 口径 C：检测后提示刷新且拦截后续 prompt（不发 RPC、引导刷新）；刷新/新建/切换会话后解除；本端写入 `markSynced` 豁免 |
 
 ### 10.3 文件与工作区（FR-FILE）
 
@@ -310,10 +310,10 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | 编号 | 优先级 | 状态 | 实现位置 | 备注 |
 |---|---|---|---|---|
 | FR-CMD-01 | P0 | ✅ 已实现 | `package.json`（`contributes.commands`/`menus`）；`src/extension.ts`（注册） | Open Chat / New Session / Abort / Show Session History / Report Issue 齐备 |
-| FR-CMD-02 | P0 | ✅ 已实现 | `src/util/log.ts`（Logger + 脱敏包装）；`src/util/redact.ts`（NFR-03）；`src/extension.ts`（Output Channel「Sdysyhj」）；`src/bridge/rpcClient.ts`（stderr 累积、`onAnomaly` 协议异常） | 子进程 stderr、RPC 协议异常入 Output Channel |
+| FR-CMD-02 | P0 | ✅ 已实现 | `src/util/log.ts`（Logger + 脱敏包装）；`src/util/redact.ts`（NFR-03）；`src/extension.ts`（Output Channel「Sdysyhj」）；`src/bridge/rpcClient.ts`（`onStderr` 行缓冲原文转发、`onAnomaly` 协议异常）；`src/bridge/piBridge.ts`（`attach` 接线 stderr/异常→日志） | 子进程 stderr 原文、RPC 协议异常实时入 Output Channel（脱敏）；退出时冲刷无换行尾部 |
 | FR-CMD-03 | P2 | ⏭ 二期 | — | 不计 MVP 门禁；MVP 阶段命令文本直接发送即可生效；`/` 自动补全不做（二期） |
 | FR-CMD-04 | P2 | ⏭ 二期 | — | 复用 pi 的 MCP 配置自动生效，无专门 UI（二期） |
-| FR-CMD-05 | P0 | ✅ 已实现 | `src/bridge/rpcTransport.ts`（`resolvePiRuntime`：auto=PATH 探测→内置回退；path=显式指定；bundled=内置；失败抛 `PiRuntimeError` 含详情+指引）；`package.json`（`sdysyhj.piRuntime`/`sdysyhj.piPath`）；`src/bridge/piBridge.ts`（`buildArgs`） | “可用 pi”判据：`pi --version` 退出 0 且含版本号且 ≥ 最低支持版本（`MIN_SUPPORTED_PI_VERSION` = 0.84.0，`rpcTransport.ts` 声明）；不满足则回退内置运行时（显式路径则报含详情错误） |
+| FR-CMD-05 | P0 | ✅ 已实现 | `src/bridge/rpcTransport.ts`（`resolvePiRuntime`：auto=PATH 探测→内置回退；path=显式指定；bundled=内置；失败抛 `PiRuntimeError` 含详情+指引；`defaultResolveBundledCli` 逐级向上探测 node_modules，兼容打包布局）；`package.json`（`sdysyhj.piRuntime`/`sdysyhj.piPath`）；`src/bridge/piBridge.ts`（`buildArgs`） | “可用 pi”判据：`pi --version` 退出 0 且含版本号且 ≥ 最低支持版本（`MIN_SUPPORTED_PI_VERSION` = 0.84.0）；不满足则回退内置运行时；打包布局（<ext>/dist + <ext>/node_modules）已回归验证 |
 
 ### 10.6 设计偏差与实现说明
 
@@ -325,6 +325,19 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 6. **基线 v0.2.1 验收口径对齐**：① 大输出默认保留尾部 200 行（`sdysyhj.outputTailLines` 默认 200，单测断言），“复制全部”取完整输出（宿主缓存）；② “可用 pi”判据 = `pi --version` 退出 0 + 含版本号 + 版本 ≥ `MIN_SUPPORTED_PI_VERSION`（0.84.0，`src/bridge/rpcTransport.ts` 声明），不满足自动回退内置运行时（显式路径则报含详情错误）；③ 历史重放与会话 JSONL 一致（集成测试以含 compaction 条目的 session JSONL fixture 逐条校验，含 toolResult 折叠）；④ FR-CHAT-08 仅状态展示与状态流转，点击切换交互归属 FR-MOD-01/02；⑤ thinking 等级枚举透传不固化（`sdysyhj.thinkingDefault` 自由字符串，合法枚举以 pi `get_available_thinking_levels` 为准）。
 7. **NFR-03 落盘位置**：会话/状态仅落 `$HOME/.pi/agent/`（pi 原有位置，含 `PI_CODING_AGENT_DIR`/`PI_CODING_AGENT_SESSION_DIR` 环境覆盖）；插件源码无任何写盘逻辑（仅读 session 存储与监视），不产生副本。
 8. **NFR-01 代理判据自测**：集成测试“NFR-01 代理”验证 600 个 text delta 零丢失（逐段拼接 == 权威终稿）+ 全量渲染 ≤30s；webview 增量合并批处理（thinking 按 rAF 合批、正文 300ms 合并重排）。
+
+### 10.7 失败回路第 1 轮修复记录（核验报告 report-e9ae693，需求基线 v0.2.2 口径）
+
+| 缺陷 | 根因 | 修复位置 | 回归测试 |
+|---|---|---|---|
+| #1（P0，FR-CMD-05）打包布局内置运行时解析失败 | ① `require.resolve` 受包 exports 限制（仅 `import` 条件，CJS 下抛 `ERR_PACKAGE_PATH_NOT_EXPORTED`）；② 相对回退路径比打包布局（`<ext>/dist` → `<ext>/node_modules`）多一级 `..` | `src/bridge/rpcTransport.ts`（`defaultResolveBundledCli(baseDir?, exists?)`：从 bundle 所在目录逐级向上探测 `node_modules`，不依赖 exports 映射；显式 baseDir 时确定性跳过 require.resolve） | `test/unit/runtime.test.ts`（打包布局/旧式入口/深层目录/负例 5 组）；`test/integration/defects-regression.test.ts`（复现脚本形态：esbuild 真实 bundle + vscode stub + 子进程激活→ready→prompt，断言 `source=bundled` 且 `PROD-REPRO-OK`） |
+| #2（P0，FR-CMD-02）stderr/协议异常未入 Output Channel | RpcClient 的 stderr 累积与 `onAnomaly` 无消费方接线 | `src/bridge/rpcClient.ts`（新增 `onStderr` 行缓冲原文转发 + 退出冲刷尾部）；`src/bridge/piBridge.ts`（`attach` 接线 stderr/异常→logger，经脱敏入通道） | `test/unit/rpcClient.test.ts`（行缓冲/跨 chunk/尾部冲刷）；`test/unit/piBridge.test.ts`（日志写入+脱敏）；`test/integration/defects-regression.test.ts`（MOCK-STDERR 口径：哨兵原文+非法 JSONL 异常+脱敏） |
+| #3（P1，口径 A）中止后状态不回 idle | `agent_settled(aborted)` 后停畵 `aborted`，未迁回 `idle` | `src/bridge/piBridge.ts`（settled 后先发瞬态 `aborted`（消息级『已中止』标记独立保留）再发 `idle`；崩溃致中止同口径） | `test/unit/piBridge.test.ts`（状态流 `streaming→aborted→idle`）；`test/integration/pi-bridge.test.ts`（同口径断言） |
+| #4（P1，FR-SESS-07 口径 C）外部修改后未拦截/未自动刷新 | 仅提示不拦截，陈旧状态可继续交互 | `src/bridge/piBridge.ts`（`sessionStale` 标记：检测后拦截 prompt（不发 RPC）并引导刷新；刷新/新建/切换会话解除）；`src/session/sessionStore.ts`（轮询 5s→2.5s 保 ≤5s 检测） | `test/unit/piBridge.test.ts`（拦截+引导+解除×2）；`test/integration/defects-regression.test.ts`（MOCK 真子进程：拦截时无 prompt RPC，刷新后恢复） |
+| #6（P1，NFR-05）prompt/abort 日志缺失 | `sendPrompt`/`abort` 路径无 logger 调用 | `src/bridge/piBridge.ts`（prompt 发送（含 steer 排队）/abort 请求入日志；与既有『新建会话』『子进程退出』凑齐 4 类关键路径） | `test/unit/piBridge.test.ts`（4 类齐全）；`test/integration/defects-regression.test.ts`（4 类齐全，含崩溃退出） |
+| #2 补（交付验收退回）：stderr 转发与 `agent_settled` 时序竞态（负载下间歇失败） | stdout/stderr 为两个独立 fd，libuv 同一 poll 批次内回调顺序不与子进程写入顺序一致；旧实现同步派发 settled，stderr 可能尚未进入日志 | `src/bridge/rpcClient.ts`（有序派发队列 + `stderrDrainBarrier`：`agent_settled` 经两连 `setImmediate` 让出（poll 阶段及其 nextTick/微任务先于 check 阶段，已就绪 stderr 必先落地）后再派发；FIFO 保序不打乱其他事件） | `test/unit/stderr-ordering.test.ts`（可控子进程确定性复现竞态：settled 先处理、stderr 后送达→ 断言 stderr 全部先于 settled；FIFO 保序）；验收：verify:integration 连续 10+10 次全绿（含并行 verify:unit 负载） |
+
+口径 B（消息数=消息总数 user+assistant）：实现已符合，无改动。
 
 ---
 

@@ -8,7 +8,7 @@ import type { HostToWebview, RunState, ToolCallStatus, UiBlock, UiMessage } from
 import { SessionFileWatcher } from "../session/sessionStore";
 import { TypedEmitter } from "../util/emitter";
 import type { Logger } from "../util/log";
-import { summarizeToolArgs, truncateToTail } from "../util/text";
+import { summarizeToolArgs, truncateToTail, firstLine } from "../util/text";
 import type { ResolvedRuntime } from "./rpcTransport";
 import type {
   AgentMessage,
@@ -65,6 +65,10 @@ export interface PiRpcClient {
   stop(): Promise<void>;
   onEvent(listener: (event: RpcEvent) => void): () => void;
   onExit(listener: (info: { code: number | null; stderr: string; intentional: boolean }) => void): () => void;
+  /** 子进程 stderr（按行原文），供日志排障（FR-CMD-02） */
+  onStderr(listener: (line: string) => void): () => void;
+  /** RPC 协议异常（解析失败等），供日志排障（FR-CMD-02） */
+  onAnomaly(listener: (detail: string) => void): () => void;
   prompt(message: string, streamingBehavior?: "steer" | "followUp"): Promise<PromptAcceptance>;
   steer(message: string): Promise<QueueAcceptance>;
   followUp(message: string): Promise<QueueAcceptance>;
@@ -144,6 +148,8 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
   private pendingAbort = false;
   private crashStreak = 0;
   private disposed = false;
+  /** 会话陈旧（外部修改待刷新）：拦截后续 prompt，直至刷新完成（FR-SESS-07） */
+  private sessionStale = false;
 
   private sessionId = "";
   private sessionName = "";
@@ -157,17 +163,21 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     super();
     this.watcher =
       options.createWatcher?.(() => {
-        this.emit("external_change", {
-          detail: "当前会话在插件之外被修改（如终端 pi 写入同一会话）。",
-        });
+        this.onExternalChange();
       }) ??
       new SessionFileWatcher({
         onExternalChange: () => {
-          this.emit("external_change", {
-            detail: "当前会话在插件之外被修改（如终端 pi 写入同一会话）。",
-          });
+          this.onExternalChange();
         },
       });
+  }
+
+  /** 外部修改：置陈旧标记（拦截后续交互）并提示刷新（FR-SESS-07，口径 C）。 */
+  private onExternalChange(): void {
+    this.sessionStale = true;
+    this.emit("external_change", {
+      detail: "当前会话在插件之外被修改（如终端 pi 写入同一会话）。",
+    });
   }
 
   // ---------- 生命周期 ----------
@@ -207,6 +217,9 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
         this.handleCrash(info);
       })
     );
+    // stderr 原文与协议异常写入 Output Channel（FR-CMD-02 / NFR-05）；logger 统一脱敏（NFR-03）
+    this.unsubs.push(client.onStderr((line) => this.options.logger.error(`pi 子进程 stderr：${line}`)));
+    this.unsubs.push(client.onAnomaly((detail) => this.options.logger.warn(`RPC 协议异常：${detail}`)));
   }
 
   private detach(): void {
@@ -252,7 +265,11 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
         await this.spawnClient();
         await this.refreshState();
         await this.refreshHistory();
-        this.setRunState(wasRunning ? "aborted" : "idle", wasRunning ? "子进程崩溃，本次运行已中止" : undefined);
+        if (wasRunning) {
+          // 同口径 A：崩溃致中止为瞬态，最终回 idle（提示经 toast/error 补充）
+          this.setRunState("aborted", "子进程崩溃，本次运行已中止");
+        }
+        this.setRunState("idle");
       } catch (err) {
         this.setRunState("error", err instanceof Error ? err.message : String(err));
         this.emit("error", {
@@ -274,6 +291,15 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
   async sendPrompt(text: string, mode: "auto" | "steer" | "followUp" = "auto"): Promise<void> {
     const trimmed = text.trim();
     if (trimmed.length === 0) return;
+    // FR-SESS-07 拦截语义（v0.2.2 口径 C）：外部修改未刷新前，阻止基于陈旧状态继续交互
+    if (this.sessionStale) {
+      this.options.logger.warn("prompt 发送被拦截：会话在插件之外被修改，待刷新");
+      this.emit("error", {
+        message: "会话已在插件之外被修改，本次发送已拦截（避免基于陈旧状态操作）。",
+        hint: "请先点击『刷新』恢复最新会话状态（或重新选择会话）后再发送。",
+      });
+      return;
+    }
     const client = this.client;
     if (!client) {
       this.emit("error", { message: "pi 运行时尚未就绪，无法发送。", hint: "请稍候或重新打开面板。" });
@@ -282,6 +308,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     const running = this.runState === "starting" || this.runState === "streaming";
     if (running) {
       const effective = mode === "auto" ? this.options.sendMode : mode;
+      this.options.logger.info(`prompt 发送（${effective} 插话排队）：${firstLine(trimmed, 80)}`);
       this.emit("user_message", { text });
       this.pushUserMessage(text);
       try {
@@ -297,6 +324,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
       return;
     }
 
+    this.options.logger.info(`prompt 发送：${firstLine(trimmed, 80)}`);
     this.emit("user_message", { text });
     this.pushUserMessage(text);
     this.setRunState("starting");
@@ -326,6 +354,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     const client = this.client;
     if (!client) return;
     if (this.runState !== "starting" && this.runState !== "streaming") return;
+    this.options.logger.info("abort：请求中止当前运行（RPC abort）");
     this.pendingAbort = true;
     try {
       await client.abort();
@@ -340,6 +369,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     if (!client) return;
     await this.safeAbort();
     await client.newSession();
+    this.sessionStale = false;
     if (this.options.thinkingDefault && this.options.thinkingDefault.length > 0) {
       // 新会话默认 thinking 等级；枚举由 pi 校验（透传不固化）
       try {
@@ -361,6 +391,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     if (!client) return;
     await this.safeAbort();
     await client.switchSession(sessionPath);
+    this.sessionStale = false;
     this.uiMessages = [];
     await this.refreshState(true);
     await this.refreshHistory();
@@ -379,9 +410,10 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     this.options.logger.info(`会话命名：${name}`);
   }
 
-  /** FR-SESS-07：用户确认后刷新，避免静默使用陈旧状态。 */
+  /** FR-SESS-07：用户确认后刷新，避免静默使用陈旧状态；刷新完成解除交互拦截。 */
   async reloadHistory(): Promise<void> {
     await this.refreshHistory();
+    this.sessionStale = false;
     this.watcher.markSynced();
     this.emit("toast", { text: "会话已刷新" });
   }
@@ -608,7 +640,12 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
         this.streamingMessage = null;
         this.streamingBlocks = new Map();
         this.crashStreak = 0; // 正常跑完一轮，清零崩溃连击
-        this.setRunState(aborted ? "aborted" : "idle");
+        // 运行状态口径（v0.2.2 口径 A）：settled 后必须回 idle；
+        // “已中止”为消息级标记（message.aborted），aborted 仅为瞬态状态事件。
+        if (aborted) {
+          this.setRunState("aborted");
+        }
+        this.setRunState("idle");
         break;
       }
       case "session_info_changed":

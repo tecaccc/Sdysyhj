@@ -140,7 +140,7 @@ export function mostRecentSession(cwd: string, sessionsRoot?: string): SessionSu
 }
 
 export interface ExternalChangeOptions {
-  /** 轮询间隔（毫秒），默认 5000 */
+  /** 轮询间隔（毫秒），默认 2500（保证 ≤5s 检测时限） */
   intervalMs?: number;
   /** 检测到外部变化时回调 */
   onExternalChange: () => void;
@@ -190,7 +190,7 @@ export class SessionFileWatcher {
           // 忽略
         }
       }
-    }, this.options.intervalMs ?? 5000);
+    }, this.options.intervalMs ?? 2500);
   }
 
   dispose(): void {

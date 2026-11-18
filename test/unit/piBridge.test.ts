@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { PiBridge, type BridgeEvent, type SessionWatcherLike } from "../../src/bridge/piBridge";
 import type { ResolvedRuntime } from "../../src/bridge/rpcTransport";
 import type { AgentMessage, RpcEvent } from "../../src/bridge/protocol";
-import { MemoryLogger } from "../../src/util/log";
+import { MemoryLogger, createRedactingLogger } from "../../src/util/log";
 import { FakeRpcClient } from "../helpers/fake-rpc-client";
 
 const runtime: ResolvedRuntime = { source: "bundled", command: "node", baseArgs: ["/tmp/cli.js"], detail: "test" };
@@ -127,7 +127,7 @@ describe("PiBridge 状态机与事件翻译", () => {
     expect(final.message.blocks[0].text).toBe("Hello world! (final)");
   });
 
-  it("abort：agent_settled(aborted) → run_state=aborted，历史保留", async () => {
+  it("abort：agent_settled(aborted) → 状态流 streaming→aborted→idle，历史保留（缺陷#3 回归，口径 A）", async () => {
     const { bridge, fakes, events } = makeBridge();
     await bridge.start();
     const fake = fakes[0];
@@ -145,7 +145,10 @@ describe("PiBridge 状态机与事件翻译", () => {
     fake.emit({ type: "agent_settled", aborted: true });
 
     const states = events.filter((e) => e.kind === "run_state").map((e) => (e as { state: string }).state);
-    expect(states[states.length - 1]).toBe("aborted");
+    // 口径 A：settled 后必须回 idle；“已中止”为消息级标记
+    expect(states.join("→")).toContain("streaming→aborted→idle");
+    expect(states[states.length - 1]).toBe("idle");
+    expect(bridge.getRunState()).toBe("idle");
     const final = events.filter((e) => e.kind === "message_final").pop() as { message: { aborted?: boolean } };
     expect(final.message.aborted).toBe(true);
   });
@@ -429,6 +432,104 @@ describe("PiBridge 状态机与事件翻译", () => {
     const fake = fakes[0];
     await bridge.newSession();
     expect(fake.setThinkingLevels).toEqual([]);
+  });
+
+  it("缺陷#6 回归：关键路径日志 4 类齐全（会话创建/prompt/abort/子进程退出）", async () => {
+    const { bridge, fakes, logger } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.newSession(); // 会话创建
+    await bridge.sendPrompt("hello world"); // prompt 发送
+    fake.emit({ type: "agent_start" });
+    await bridge.abort(); // abort
+    fake.emit({ type: "agent_settled", aborted: true });
+    fake.crash(3, "boom"); // 子进程退出（触发自动重启路径日志）
+    await waitFor(() => fakes.length === 2);
+
+    const log = logger.lines.join("\n");
+    expect(log).toMatch(/新建会话/); // 会话创建
+    expect(log).toMatch(/prompt/i); // prompt 发送
+    expect(log).toMatch(/abort|中止/); // abort
+    expect(log).toMatch(/子进程退出/); // 子进程退出
+  });
+
+  it("缺陷#4 回归：外部修改后 prompt 被拦截并引导刷新；刷新后恢复（FR-SESS-07 口径 C）", async () => {
+    const { bridge, fakes, events, watcher } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+
+    // 模拟外部修改检测
+    watcher.cb?.();
+    expect(kinds(events)).toContain("external_change");
+
+    // 未刷新：下一次 prompt 被拦截（不发 RPC prompt）并引导刷新
+    await bridge.sendPrompt("stale-check");
+    expect(fake.prompts.length).toBe(0);
+    const errors = events.filter((e) => e.kind === "error") as Array<{ message: string; hint?: string }>;
+    expect(errors.some((e) => e.message.includes("拦截"))).toBe(true);
+    expect(errors.some((e) => (e.hint ?? "").includes("刷新"))).toBe(true);
+
+    // 刷新后恢复交互
+    await bridge.reloadHistory();
+    await bridge.sendPrompt("fresh-check");
+    expect(fake.prompts.map((p) => p.message)).toEqual(["fresh-check"]);
+  });
+
+  it("缺陷#4 回归：切换/新建会话同样解除陈旧拦截", async () => {
+    const { bridge, fakes, watcher } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+    watcher.cb?.();
+    await bridge.sendPrompt("blocked");
+    expect(fake.prompts.length).toBe(0);
+
+    await bridge.newSession();
+    await bridge.sendPrompt("after-new");
+    expect(fake.prompts.map((p) => p.message)).toEqual(["after-new"]);
+
+    watcher.cb?.();
+    await bridge.sendPrompt("blocked-again");
+    expect(fake.prompts.length).toBe(1);
+    await bridge.switchSession("/tmp/other.jsonl");
+    await bridge.sendPrompt("after-switch");
+    expect(fake.prompts.map((p) => p.message)).toEqual(["after-new", "after-switch"]);
+  });
+
+  it("缺陷#2 回归：stderr/协议异常写入日志并脱敏（FR-CMD-02）", async () => {
+    const fakes: FakeRpcClient[] = [];
+    const memory = new MemoryLogger();
+    const watcherCb: { cb: (() => void) | null } = { cb: null };
+    void watcherCb;
+    const bridge = new PiBridge({
+      cwd: "/tmp",
+      runtime,
+      createClient: () => {
+        const fake = new FakeRpcClient();
+        fakes.push(fake);
+        return fake;
+      },
+      logger: createRedactingLogger(memory),
+      tailLines: 200,
+      sendMode: "steer",
+      createWatcher: (cb) => {
+        void cb;
+        return { track: () => undefined, markSynced: () => undefined, start: () => undefined, dispose: () => undefined };
+      },
+    });
+    await bridge.start();
+    const fake = fakes[0];
+
+    fake.emitStderr("E2E-STDERR-MARKER diagnostic");
+    fake.emitStderr('{"api_key":"sk-supersecret123456"}');
+    fake.emitAnomaly("无法解析的 RPC 输出行：bad json");
+
+    const log = memory.lines.join("\n");
+    expect(log).toContain("E2E-STDERR-MARKER"); // stderr 原文
+    expect(log).toMatch(/无法解析|协议异常/); // 协议异常记录
+    expect(log).toContain("[REDACTED]"); // 脱敏
+    expect(log).not.toContain("sk-supersecret123456");
+    await bridge.dispose();
   });
 });
 

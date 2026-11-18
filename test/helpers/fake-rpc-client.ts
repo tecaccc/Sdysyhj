@@ -43,6 +43,8 @@ export class FakeRpcClient implements PiRpcClient {
 
   private eventListeners = new Set<(event: RpcEvent) => void>();
   private exitListeners = new Set<(info: { code: number | null; stderr: string; intentional: boolean }) => void>();
+  private stderrListeners = new Set<(line: string) => void>();
+  private anomalyListeners = new Set<(detail: string) => void>();
 
   async start(): Promise<void> {
     this.started = true;
@@ -63,6 +65,26 @@ export class FakeRpcClient implements PiRpcClient {
   onExit(listener: (info: { code: number | null; stderr: string; intentional: boolean }) => void): () => void {
     this.exitListeners.add(listener);
     return () => this.exitListeners.delete(listener);
+  }
+
+  onStderr(listener: (line: string) => void): () => void {
+    this.stderrListeners.add(listener);
+    return () => this.stderrListeners.delete(listener);
+  }
+
+  onAnomaly(listener: (detail: string) => void): () => void {
+    this.anomalyListeners.add(listener);
+    return () => this.anomalyListeners.delete(listener);
+  }
+
+  /** 注入 stderr 行（模拟子进程 stderr）。 */
+  emitStderr(line: string): void {
+    for (const listener of [...this.stderrListeners]) listener(line);
+  }
+
+  /** 注入协议异常（模拟非法 JSONL 等）。 */
+  emitAnomaly(detail: string): void {
+    for (const listener of [...this.anomalyListeners]) listener(detail);
   }
 
   /** 注入事件（模拟子进程事件流）。 */

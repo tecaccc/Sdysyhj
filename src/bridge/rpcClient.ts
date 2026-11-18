@@ -72,6 +72,8 @@ export class RpcClient {
   private eventListeners = new Set<RpcEventListener>();
   private exitListeners = new Set<(info: RpcExitInfo) => void>();
   private anomalyListeners = new Set<(detail: string) => void>();
+  private stderrListeners = new Set<(line: string) => void>();
+  private stderrLineBuffer = "";
   private stderrChunks: string[] = [];
   private requestId = 0;
   private exited = false;
@@ -102,9 +104,7 @@ export class RpcClient {
     child.stdout.on("data", (chunk: string | Buffer) => reader.push(chunk));
     child.stdout.on("end", () => reader.end());
     child.stderr.setEncoding("utf8");
-    child.stderr.on("data", (chunk: string) => {
-      this.stderrChunks.push(chunk);
-    });
+    child.stderr.on("data", (chunk: string) => this.acceptStderrChunk(chunk));
     child.on("error", (err) => {
       this.finishExit(null, `进程错误：${err.message}`);
     });
@@ -146,6 +146,12 @@ export class RpcClient {
   onAnomaly(listener: (detail: string) => void): () => void {
     this.anomalyListeners.add(listener);
     return () => this.anomalyListeners.delete(listener);
+  }
+
+  /** 订阅子进程 stderr（按行，原文转发，供 Output Channel 排障，FR-CMD-02）。 */
+  onStderr(listener: (line: string) => void): () => void {
+    this.stderrListeners.add(listener);
+    return () => this.stderrListeners.delete(listener);
   }
 
   get isRunning(): boolean {
@@ -290,9 +296,75 @@ export class RpcClient {
       }
       return;
     }
+    const event = record as RpcEvent;
+    if (event.type === "agent_settled") {
+      // 顺序保证（缺陷#2 修复）：stderr 尾部冲刷必须先于对外暴露 agent_settled——
+      // settled 事件到达消费方时，本次运行已写入的 stderr 必定已全部进入日志通道。
+      // 跨管道交付无内核级顺序保证（stdout/stderr 为两个独立 fd，事件回调顺序不与
+      // 子进程写入顺序一致），故经 stderr 排空屏障（让出事件循环，使已就绪的 stderr
+      // 先落地日志）后再派发，见 stderrDrainBarrier。
+      this.enqueueDispatch(true, () => this.dispatchEvent(event));
+    } else {
+      this.enqueueDispatch(false, () => this.dispatchEvent(event));
+    }
+  }
+
+  /** 有序派发队列：普通事件队列空时同步派发；屏障项等待 stderr 排空后再派发；全局保序。 */
+  private dispatchQueue: Array<{ barrier: boolean; run: () => void }> = [];
+  private draining = false;
+
+  private enqueueDispatch(barrier: boolean, run: () => void): void {
+    this.dispatchQueue.push({ barrier, run });
+    if (!this.draining) {
+      void this.drainDispatchQueue();
+    }
+  }
+
+  private async drainDispatchQueue(): Promise<void> {
+    this.draining = true;
+    try {
+      while (this.dispatchQueue.length > 0) {
+        const item = this.dispatchQueue.shift()!;
+        if (item.barrier) {
+          await this.stderrDrainBarrier();
+        }
+        item.run();
+      }
+    } finally {
+      this.draining = false;
+    }
+  }
+
+  /**
+   * stderr 排空屏障：让出事件循环，使已入内核/stream 层的 stderr 先于 settled 派发落地。
+   * 依据：子进程在程序序上先写 stderr 后写 settled（内核管道缓冲保序），故 settled 被父进程
+   * 处理时 stderr 字节必已就绪；libuv 同一 poll 批次内两 fd 回调顺序不定（即本次竞态），
+   * 但 poll 阶段及其 nextTick/微任务均先于 check 阶段（setImmediate）完成——
+   * 因此两连 setImmediate 让出后，就绪的 stderr 必定已进入日志通道，再派发 settled 即保序。
+   */
+  private async stderrDrainBarrier(): Promise<void> {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+
+  /** stderr 原文接收：累积 + 行缓冲转发（FR-CMD-02）。 */
+  private acceptStderrChunk(chunk: string): void {
+    this.stderrChunks.push(chunk);
+    this.stderrLineBuffer += chunk;
+    for (;;) {
+      const idx = this.stderrLineBuffer.indexOf("\n");
+      if (idx === -1) break;
+      let line = this.stderrLineBuffer.slice(0, idx);
+      this.stderrLineBuffer = this.stderrLineBuffer.slice(idx + 1);
+      if (line.endsWith("\r")) line = line.slice(0, -1);
+      if (line.length > 0) this.notifyStderr(line);
+    }
+  }
+
+  private dispatchEvent(event: RpcEvent): void {
     for (const listener of [...this.eventListeners]) {
       try {
-        listener(record);
+        listener(event);
       } catch (err) {
         this.notifyAnomaly(`事件监听器异常：${err instanceof Error ? err.message : String(err)}`);
       }
@@ -309,9 +381,25 @@ export class RpcClient {
     }
   }
 
+  private notifyStderr(line: string): void {
+    for (const listener of [...this.stderrListeners]) {
+      try {
+        listener(line);
+      } catch {
+        // 忽略
+      }
+    }
+  }
+
   private finishExit(code: number | null, extraError?: string): void {
     if (this.exited) return;
     this.exited = true;
+    // 冲刷未换行的 stderr 尾部
+    if (this.stderrLineBuffer.length > 0) {
+      const tail = this.stderrLineBuffer;
+      this.stderrLineBuffer = "";
+      this.notifyStderr(tail);
+    }
     const stderr = this.getStderr() + (extraError ? `\n${extraError}` : "");
     this.exitInfo = { code, stderr, intentional: this.stopping };
     for (const pending of this.pending.values()) {

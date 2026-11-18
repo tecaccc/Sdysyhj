@@ -167,6 +167,24 @@ describe("RpcClient", () => {
     await expect(bad).resolves.toEqual({ ok: false, error: "already streaming" });
   });
 
+  it("onStderr：行缓冲转发 stderr 原文，退出时冲刷无换行尾部（FR-CMD-02）", async () => {
+    const { client, harness } = makeClient();
+    await client.start();
+    const child = harness.children[0];
+    const lines: string[] = [];
+    client.onStderr((line) => lines.push(line));
+
+    // 跨 chunk 的一行 + 独立行 + 无换行尾部
+    child.stderr.write("E2E-STDERR-MA");
+    child.stderr.write("RKER line1\nline2\nno-newline-tail");
+    await flush();
+    expect(lines).toEqual(["E2E-STDERR-MARKER line1", "line2"]);
+
+    child.exit(0);
+    await flush();
+    expect(lines).toEqual(["E2E-STDERR-MARKER line1", "line2", "no-newline-tail"]);
+  });
+
   it("stdin 每个命令一行 JSON（JSONL）", async () => {
     const { client, harness, writes } = makeClient();
     await client.start();
