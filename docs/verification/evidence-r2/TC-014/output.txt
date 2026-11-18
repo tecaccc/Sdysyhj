@@ -1,0 +1,12 @@
+[env] HOME=/tmp/tmp.X4tVF8C61b MOCKLOG=/tmp/tmp.WVhuYgBVON SCENARIO=stream ARGS=tc014.cjs
+PASS  TC-014(a1) 状态模型含模型字段  |  {"kind":"model_info","model":"mock/mock-alpha","thinkingLevel":"high","sessionName":""}
+PASS  TC-014(a2) 状态模型含 thinking 等级字段  |  {"kind":"model_info","model":"mock/mock-alpha","thinkingLevel":"high","sessionName":""}
+PASS  TC-014(a3) 状态模型含会话名字段  |  {"kind":"model_info","model":"mock/mock-alpha","thinkingLevel":"high","sessionName":""}
+PASS  TC-014(a4) 运行状态字段（idle/streaming/aborted）  |  ["idle"]
+PASS  TC-014(b1) 正常流式状态流与 TC-001(c) 一致（…→streaming→idle）  |  idle→starting→streaming→idle
+PASS  TC-014(b2) 中止状态流与 TC-009(c) 一致（streaming→aborted→idle）  |  idle→starting→streaming→idle→starting→streaming→aborted→idle
+PASS  TC-014(c) 会话名随重命名更新  |  {"kind":"session_name","name":"TC-014-name"}
+PASS  TC-014(d1) 状态栏含模型·等级·状态  |  mock/mock-alpha · high · 空闲
+PASS  TC-014(d2) 会话名展示且随重命名更新  |  TC-014-name
+
+=== TC-014: 9/9 assertions passed ===

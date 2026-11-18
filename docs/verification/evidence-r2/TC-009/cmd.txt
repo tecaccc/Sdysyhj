@@ -1,0 +1,1 @@
+cmd: node -e <TC-009 原文注册断言> && bash run.sh tc009.cjs

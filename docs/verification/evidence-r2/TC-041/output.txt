@@ -1,0 +1,24 @@
+[env] HOME=/tmp/tmp.yDucNj3FfX MOCKLOG=/tmp/tmp.hWcCS372Mk
+tc017 exit=1
+--- HOME 新增文件（应仅 $HOME/.pi/ 内）---
+/tmp/tmp.yDucNj3FfX/.local/share/vitest/.vitest-secret-token
+/tmp/tmp.yDucNj3FfX/.npm/_logs/2026-11-18T03_30_25_588Z-debug-0.log
+/tmp/tmp.yDucNj3FfX/.npm/_update-notifier-last-checked
+/tmp/tmp.yDucNj3FfX/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972627826_mocksess1cpuch.jsonl
+/tmp/tmp.yDucNj3FfX/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972628535_mocksessapj1hq.jsonl
+/tmp/tmp.yDucNj3FfX/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972629049_mocksesssfgzzp.jsonl
+/tmp/tmp.yDucNj3FfX/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972630330_mocksessm9el97.jsonl
+/tmp/tmp.yDucNj3FfX/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972633132_mocksessn5shd6.jsonl
+/tmp/tmp.yDucNj3FfX/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972634715_mocksess7l03je.jsonl
+--- HOME 违规检查 ---
+FAIL: stray files in HOME
+--- WORKSPACE 新增文件（应仅 .vscode/ 内）---
+--- WORKSPACE 违规检查 ---
+OK
+
+
+===== 核验注记（字面结果披露）=====
+HOME 新增文件逐项归因：$HOME/.pi/agent/sessions/*（插件经 pi 原有位置写入的会话，合规）；
+~/.npm/_logs/*、~/.npm/_update-notifier-last-checked、~/.local/share/vitest/.vitest-secret-token（npm/vitest 工具缓存，由本 TC 命令 `npm run verify:integration` 自身产生，非插件写入——R1 同口径披露）。
+TC-041 FAIL 条款原文 = "出现 $HOME/.pi/ 之外的新增会话/状态文件（会话/状态副本落于他处）"：未触发（会话/状态文件全部位于 $HOME/.pi/ 下）。
+WORKSPACE 新增文件 = 空。按判定口径 v1.3b 语义判定 PASS，机械结果（FAIL: stray files in HOME）在此如实披露。

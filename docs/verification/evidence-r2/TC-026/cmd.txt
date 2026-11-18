@@ -1,0 +1,1 @@
+node -e <TC-026 v0.2 原文结构化菜单断言> && bash run.sh tc026.cjs

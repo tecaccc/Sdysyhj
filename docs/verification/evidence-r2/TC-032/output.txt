@@ -1,0 +1,5 @@
+[env] HOME=/tmp/tmp.OdQkO5iFDn MOCKLOG=/tmp/tmp.DaaQZtfvs8 SCENARIO=stream ARGS=tc032.cjs
+PASS  TC-032(a) mock 收到原文 '/review this file'  |  ["/review this file"]
+PASS  TC-032(b) 会话正常继续（有回复、无错误卡片）  |  finals=1, errors=0
+
+=== TC-032: 2/2 assertions passed ===

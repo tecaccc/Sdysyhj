@@ -1,0 +1,137 @@
+
+ RUN  v5.1.0 /tmp/sdysyhj-verify-r2
+
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 启动 → prompt → 工具调用链 → settled（含 thinking/tool 卡片事件） 129ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 错误运行（ERROR）：错误展示 + 状态恢复 78ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 子进程崩溃 → 自动重启一次；再崩溃 → error 态 + 可行动指引（NFR-02/FR-CHAT-07） 172ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 会话切换：历史恢复（session_reset + history_loaded） 72ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#1（FR-CMD-05）打包布局内置运行时 > 复现脚本形态：激活 → ready → source=bundled 可用（vsix 布局） 358ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > MOCK-STDERR：stderr 原文与协议异常写入日志（含脱敏） 97ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 新建会话清空历史（FR-SESS-01） 94ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > steer 插话排队（FR-CHAT-06） 107ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > stderr 无换行尾部在子进程退出时也会冲刷 125ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > dispose 强制停止子进程（无僵尸） 271ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > NFR-01 代理：≥600 delta 零丢失 + 全量渲染 ≤30s 62ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > FR-SESS-03：切换会话重放历史与会话 JSONL 一致（含压缩状态条目） 45ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#4（FR-SESS-07）外部修改拦截（口径 C） > 检测外部修改后 prompt 被拦截并引导刷新；刷新后恢复 367ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#6（NFR-05）关键路径日志 > 会话创建 / prompt / abort / 子进程退出 4 类齐全 129ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > prompt → 事件流 → agent_settled 全链路 63ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 响应 id 关联与命令覆盖（get_state/set_model/thinking/session_name） 56ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 帧解析：delta 内 U+2028/U+2029 不破坏记录 56ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > auto：PATH 上的假 pi 可用 → source=path，含版本 9ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > auto：PATH pi 启动失败（exit≠0）→ 回退内置运行时 6ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > auto：PATH 无 pi → 内置运行时（真实 node_modules 中的 cli.js） 3ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > 显式 piPath 指向假 pi → source=explicit 4ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > 显式 piPath 启动失败 → 含详情的可行动错误 4ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > defaultProbe：不存在的命令 → ok=false 2ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > abort：LONG 运行中中止 → agent_settled(aborted) 75ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 运行中 prompt 无 streamingBehavior 被拒；steer/followUp 排队 45ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > switch_session 恢复消息（FR-SESS-03 数据面） 45ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 未识别命令返回 success:false（错误处理） 52ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > stop() 后进程退出、后续请求拒绝 141ms
+ ✓ test/integration/runtime-resolve.test.ts > 内置运行时冒烟（离线） > bundled cli.js --version 可执行 326ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 启动 spawn 正确的命令与参数 4ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 请求带 id，乱序响应正确关联 14ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 事件分发到 onEvent 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 无法解析的行进入 onAnomaly（协议异常日志，FR-CMD-02） 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > U+2028/U+2029 不破坏帧（严格 LF 切分） 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 子进程退出时挂起请求被拒绝，错误含 stderr 24ms
+ ✓ test/unit/sessionStore.test.ts > encodeSessionDirName > 与 pi 一致：去首分隔符、[/\\:] → '-'，外裹 --…-- 3ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 解析标题（session_info 名称优先）、消息数、时间 2ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 无命名时标题取首条用户消息摘要 1ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 按修改时间倒序；mostRecentSession 返回最新 2ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 目录不存在返回空数组 1ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 损坏行跳过不致命 1ms
+ ✓ test/unit/sessionStore.test.ts > defaultSessionsRoot > 环境变量优先 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > 外部修改/删除可检测；无变化不误报 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > markSynced 同步基线（本端写入不误报） 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > start/stop 定时检查触发回调 82ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 请求超时拒绝 31ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > stop() 关闭 stdin 触发有序退出 2ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > prompt 成功返回 disposition；失败返回 error 24ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > onStderr：行缓冲转发 stderr 原文，退出时冲刷无换行尾部（FR-CMD-02） 23ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > stdin 每个命令一行 JSON（JSONL） 11ms
+ ✓ test/unit/stderr-ordering.test.ts > stderr 排空屏障（agent_settled 派发顺序保证） > settled 派发前，本次运行已写入的 stderr 必定已进入日志转发 2081ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 启动后加载状态与历史 4ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt → 流式 → settled 全链路；run_state 转移 starting→streaming→idle 2ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > message_end 为权威终稿，覆盖流式增量 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > abort：agent_settled(aborted) → 状态流 streaming→aborted→idle，历史保留（缺陷#3 回归，口径 A） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 运行中发送 → steer 排队（FR-CHAT-06） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 运行中发送 follow-up 模式 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 工具卡片：执行状态 + 输出截断保留尾部 + 复制全部取全量（FR-CHAT-04） 2ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 工具失败状态（isError） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 子进程崩溃自动重启一次并提示（NFR-02）；再次崩溃进入 error 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt 被拒：错误展示 + 恢复可输入（FR-CHAT-05/07） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > provider 报错（stopReason=error）展示可读信息与指引 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 外部修改检测：watcher 回调 → external_change（FR-SESS-07） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 历史重建：工具结果绑定到卡片（FR-SESS-03） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 模型切换后 model_info 更新（FR-MOD-01） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinking 等级切换/循环（FR-MOD-02） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 会话命名（FR-SESS-04） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 新建/切换会话：session_reset + 历史重建（FR-SESS-01/03） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinkingDefault 在新建会话时透传（FR-MOD-02：枚举不固化） 2ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinkingDefault 为空时不干预 pi 自身设置 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#6 回归：关键路径日志 4 类齐全（会话创建/prompt/abort/子进程退出） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#4 回归：外部修改后 prompt 被拦截并引导刷新；刷新后恢复（FR-SESS-07 口径 C） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#4 回归：切换/新建会话同样解除陈旧拦截 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#2 回归：stderr/协议异常写入日志并脱敏（FR-CMD-02） 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 有可用 pi → 优先 PATH 3ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 无 pi → 回退内置运行时（node + cli.js） 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > bundled 模式：直接内置 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 与内置均不可用 → PiRuntimeError 含可行动指引 2ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > piPath 显式指定 → 按该路径启动 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径不存在 → 含错误详情的可行动指引 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径启动失败（探测不过）→ 错误含详情 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > path 模式未配置 piPath → 提示配置 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH pi 版本低于最低支持 → 回退内置运行时（FR-CMD-05 判据） 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径版本低于最低支持 → 含详情的可行动错误 1ms
+ ✓ test/unit/runtime.test.ts > isVersionAtLeast > 点分版本比较（缺省段按 0） 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > <ext>/dist + <ext>/node_modules 布局（vsix 形态）可解析 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > <pkg>/dist/cli.js 旧式入口可解析 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > bundle 位于更深层目录时向上走 node_modules 仍可解析 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > 布局内无内置运行时 → null（由上层报可行动错误） 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > resolvePiRuntime 在打包布局下自动回退内置运行时 1ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 按 LF 切分多行 3ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > U+2028/U+2029 在行内不触发切分（readline 的坑） 1ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 容忍 CRLF 行尾（剥掉 \r） 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 跨 chunk 的行正确拼接 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 多字节 UTF-8 字符跨 chunk 不撕裂 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > end() 冲刷未换行的尾部 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 空行被忽略 0ms
+ ✓ test/unit/text.test.ts > truncateToTail > 超过行数时仅保留尾部 3ms
+ ✓ test/unit/text.test.ts > truncateToTail > 未超限不动 1ms
+ ✓ test/unit/text.test.ts > truncateToTail > 空文本安全 1ms
+ ✓ test/unit/text.test.ts > summarizeToolArgs > bash → 命令 0ms
+ ✓ test/unit/text.test.ts > summarizeToolArgs > 文件类工具 → 路径 1ms
+ ✓ test/unit/text.test.ts > summarizeToolArgs > 通用 → 紧凑 JSON 0ms
+ ✓ test/unit/redact.test.ts > redactSecrets > api_key 键值对脱敏 4ms
+ ✓ test/unit/redact.test.ts > redactSecrets > Authorization / Bearer 脱敏 1ms
+ ✓ test/unit/redact.test.ts > redactSecrets > sk- 前缀 token 脱敏 0ms
+ ✓ test/unit/redact.test.ts > redactSecrets > JWT 脱敏 0ms
+ ✓ test/unit/redact.test.ts > redactSecrets > 普通文本不动 1ms
+ ✓ test/unit/redact.test.ts > redactSecrets > 空串安全 0ms
+ ✓ test/unit/redact.test.ts > createRedactingLogger > 所有级别写入前脱敏 1ms
+ ✓ test/unit/config.test.ts > readConfig > 默认值 4ms
+ ✓ test/unit/config.test.ts > readConfig > 合法值解析 1ms
+ ✓ test/unit/config.test.ts > readConfig > thinkingDefault 透传不固化（枚举以 pi 侧为准） 1ms
+ ✓ test/unit/config.test.ts > readConfig > 非法值回退默认 1ms
+ ✓ test/unit/config.test.ts > readConfig > outputTailLines 默认 200（FR-CHAT-04），并钳制范围 1ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 解析 response 记录 2ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 解析事件记录 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 非法 JSON 返回 parseError 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 无 type 字段返回 parseError 0ms
+ ✓ test/unit/stderr-ordering.test.ts > stderr 排空屏障（agent_settled 派发顺序保证） > 屏障不打乱事件 FIFO 顺序（settled 前后的事件保序） 2073ms
+
+ Test Files  14 passed (14)
+      Tests  120 passed (120)
+   Start at  11:31:39
+   Duration  4.58s (tests 94%, import 4%, worker 1%)
+
+    Isolate  14 workers spawned · ~166ms startup each (spawn + environment, per file)
+             at least ~609ms faster with isolate: false — reuses workers across files instead of one per file
+
+npm notice
+npm notice New major version of npm available! 11.17.0 -> 12.2.3
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3
+npm notice To update run: npm install -g npm@12.2.3
+npm notice

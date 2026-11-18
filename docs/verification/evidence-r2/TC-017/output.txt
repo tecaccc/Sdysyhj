@@ -1,0 +1,24 @@
+[env] HOME=/tmp/tmp.oDCxYl3CnL MOCKLOG=/tmp/tmp.9DLBeaAqqB SCENARIO=stream ARGS=tc_sess.cjs 017
+listSessions: [
+ {
+  "title": "TC-017-S3-M1",
+  "modifiedAt": 1794972471249.9905,
+  "messageCount": 18
+ },
+ {
+  "title": "TC-017-S2-M1",
+  "modifiedAt": 1794972468954.9563,
+  "messageCount": 10
+ },
+ {
+  "title": "TC-017-S1-M1",
+  "modifiedAt": 1794972467678.9373,
+  "messageCount": 4
+ }
+]
+PASS  TC-017(a) 列表恰含 3 项  |  items=3
+PASS  TC-017(b1) 每项含标题/时间/消息数三字段
+PASS  TC-017(b2) 消息数=总数（user+assistant）与 fixture 一致（4/10/18）  |  actual=[4,10,18] expected=[4,10,18]（口径 #12：2/5/9 prompt × (1 user + 1 assistant)）
+PASS  TC-017(c) 选择项触发切换（活动会话 id 变更）  |  mocksesshu8e2p -> mocksesshy7hoa
+
+=== TC-017: 4/4 assertions passed ===

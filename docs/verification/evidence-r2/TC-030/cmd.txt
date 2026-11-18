@@ -1,0 +1,1 @@
+node -e <TC-030 原文断言 + palette/id 检查>

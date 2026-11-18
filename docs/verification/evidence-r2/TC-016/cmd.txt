@@ -1,0 +1,1 @@
+node -e <new session 注册断言> && bash run.sh tc_sess.cjs 016

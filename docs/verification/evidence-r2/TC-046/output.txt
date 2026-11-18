@@ -1,0 +1,7 @@
+[env] HOME=/tmp/tmp.B7HUJrQr6a MOCKLOG=/tmp/tmp.LX33WA3s4C SCENARIO=stream ARGS=tc_sess.cjs 046
+PASS  TC-046(a1) 重载后历史完整恢复（3 条 marker）
+PASS  TC-046(a2) 消息总数=8（user 4 + assistant 4，口径 #12）  |  用户发送=4, 列表计数(user+assistant)=8, listSessions.messageCount=8 expected=8
+PASS  TC-046(a3) JSONL 连续续写（同一文件 wc -l 递增）  |  before=7 after=9 file=/tmp/tmp.B7HUJrQr6a/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972479095_mocksessnsc09v.jsonl
+history list after reload: [{"title":"TC-046-M1","messageCount":8}]
+
+=== TC-046: 3/3 assertions passed ===

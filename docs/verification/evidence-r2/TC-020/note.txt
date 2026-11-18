@@ -1,0 +1,1 @@
+SKIP（DEFERRED）：P2 二期延后项（test-cases 显式列出），不计入 MVP 门禁。

@@ -1,0 +1,8 @@
+[env] HOME=/tmp/tmp.ODuEZpPQ4d MOCKLOG=/tmp/tmp.FqWWvmsnRJ SCENARIO=stream ARGS=tc_models.cjs 027
+PASS  TC-027(a) manifest 含 switch model 命令/入口  |  sdysyhj.openchat open chat | sdysyhj.newsession new session | sdysyhj.abort abort | sdysyhj.showhistory show session history | sdysyhj.reportissue report issue | sdysyhj.renamesession rename session | sdysyhj.switchmodel switch model | sdysyhj.switchthinking switch thinking level | sdysyhj.sendtopi send to pi
+PASS  TC-027(b) get_available_models 被调用且候选含 mock-small/mock-large  |  [{"ts":1794972507009,"pid":3735268,"event":"command","type":"get_available_models","args":{}}]
+PASS  TC-027(b2) 候选 [mock-small,mock-large] 进入选择列表  |  ["mock-small","mock-large"]
+PASS  TC-027(c) set_model(mock-large) 记录  |  [{"ts":1794972507009,"pid":3735268,"event":"command","type":"set_model","args":{"provider":"mock","modelId":"mock-large"}}]
+PASS  TC-027(d) 状态栏模型字段更新为 mock/mock-large  |  {"kind":"model_info","model":"mock/mock-large","thinkingLevel":"high","sessionName":""}
+
+=== TC-027: 5/5 assertions passed ===

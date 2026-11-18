@@ -1,1 +1,1 @@
-node /tmp/vharness-r2/tc007.js
+run.sh tc007.cjs

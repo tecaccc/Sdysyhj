@@ -1,0 +1,1 @@
+bash run.sh tc045.cjs（L2 真实内置 pi + 127.0.0.1 mock provider 组合链路）

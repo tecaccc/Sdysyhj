@@ -1,0 +1,13 @@
+# step1 命令注册断言（同 TC-030 脚本方式，断言含 new session）
+OK: new session command registered
+exit=0
+# step2/3 行为 + 落盘断言
+[env] HOME=/tmp/tmp.WWaVs4dFMy MOCKLOG=/tmp/tmp.SCP50nTwBe SCENARIO=stream ARGS=tc_sess.cjs 016
+sessions-after.txt:
+/tmp/tmp.WWaVs4dFMy/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972467211_mocksesst9bky1.jsonl
+PASS  TC-016(a1) 会话 A 的 JSONL 文件保留  |  files=1
+PASS  TC-016(a2) 旧会话含已发消息内容（marker 命中）  |  /tmp/tmp.WWaVs4dFMy/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972467211_mocksesst9bky1.jsonl
+PASS  TC-016(b) A、B 为不同会话 id（文件互异）  |  mocksesst9bky1 vs mocksesspbn906
+PASS  TC-016(c) 会话文件仅位于 $HOME/.pi/ 下  |  ["/tmp/tmp.WWaVs4dFMy/.pi/agent/sessions/--tmp-r2harness-wsA--/1794972467211_mocksesst9bky1.jsonl"]
+
+=== TC-016: 4/4 assertions passed ===

@@ -1,0 +1,18 @@
+[env] HOME=/tmp/tmp.3GBikk4X4B MOCKLOG=/tmp/tmp.sA5uDbiHwQ SCENARIO=stream ARGS=tc031.cjs
+PASS  TC-031(c) Output Channel 名称含 Sdysyhj  |  Sdysyhj
+--- Output Channel 转储 ---
+[info  2026-11-18T03:28:29.273Z] 激活：cwd=/tmp/r2harness/wsA
+[info  2026-11-18T03:28:29.288Z] pi 运行时：PATH pi 1.99.0（source=path）
+[info  2026-11-18T03:28:29.330Z] PiBridge 已启动（PATH pi 1.99.0，cwd=/tmp/r2harness/wsA）
+[info  2026-11-18T03:28:29.331Z] Sdysyhj 已激活
+[info  2026-11-18T03:28:29.332Z] prompt 发送：stderr-check
+[debug 2026-11-18T03:28:29.333Z] 未处理 RPC 事件：turn_start
+[warn  2026-11-18T03:28:29.334Z] RPC 协议异常：无法解析的 RPC 输出行：Expected property name or '}' in JSON at position 1 (line 1 column 2)
+[error 2026-11-18T03:28:29.334Z] pi 子进程 stderr：E2E-STDERR-MARKER stderr line from mock pi
+[debug 2026-11-18T03:28:29.354Z] 未处理 RPC 事件：agent_end
+--- 转储结束 ---
+PASS  TC-031(a) 通道含 stderr 原文（E2E-STDERR-MARKER）  |  dumpLength=637
+PASS  TC-031(b) 通道含协议异常记录（非法 JSONL/解析失败）  |  dumpLength=637
+PASS  TC-031(d) 记录内容无哨兵凭证明文
+
+=== TC-031: 4/4 assertions passed ===

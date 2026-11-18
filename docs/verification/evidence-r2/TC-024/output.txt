@@ -1,0 +1,9 @@
+[env] HOME=/tmp/tmp.tLzcfxIGLd MOCKLOG=/tmp/tmp.6pUPMNYMzg SCENARIO=stream ARGS=tc024.cjs
+PASS  TC-024(a1) 文本含 '@' 触发文件选择器请求  |  [{"kind":"ready"},{"kind":"insert_file_ref"}]
+PASS  TC-024(a2) 选择器枚举范围限定当前工作区（排除工作区外文件）  |  ["src/a.ts","src/b.ts"]
+PASS  TC-024(b1) 选中后回传路径 src/a.ts  |  {"kind":"file_ref","path":"src/a.ts"}
+PASS  TC-024(b2) 输入框 prompt 插入 src/a.ts 路径  |  "看下 @src/a.ts "
+PASS  TC-024(c1) 发送 prompt 含路径  |  {"kind":"prompt","text":"看下 @src/a.ts","mode":"auto"}
+PASS  TC-024(c2) $MOCKLOG/calls.jsonl 收到的消息含该路径  |  ["看下 @src/a.ts"]
+
+=== TC-024: 6/6 assertions passed ===

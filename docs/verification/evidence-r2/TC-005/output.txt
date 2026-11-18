@@ -1,15 +1,9 @@
+[env] HOME=/tmp/tmp.vYyFBlK0vE MOCKLOG=/tmp/tmp.EAdFp0Nuxc SCENARIO=stream ARGS=tc005.cjs
+PASS  TC-005-host thinking t1..t4 顺序  |  ["t1","t2","t3","t4"]
+PASS  TC-005-host 随后 text d1..d3 顺序  |  ["d1","d2","d3"]
+PASS  TC-005-host thinking 先于 text
+PASS  TC-005(a) thinking 默认折叠（details 无 open 属性）
+PASS  TC-005(b) 展开体流式内容 t1..t4 依序  |  "t1t2t3t4"
+PASS  TC-005(c) thinking 后 d1..d3 渲染  |  "think-check\n" / "d1d2d3\n"
 
-== SC-005：发送 think-check（MOCK-THINK）
-  [PASS] thinking 块存在（details 元素）
-
-== 断言
-  [PASS] (a) thinking 块初始状态=折叠（details 无 open）
-  展开前 thinking 正文片段 = "t1"
-  展开后(流式中) = "t1t2t3t4"
-  终稿 thinking 正文 = "t1t2t3t4"
-  [PASS] (b) 展开后 t1..t4 按序渲染于 thinking 正文
-  [PASS] (b) 展开后流式显示（展开态正文随增量呈现）
-  [PASS] (c) thinking 之后 d1..d3 正常渲染（正文="d1d2d3\n"）
-  [PASS] (c) 事件序：thinking 增量先于 text 增量
-
-TC-005 RESULT: PASS (6 passed, 0 failed)
+=== TC-005: 6/6 assertions passed ===

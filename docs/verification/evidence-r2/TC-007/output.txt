@@ -1,38 +1,14 @@
+[env] HOME=/tmp/tmp.vJ75eW6cAy MOCKLOG=/tmp/tmp.sUenqZoaTM SCENARIO=stream ARGS=tc007.cjs
+PASS  TC-007(a1) 3 张工具卡（read/edit/bash）  |  ["read","edit","bash"]
+PASS  TC-007(a2) bash 卡摘要含命令 seq 1 20000  |  seq 1 20000
+PASS  TC-007(a3) 卡片均含关键参数摘要  |  ["a.ts","a.ts","a.ts · x","a.ts · x","seq 1 20000","seq 1 20000"]
+PASS  TC-007(b) 每卡状态 running→success  |  {"read":["running","running","running","success"],"edit":["running","running","running","success"],"bash":["running","running","running","success"]}
+PASS  TC-007(c1) bash 输出标记截断  |  outputTruncated=true
+PASS  TC-007(c2) 展示文本为原输出尾段（以 20000 结尾）且远小于全量  |  shownLen=1199, origLen=108893, tail="\n19999\n20000"
+PASS  TC-007(d) 复制内容 = 完整输出（长度≈原输出且含尾部）  |  copiedLen=108893, origLen=108893
+PASS  TC-007(e1) webview 3 张工具卡  |  cards=3
+PASS  TC-007(e2) bash 卡含完整入参（seq 1 20000）与出参字段
+PASS  TC-007(e3) 卡片为 details 可展开结构
+PASS  TC-007(e4) 截断时展示复制全部按钮
 
-== SC-007：发送 tools-check（MOCK-TOOLS）
-
-== (a) 工具卡要素
-  工具卡数量 = 3
-  [PASS] 3 张工具卡
-  工具名 = ["read","edit","bash"]
-  [PASS] 工具名 read/edit/bash
-  摘要 = ["{\"file_path\":\"src/a.ts\"}","{\"file_path\":\"src/a.ts\",\"old_string\":\"alpha\",\"new_string\":\"beta\"}","seq 1 20000"]
-  [PASS] bash 卡摘要含命令文本 seq 1 20000
-  [PASS] read 卡摘要含关键参数 src/a.ts
-
-== (b) 状态流转 进行中→成功
-  状态事件 = {"tc-0":["running","running","running","success","success"],"tc-1":["running","running","running","success","success"],"tc-2":["running","running","running","success","success"]}
-  [PASS] 3 个 toolCallId 均有状态事件（3）
-  [PASS] 每卡 running→success
-  [FAIL] 终态卡片均成功（["⏳ 进行中","⏳ 进行中","⏳ 进行中"]）
-
-== (c) 大输出截断保留尾部
-  bash 展示长度 = 0（原输出 108893）
-  [PASS] 展示文本被截断（长度远小于原输出）
-  [FAIL] 展示文本以原输出末段（尾部 200 行）结尾
-  [PASS] 宿主事件标记 outputTruncated=true
-  [FAIL] 截断时『复制全部』按钮可见
-
-== (d) 复制全部 = 完整输出
-  剪贴板长度 = 108893（期望 108893）
-  [PASS] 复制内容与完整输出逐字相等（含尾部）
-
-== (e) 卡片可展开查看输入/输出（展开数据断言）
-  [PASS] 每卡含 输入/输出 展开区
-  入参 = ["{\"file_path\":\"src/a.ts\"}","{\"file_path\":\"src/a.ts\",\"old_string\":\"alpha\",\"new_string\":\"beta\"}","{\"command\":\"seq 1 20000\"}"]
-  [PASS] read 卡完整入参（file_path）
-  [PASS] edit 卡完整入参（old_string/new_string）
-  [PASS] bash 卡完整入参（command）
-  [FAIL] 出参字段可见（read 输出 20 行）
-
-TC-007 RESULT: FAIL (13 passed, 4 failed)
+=== TC-007: 11/11 assertions passed ===

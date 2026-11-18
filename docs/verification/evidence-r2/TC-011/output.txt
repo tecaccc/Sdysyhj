@@ -1,0 +1,9 @@
+[env] HOME=/tmp/tmp.9tweCkzH0z MOCKLOG=/tmp/tmp.bXmYE25fBX SCENARIO=stream ARGS=tc011.cjs
+PASS  TC-011(a1) steer 请求含第二条消息原文  |  [{"ts":1794972443430,"pid":3734601,"event":"command","type":"steer","args":{"message":"steer-msg-2"}}]
+PASS  TC-011(a2) 未产生新会话（无 new_session 调用）
+PASS  TC-011(b1) follow_up 请求已受理（queued）  |  [{"ts":1794972443430,"pid":3734601,"event":"command","type":"follow_up","args":{"message":"followup-msg-3"}}]
+PASS  TC-011(b2) 本轮结束后队列消息被发送  |  [{"ts":1794972443457,"pid":3734601,"event":"queue_delivered","kind":"steer","message":"steer-msg-2"}]
+PASS  TC-011(c1) 运行中发送框转为插话输入（placeholder 含插话）  |  运行中：输入消息以 steer 方式插话…（Enter 发送）
+PASS  TC-011(c2) 发送行为随模式变化（steer→followUp）  |  [{"kind":"prompt","text":"m-steer","mode":"steer"},{"kind":"prompt","text":"m-follow","mode":"followUp"}]
+
+=== TC-011: 6/6 assertions passed ===

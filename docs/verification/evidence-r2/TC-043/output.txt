@@ -1,0 +1,22 @@
+[env] HOME=/tmp/tmp.9uvxEcfMMF MOCKLOG=/tmp/tmp.0zkpovRvP6 SCENARIO=stream ARGS=tc043.cjs
+--- Output Channel 转储 ---
+[info  2026-11-18T03:29:27.646Z] 激活：cwd=/tmp/r2harness/wsA
+[info  2026-11-18T03:29:27.661Z] pi 运行时：PATH pi 1.99.0（source=path）
+[info  2026-11-18T03:29:27.703Z] PiBridge 已启动（PATH pi 1.99.0，cwd=/tmp/r2harness/wsA）
+[info  2026-11-18T03:29:27.704Z] Sdysyhj 已激活
+[info  2026-11-18T03:29:27.706Z] 新建会话
+[info  2026-11-18T03:29:28.007Z] prompt 发送：slow-check
+[debug 2026-11-18T03:29:28.009Z] 未处理 RPC 事件：turn_start
+[info  2026-11-18T03:29:28.033Z] abort：请求中止当前运行（RPC abort）
+[debug 2026-11-18T03:29:28.035Z] 未处理 RPC 事件：agent_end
+[info  2026-11-18T03:29:28.059Z] prompt 发送：crash-check
+[debug 2026-11-18T03:29:28.060Z] 未处理 RPC 事件：turn_start
+[error 2026-11-18T03:29:28.065Z] pi 子进程退出（code=3）：
+--- 转储结束 ---
+PASS  TC-043(1) 会话创建有日志（带时间戳）  |  查找『新建会话』
+PASS  TC-043(2) prompt 发送有日志（带时间戳）  |  查找 prompt/发送
+PASS  TC-043(3) abort 有日志（带时间戳）  |  查找 abort/中止
+PASS  TC-043(4) 子进程退出有日志（带时间戳）  |  查找『子进程退出』
+PASS  TC-043(5) 错误含可行动建议  |  ["若反复崩溃：请运行 `pi auth` 检查凭证、确认 sdysyhj.piPath 设置，并查看 Output「Sdysyhj」日志。"]
+
+=== TC-043: 5/5 assertions passed ===

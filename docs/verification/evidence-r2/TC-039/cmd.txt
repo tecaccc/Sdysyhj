@@ -1,0 +1,1 @@
+bash t_tc039.sh（随机哨兵 + 被测产物/日志扫描，test-cases v0.2 口径）

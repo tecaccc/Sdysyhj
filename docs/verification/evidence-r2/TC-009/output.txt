@@ -1,0 +1,12 @@
+# step1 命令注册断言（test-cases TC-009 原文）
+OK: abort command registered
+exit=0
+# step2 行为断言
+[env] HOME=/tmp/tmp.JVHjSnqZnE MOCKLOG=/tmp/tmp.qhtBZJjQnq SCENARIO=stream ARGS=tc009.cjs
+PASS  TC-009(b) calls.jsonl 含 abort 调用  |  [{"ts":1794972444452,"pid":3734608,"event":"command","type":"abort","args":{}},{"ts":1794972444453,"pid":3734608,"event":"abort_called"}]
+PASS  TC-009(c) 状态流 streaming→aborted→idle  |  idle→starting→streaming→aborted→idle
+PASS  TC-009(e1) 中止轮保留（message_final 存在且标记 aborted）  |  [{"id":"m2","aborted":true}]
+PASS  TC-009(d) 中止后恢复可输入（发送按钮可见/Stop 隐藏）  |  send.hidden=false, stop.hidden=true
+PASS  TC-009(e2) 历史带『已中止』标记  |  ⏹ 已中止
+
+=== TC-009: 5/5 assertions passed ===

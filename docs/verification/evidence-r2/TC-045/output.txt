@@ -1,0 +1,11 @@
+[env] HOME=/tmp/tmp.aqtLdUZH89 MOCKLOG=/tmp/tmp.fppvugTveQ SCENARIO=stream ARGS=tc045.cjs
+PASS  TC-045(1) 内置运行时启动（source=bundled，PATH 无 pi）  |  [info  2026-11-18T03:31:21.076Z] pi 运行时：内置运行时 dist（source=bundled）
+PASS  TC-045(2) 流式回复（text delta ≥8）  |  ["TASK-COMPLETE ","d1 ","d2 ","d3 ","d4 ","d5 ","d6 ","d7 ","d8 "]
+PASS  TC-045(3) thinking 块（推理增量）  |  thinkingDeltas=3 ["thinking-r1 ","thinking-r2 ","thinking-r3 "]
+PASS  TC-045(4a) 3 个工具调用 read/edit/bash  |  ["read","edit","bash"]
+PASS  TC-045(4b) 3 张工具卡全部成功  |  [{"id":"call-1","status":"success"},{"id":"call-1","status":"success"},{"id":"call-2","status":"success"},{"id":"call-2","status":"success"},{"id":"call-3","status":"success"},{"id":"call-3","status":"success"}]
+PASS  TC-045(5) 任务真实执行：src/a.ts 被修改  |  "const HELLO-EDITED = \"world\";\nexport default hello;\n"
+PASS  TC-045(6) 命令执行输出 TC-045-ok
+PASS  TC-045(7) webview 呈现工具卡/流式/任务文本
+
+=== TC-045: 8/8 assertions passed ===

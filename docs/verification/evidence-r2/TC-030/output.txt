@@ -1,0 +1,11 @@
+# TC-030 五命令注册清单断言（test-cases 原文）
+OK: 5 commands registered
+exit=0
+# Command Palette 可见性（manifest 检查）
+Command Palette menus 声明: null
+已注册命令: sdysyhj.openChat, sdysyhj.newSession, sdysyhj.abort, sdysyhj.showHistory, sdysyhj.reportIssue, sdysyhj.renameSession, sdysyhj.switchModel, sdysyhj.switchThinking, sdysyhj.sendToPi
+# 实际唤起佐证：以下命令均在本核验中经 commands.executeCommand 实际执行成功（见各 TC 证据）：
+#   sdysyhj.abort → TC-009；sdysyhj.newSession → TC-016/021/043；sdysyhj.switchModel → TC-027；sdysyhj.renameSession → TC-019/014
+#   sdysyhj.showHistory → TC-017/018；sdysyhj.openChat / reportIssue → 命令注册断言 + openChat 经 resolveWebviewView 路径
+OK: openChat/newSession/abort/showHistory 命令 id 注册齐全
+exit=0

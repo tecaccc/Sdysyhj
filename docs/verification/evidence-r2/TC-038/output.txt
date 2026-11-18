@@ -1,0 +1,9 @@
+[env] HOME=/tmp/tmp.AiYly53OiW MOCKLOG=/tmp/tmp.9EG9WmAKim SCENARIO=stream ARGS=tc038.cjs
+PASS  TC-038(a1) 第一次崩溃后自动重启一次（spawn 计数 +1）  |  before=1 after=2
+PASS  TC-038(a2) 产生用户提示（含重启说明）  |  ["Pi 子进程异常退出（code=3），已自动重启一次。"]
+PASS  TC-038(b1) 第二次崩溃不再重启（spawn 计数不再增长）  |  after1=2 after2=2
+PASS  TC-038(b2) 反复崩溃有提示（停止自动重启）  |  ["Pi 子进程异常退出（code=3），已自动重启一次。","Pi 子进程反复崩溃，已停止自动重启。"]
+PASS  TC-038(c1) 注入异常后宿主存活：New Session 命令执行成功  |  cmdOk=true, newSessionCalls=1
+PASS  TC-038(c2) 无宿主崩溃（进程存活即断言执行至此）
+
+=== TC-038: 6/6 assertions passed ===

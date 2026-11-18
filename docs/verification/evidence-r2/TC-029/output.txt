@@ -1,0 +1,5 @@
+[env] HOME=/tmp/tmp.fOIoetjfwM MOCKLOG=/tmp/tmp.5FE6qJTJzY SCENARIO=stream ARGS=tc_models.cjs 029
+before reload: {"kind":"model_info","model":"mock/mock-large","thinkingLevel":"low","sessionName":""} | after reload: {"kind":"model_info","model":"mock/mock-large","thinkingLevel":"low","sessionName":""}
+PASS  TC-029 重载后状态栏模型/等级与切换后一致（非默认值）  |  {"switched":{"kind":"model_info","model":"mock/mock-large","thinkingLevel":"low","sessionName":""},"restored":{"kind":"model_info","model":"mock/mock-large","thinkingLevel":"low","sessionName":""}}
+
+=== TC-029: 1/1 assertions passed ===

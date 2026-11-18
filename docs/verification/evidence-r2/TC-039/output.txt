@@ -1,0 +1,18 @@
+[env] HOME=/tmp/tmp.GXAqR3cOHk MOCKLOG=/tmp/tmp.O2dPTMhhab SENTINEL=PI_TEST_SENTINEL_2a9215e6966f9423
+--- auth.json（注入点，豁免扫描）---
+{"api_key":"PI_TEST_SENTINEL_2a9215e6966f9423"}
+verify:unit exit=0
+verify:integration exit=0
+battery exit=0
+--- 扫描 1：$MOCKLOG 日志/转储 + $HOME/.pi 会话/状态（豁免 auth.json 注入点）---
+rg1 exit=1（1=零命中）
+--- 扫描 2：$WORKSPACE 构建产物（dist/out/build/media）---
+  [/tmp/sdysyhj-verify-r2/media] rg exit=1
+--- 扫描 3：核验构建产物/驱动脚本目录 /tmp/r2harness（豁免本脚本与 run.sh 注入点）---
+rg3 exit=1（1=零命中）
+--- 脱敏痕迹（期望命中 [REDACTED]）---
+/tmp/tmp.O2dPTMhhab/logs/channel-crash.txt:api_key":"[REDACTED]
+/tmp/tmp.O2dPTMhhab/logs/channel-crash.txt:api_key":"[REDACTED]
+/tmp/tmp.O2dPTMhhab/logs/battery.txt:api_key":"[REDACTED]
+/tmp/tmp.O2dPTMhhab/logs/battery.txt:api_key":"[REDACTED]
+TC-039 RESULT: PASS（被测产物/日志中哨兵零命中）

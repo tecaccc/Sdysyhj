@@ -1,0 +1,1 @@
+node -e <TC-042 原文版本门槛> + npx vsce ls / 等价静态核对

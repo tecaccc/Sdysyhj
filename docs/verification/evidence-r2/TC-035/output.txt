@@ -1,0 +1,41 @@
+# SC-035a~d（L1 mock PATH 优先/内置回退/显式指定/失败指引）
+[env] HOME=/tmp/tmp.yCqP3oKMzM MOCKLOG=/tmp/tmp.shfDbmhNeN SCENARIO=stream ARGS=tc035.cjs
+PASS  TC-035(a1) SC-035a 启动 PATH 中的 pi（pi-invocations.log 非空）  |  logBytes=21
+PASS  TC-035(a2) 运行时来源 = path（日志佐证）  |  [info  2026-11-18T03:29:22.521Z] pi 运行时：PATH pi 1.99.0（source=path）
+PASS  TC-035(a3) 对话成功（≥8 deltas）
+PASS  TC-035(b1) SC-035b 使用内置运行时（source=bundled）  |  [info  2026-11-18T03:29:22.823Z] pi 运行时：内置运行时 dist（source=bundled）
+PASS  TC-035(b2) 内置运行时完成对话（mock provider 收到请求且 ≥8 deltas）  |  openaiCalls=1
+PASS  TC-035(c1) 按显式路径启动（invocations.log 增长）
+PASS  TC-035(c2) 运行时来源 = explicit（日志佐证）  |  [info  2026-11-18T03:29:23.413Z] pi 运行时：显式指定 pi 1.99.0（source=explicit）
+SC-035d error: {"kind":"error","message":"指定的 pi 路径不存在：/nonexistent/pi","hint":"请在设置 sdysyhj.piPath 中填写有效的 pi 可执行文件完整路径，或改用自动模式。"}
+PASS  TC-035(d1) 展示含错误详情（路径 /nonexistent/pi）  |  {"kind":"error","message":"指定的 pi 路径不存在：/nonexistent/pi","hint":"请在设置 sdysyhj.piPath 中填写有效的 pi 可执行文件完整路径，或改用自动模式。"}
+PASS  TC-035(d2) 可行动指引（设置/回退建议）  |  请在设置 sdysyhj.piPath 中填写有效的 pi 可执行文件完整路径，或改用自动模式。
+
+=== TC-035: 9/9 assertions passed ===
+
+# 缺陷#1 生产布局复现（R2 独立，vsix 布局 + spawn 路径防混淆断言）
+vpkg layout built: /tmp/r2-vpkg
+extension.js exists = true
+bundled cli.js exists = true /tmp/r2-vpkg/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js
+[env] HOME=/tmp/tmp.KiAs74jwU6 MOCKLOG=/tmp/tmp.DHb6YLHXXa SCENARIO=stream ARGS=r2-defect1-prod-layout.cjs
+--- HOST->WEBVIEW ---
+{"kind":"config","tailLines":200,"sendMode":"steer","workspaceLabel":"tmp.KiAs74jwU6"}
+{"kind":"toast","text":"未打开工作区：仍可聊天，但文件工具受限（cwd = 用户主目录）。"}
+{"kind":"model_info","model":"mockllm/mock-small","thinkingLevel":"off","sessionName":""}
+{"kind":"run_state","state":"idle"}
+{"kind":"history_loaded","messages":[]}
+--- Output Channel ---
+[info  2026-11-18T03:29:24.549Z] 激活：cwd=/tmp/tmp.KiAs74jwU6（无工作区，文件工具受限）
+[info  2026-11-18T03:29:24.557Z] pi 运行时：内置运行时 dist（source=bundled）
+[info  2026-11-18T03:29:24.930Z] PiBridge 已启动（内置运行时 dist，cwd=/tmp/tmp.KiAs74jwU6）
+[info  2026-11-18T03:29:24.930Z] Sdysyhj 已激活
+--- spawn 记录 ---
+{"cmd":"pi","args":["--version"]}
+{"cmd":"/home/connor/.nvm/versions/node/v24.19.0/bin/node","args":["/tmp/r2-vpkg/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js","--mode","rpc"]}
+PASS  R2-#1(a) 无『未找到可用的 pi 运行时』错误
+PASS  R2-#1(b) source=bundled（内置运行时回退生效）  |  [info  2026-11-18T03:29:24.557Z] pi 运行时：内置运行时 dist（source=bundled）
+PASS  R2-#1(c) 打包布局内置运行时实际存在  |  /tmp/r2-vpkg/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js
+PASS  R2-#1(d) 启动的 cli 指向布局自身 node_modules（防 /tmp/node_modules 垫片混淆）  |  ["/tmp/r2-vpkg/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js","--mode","rpc"]
+PASS  R2-#1(e) 打包布局下对话成功（text deltas ≥8）  |  deltas=8 ["d1 ","d2 ","d3 ","d4 ","d5 ","d6 ","d7 ","d8 "]
+
+=== R2 defect#1 prod-layout: 5/5 assertions passed ===

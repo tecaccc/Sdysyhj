@@ -1,0 +1,1 @@
+bash run.sh tc036.cjs

@@ -1,0 +1,37 @@
+[env] HOME=/tmp/tmp.GBxkQs4QBC MOCKLOG=/tmp/tmp.5Eao067HsC SCENARIO=stream ARGS=tc003.cjs
+--- 渲染产物样本（前 1200 字符）---
+<h1>标题一</h1>
+<h2>标题二</h2>
+<ul>
+<li>无序项 A</li>
+<li>无序项 B</li>
+</ul>
+<ol>
+<li>有序项 1</li>
+<li>有序项 2</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>列1</th>
+<th>列2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>单元格1</td>
+<td>单元格2</td>
+</tr>
+</tbody></table>
+<pre class="code-block"><code class="hljs language-js"><span class="hljs-keyword">const</span> hello = <span class="hljs-string">"world"</span>;
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">foo</span>(<span class="hljs-params"></span>) { <span class="hljs-keyword">return</span> hello; }</code></pre>
+<p><a href="https://example.com/path" rel="noopener noreferrer">链接</a> 与行内 <code>inlineCode</code>。</p>
+
+PASS  TC-003-1 h1/h2
+PASS  TC-003-2 ul>li
+PASS  TC-003-3 ol>li
+PASS  TC-003-4 table/thead/tbody/tr/td
+PASS  TC-003-5 pre>code.language-js 且含语法高亮 token  |  hljs language-js tokens=6
+PASS  TC-003-6 a[href^=https://]
+PASS  TC-003-7 行内 code
+
+=== TC-003: 7/7 assertions passed ===

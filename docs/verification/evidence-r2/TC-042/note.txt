@@ -1,0 +1,2 @@
+MANUAL（环境受限部分）：(c) 三平台冒烟 CI 日志（Windows/macOS/Linux 各一份）需 CI 矩阵，本单机 Linux 环境无法产出 → 列遗留，不计 FAIL。
+(a) 版本门槛、(b) 打包清单核对已自动执行并存证于 output.txt（vsce 离线不可用，以 .vscodeignore + 依赖清单 + 原生依赖扫描等价核对）。

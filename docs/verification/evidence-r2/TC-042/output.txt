@@ -1,0 +1,36 @@
+# (a) 版本门槛断言（test-cases TC-042 原文）
+OK engines.vscode=^1.85.0
+exit=0
+# (b) 打包清单：npx vsce ls（离线尝试）
+npm error npx canceled due to missing packages and no YES option: ["vsce@2.15.0"]
+npm error A complete log of this run can be found in: /home/connor/.npm/_logs/2026-11-18T03_31_20_145Z-debug-0.log
+vsce exit=0
+# (b') 等价静态核对（vsce 离线不可用时）
+.vscode/**
+.vscode-test/**
+src/**
+webview/**
+test/**
+docs/**
+node_modules/.bin/**
+node_modules/**/test/**
+node_modules/**/*.ts
+node_modules/**/*.map
+.gitignore
+esbuild.mjs
+tsconfig.json
+**/*.vsix
+media/*.map
+media/main.js.map
+*.log
+--- 依赖清单（package.json dependencies）---
+{
+ "@earendil-works/pi-coding-agent": "1.5.2",
+ "dompurify": "3.4.18",
+ "highlight.js": "11.12.0",
+ "marked": "18.2.1"
+}
+--- 原生依赖/独立 Node 运行时检查 ---
+OK: 无独立 Node 运行时包
+node_modules/lightningcss-linux-x64-gnu/lightningcss.linux-x64-gnu.node
+OK: 无平台原生 .node 产物（find 输出为空）
