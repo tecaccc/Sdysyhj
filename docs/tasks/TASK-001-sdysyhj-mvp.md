@@ -82,6 +82,8 @@
 - 2026-11-18 研发 Agent：竞态修复交付——stderr 排空屏障（agent_settled 有序派队 + 两连 setImmediate 让出，FIFO 保序）；新增 stderr-ordering.test.ts 确定性复现；21 次集成全绿（10+10+1，含 3 路并行压测 loadavg 3.2）；自测 tsc/build/unit 91/integration 29 全绿
 - 2026-11-18 总调度 ④ 交付验收（R2 件）：**通过**。写权限零越界 ✅、追溯表 26/26 ✅、tsc/build ✅、integration 5×5 并行负载全绿 ✅、unit 91/91 ✅；commit `ce2c7a2`，标签 `ready-for-verify-r2` 已打
 - 2026-11-18 总调度：派发第 2 轮核验（全新上下文，invocation `2170e0a4`）：全量重验 TC-001~046 + 缺陷 #1-#6 重点回归 + 集成压测 5 连跑 + NFR 安全专项重测；产物 report-ce2c7a2.md + evidence-r2/；用例判定以 v0.2 + 口径 #11-#13 为准
+- 2026-11-18 事件记录 3：pendant 平台工具面整体不可用（wait/message/agent 均 not found，疑与当日服务过载同源）；第 2 轮核验 Agent 疑似中断（evidence-r2 停在 TC-001/005/007 后 50+ 分钟无写入）。处置：① 中断残留证据提交留痕（`5a5fd26`）；② 按“不静默换通道”纪律向人类明示后，启用备用通道——原生 subagent（worker）以独立 worktree 运行第 2 轮核验（run `2946991f`）；③ pendant 恢复后若原核验 Agent 也产出报告，择一采信并留痕对比
+- 2026-11-18 事件记录 4：备用通道 worktree 隔离创建失败（EACCES：默认基目录 /data/workspace/worktrees 父目录 root 所有；run `2946991f` 失败留痕于 pi-subagents handoff）。改用零写权隔离：worker 不写主仓库，产物落 /tmp/r2-staging/，测试在 /tmp clone 执行，完成由总调度合入（run `a27abe6b`）——与可能复活的 pendant 核验 Agent 零写冲突
 - 2026-11-17 交付检查待办：研发 Agent 施工中已产生 node_modules/、package.json、package-lock.json（未跟踪）；收产物时核验 .gitignore 已覆盖 node_modules，且测试约定（verify:unit/verify:integration）未被改名
 
 ## 7. 收产物检查记录（②'）
