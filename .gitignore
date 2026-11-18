@@ -6,3 +6,4 @@ media/*.map
 *.vsix
 .DS_Store
 *.log
+.pi-loop.json.lock

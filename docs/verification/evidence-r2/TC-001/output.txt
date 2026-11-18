@@ -1,0 +1,20 @@
+
+== SC-001：发送 prompt stream-check（MOCK-STREAM）
+text deltas = ["d1","d2","d3","d4","d5","d6","d7","d8"]
+事件序列 = toast | run_state:idle | toast | run_state:idle | user_message | run_state:starting | run_state:streaming | stream_start | text_delta | text_delta | text_delta | text_delta | text_delta | text_delta | text_delta | text_delta | message_final | run_state:idle
+
+== 断言
+  [PASS] 运行结束（message_final + run_state:idle）
+  [PASS] (a) text-delta 级增量 ≥8（实际 8）
+  [PASS] (a) 增量顺序与 d1..d8 一致
+  [PASS] (b) 最后一个增量后出现完成事件（message_final）
+  [PASS] (c) 初始 idle（回放 run_state:idle）
+  [PASS] (c) 运行状态流 idle→streaming→idle（实际 idle→idle→starting→streaming→idle）
+  [PASS] (d) 首增量距发送 <2s（实际 73ms）
+
+== webview DOM 佐证
+assistant 渲染文本 = "d1d2d3d4d5d6d7d8\n"
+  [PASS] DOM 渲染文本包含 d1..d8 依序
+  [PASS] calls.jsonl 记录 prompt 调用
+
+TC-001 RESULT: PASS (9 passed, 0 failed)
