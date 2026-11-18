@@ -23,9 +23,9 @@
 | ③a 开发 + 自测 | 按需求基线 + 技术方案实现 MVP | 研发 Agent（fresh context） | ✅ 完成（P0 全量+P1 尽力） |
 | ③b 盲写测试用例 | 仅依据需求基线写 `docs/test-cases.md` | 测试 Agent（fresh context，禁读 src/） | ✅ 完成（TC-001~046） |
 | 【审批点2】测试用例 | 总调度审查覆盖度与可判定性 | **总调度裁决**（人类授权） | ✅ 2026-11-17 通过 |
-| ④ 研发交付 | 自测全绿 + FR 追溯表 + 标签 `ready-for-verify` | 研发 Agent | ✅ 验收通过（`e9ae693`，标签已打） |
-| ⑤ 独立核验 | 干净工作区检出标签，逐 TC 执行出报告 | 测试 Agent（核验，全新上下文） | ✅ 报告已收（`report-e9ae693`：**FAIL**） |
-| ⑥ 闭环/失败回路 | PASS → 交付总结；FAIL → 缺陷清单回研发（≤2 轮） | 总调度 | 🔄 **失败回路第 1 轮**（三路修复中） |
+| ④ 研发交付 | 自测全绿 + FR 追溯表 + 标签 `ready-for-verify` | 研发 Agent | ✅ R2 件验收通过（`ce2c7a2`，标签 `ready-for-verify-r2`） |
+| ⑤ 独立核验 | 干净工作区检出标签，逐 TC 执行出报告 | 测试 Agent（核验，全新上下文） | 🔄 **第 2 轮核验中**（invocation `2170e0a4`） |
+| ⑥ 闭环/失败回路 | PASS → 交付总结；FAIL → 缺陷清单回研发（≤2 轮） | 总调度 | 🔄 第 1 轮修复已交付，待第 2 轮核验结论 |
 
 ## 3. 审批点记录
 
@@ -79,6 +79,9 @@
 - 2026-11-17 事件记录：修复任务首派（invocation `844ac41f`）因模型服务端瞬态故障（503 system_memory_overloaded）中断，未产生有效改动（工作区检查与退回时一致，无污染）；同任务已重发（invocation `24aab952`）继续执行
 - 2026-11-17 事件记录 2：重发任务再次因 503 中断（服务端内存 91.1%）；本次中断前已产生部分进展（新增 test/unit/stderr-ordering.test.ts，方向=方案1 产品侧顺序保证；rpcClient/piBridge 增量修改，变更量 366+/40- → 424+/44-），现场保留待续做；总调度策略：退避 270s 后重发（定时器已臂），不计失败回路重试次数（基础设施抖动≠产品缺陷回路）
 - 2026-11-18 09:35 定时器触发：退避期满，重发研发 Agent 续做竞态修复（invocation `4bf06c71`，从现场部分改动续做，方向=方案 1 顺序保证）
+- 2026-11-18 研发 Agent：竞态修复交付——stderr 排空屏障（agent_settled 有序派队 + 两连 setImmediate 让出，FIFO 保序）；新增 stderr-ordering.test.ts 确定性复现；21 次集成全绿（10+10+1，含 3 路并行压测 loadavg 3.2）；自测 tsc/build/unit 91/integration 29 全绿
+- 2026-11-18 总调度 ④ 交付验收（R2 件）：**通过**。写权限零越界 ✅、追溯表 26/26 ✅、tsc/build ✅、integration 5×5 并行负载全绿 ✅、unit 91/91 ✅；commit `ce2c7a2`，标签 `ready-for-verify-r2` 已打
+- 2026-11-18 总调度：派发第 2 轮核验（全新上下文，invocation `2170e0a4`）：全量重验 TC-001~046 + 缺陷 #1-#6 重点回归 + 集成压测 5 连跑 + NFR 安全专项重测；产物 report-ce2c7a2.md + evidence-r2/；用例判定以 v0.2 + 口径 #11-#13 为准
 - 2026-11-17 交付检查待办：研发 Agent 施工中已产生 node_modules/、package.json、package-lock.json（未跟踪）；收产物时核验 .gitignore 已覆盖 node_modules，且测试约定（verify:unit/verify:integration）未被改名
 
 ## 7. 收产物检查记录（②'）
