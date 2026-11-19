@@ -1,0 +1,45 @@
+# TASK-002 ｜ GitHub Issue 常态化巡检（通道 B）
+
+> 任务性质：总调度常态职责（人类指令，2026-11-19 起）
+> 触发：cron 每 5 分钟（任务 `9a687aec`，会话级）+ pi loop（锁宿主 pid 3848332）
+> 使命（人类原令摘要）：
+> 1. 盯住 GitHub Issue（owner=tecaccc / repo=Sdysyhj，坐标以 `git remote -v` 为准）；
+> 2. **新需求**（type:feature）：只记录不开发——分诊打标 + Issue 评论留档 + 本任务单登记；是否进入流水线留人类决策；
+> 3. **产品具体问题**（type:bug）：分析验证 → 属实则走流水线修复（研发→核验→发版，按 development-guidelines 第二部分 §4）→ 回写 Issue 并关闭；
+> 4. **疑问类**（type:question）：不进流水线，整理答案回写后关闭（github-operations.md §4.2）。
+> 5. 发版严格按 versioning.md（0.1.x 锁定、PATCH +1、五处一致、`v<version>` 标签）。
+
+## 1. 巡检记录（时序）
+
+| 时间（+0800） | OPEN | CLOSED | 处置 |
+|---|---|---|---|
+| 2026-11-19 ~18:12 | 0 | 0 | 无事可办；发现并处置工作区遗留污染（见 §2） |
+
+> 巡检口径：`github_list_issues` state=OPEN / CLOSED 各一次（github-operations.md §4.1）；0 结果如实报 0。无事可办的巡检不产生 commit（最小写入），有事才留痕。
+
+## 2. 事件：工作区遗留污染修复（2026-11-19 18:1x，总调度裁决）
+
+**现场**（处置前 `git status`）：
+- `M .gitignore`：多出一行 `DevelopmentGuidelines/`（忽略规范目录，未提交）
+- `D docs/agent-workflow.md`：已提交的重定向存根被本地删除（未提交）
+- `DevelopmentGuidelines/` 四文件全部未跟踪（被上述忽略行掩盖）
+
+**认定**：commit `87512d9`（已推送）声明"规范统一收口至 DevelopmentGuidelines/development-guidelines.md、原路径留重定向存根"，但该提交只改了存根、**漏 `git add` 规范目录** → 远端存根链接断链。工作区随后的忽略行 + 删存根改动与本提交声明、规范 §10 文档关系表、存根正文三方矛盾，且任务单零留痕，判定为断链后的遗留污染（非人类决策；如人类另有意图可指示回退，本修复完全可逆）。
+
+**处置**（证据链修复）：
+1. `git checkout -- docs/agent-workflow.md .gitignore`（还原提交态）
+2. 删除杂散副本 `DevelopmentGuidelines/agent-workflow.md`（与已提交存根逐字节相同的误置副本，`diff` 证据）
+3. 规范三文件入库：development-guidelines.md / github-operations.md / versioning.md
+4. 推送前密钥扫描：`sk-…/ghp_…/AKIA…` 等模式 0 命中（CLEAN）
+5. 提交（本任务单一并入库），commit 见 git log；不涉及版本载体，不发版、不打 v 标签
+
+## 3. 分诊台账（Issue 处理记录）
+
+> 每处理一条 Issue 在此登记：编号 / 类型 / 动作 / 闭环链接。
+
+（暂无）
+
+## 4. 遗留与边界
+
+- 巡检为会话级 cron；宿主会话终止后需人类重建巡检（`*/5 * * * *`，prompt 见 §0 使命）。
+- feature 类只记录；若人类批准开发，按 development-guidelines 第二部分 §4 走完整流水线（产品→研发→测试→核验→发版），届时另立任务单。
