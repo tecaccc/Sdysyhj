@@ -3,7 +3,7 @@
 > 产出：测试 Agent（写用例阶段，TASK-001）｜ 状态：**待审批点 2 裁决** ｜ 版本：v0.2（2026-11-17 修订）
 >
 > **依据（唯一）**：docs/requirements.md v0.2（需求基线）。
-> **参考**：docs/agent-workflow.md §6（产物契约）、§4（自测命令约定 `npm run verify:unit` / `npm run verify:integration`）。
+> **参考**：DevelopmentGuidelines/development-guidelines.md 第二部分（原 agent-workflow）§6（产物契约）、§4（自测命令约定 `npm run verify:unit` / `npm run verify:integration`）。注：该规范文档仅存本地（不入库）。
 > **盲写声明**：本用例为全新上下文盲写产物，未读取 src/、webview/、test/、media/、package.json、docs/technical-design.md 等任何实现侧内容；全部用例仅从需求推导，不迁就实现。
 > **写权限声明**：本阶段仅写 docs/test-cases.md 一个文件；无任何 git 写操作。
 

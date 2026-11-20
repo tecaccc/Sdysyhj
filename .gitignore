@@ -7,3 +7,4 @@ media/*.map
 .DS_Store
 *.log
 .pi-loop.json.lock
+DevelopmentGuidelines/
