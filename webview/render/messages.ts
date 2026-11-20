@@ -299,12 +299,17 @@ export class MessageView {
     if (this.cursorEl) this.cursorEl.remove();
     this.blocks.clear();
     this.bodyEl.innerHTML = "";
-    for (const block of message.blocks) {
+    message.blocks.forEach((block, index) => {
       const view = this.createFinalBlock(block);
       if (view) {
         this.bodyEl.appendChild(view.root);
+        // #D-04：终稿块视图回填 this.blocks。toolcallStatus() 遍历此表按 toolCallId 匹配，
+        // agent 循环时序上 toolResult（toolcall_status）必然晚于含工具卡的 message_final 到达，
+        // 不回填则 final 后状态更新必然丢失（卡片恒“进行中”）。键取终稿块数组下标——
+        // toolcallStatus 匹配只看 toolCallId，与键无关；流式期间行为不变。
+        this.blocks.set(index, view);
       }
-    }
+    });
     if (message.aborted) {
       this.bodyEl.appendChild(el("div", "aborted-marker", "⏹ 已中止"));
     }

@@ -279,6 +279,71 @@ describe("PiBridge 状态机与事件翻译", () => {
     expect(block && block.type === "toolcall" && block.status).toBe("success");
   });
 
+  it("#D-04 时序契约：工具执行结果晚于含工具卡的 message_final 到达时，toolcall_status 仍随后发出且可按 messageId/toolCallId 路由（FR-CHAT-04，直播路径）", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("run tool");
+    fake.emit({ type: "agent_start" });
+    fake.emit({ type: "message_start", message: { role: "assistant", content: [], stopReason: "pending" } });
+    fake.emit({ type: "message_update", assistantMessageEvent: { type: "toolcall_start", contentIndex: 0, id: "call_d4", toolName: "read" } });
+    // 含工具卡的助手消息终稿先行到达（message_final）
+    fake.emit({
+      type: "message_end",
+      message: {
+        role: "assistant",
+        content: [{ type: "toolCall", id: "call_d4", name: "read", arguments: { path: "src/a.ts" } }],
+        stopReason: "toolUse",
+        timestamp: 1,
+      },
+    });
+    const finalIdx = events.findIndex(
+      (e) => e.kind === "message_final" && e.messageId !== undefined && (e as { message: { blocks: unknown[] } }).message.blocks.length > 0
+    );
+    expect(finalIdx).toBeGreaterThanOrEqual(0);
+    const finalEvent = events[finalIdx] as { kind: "message_final"; messageId: string; message: { blocks: Array<{ type: string; id?: string; status?: string }> } };
+    const finalToolBlock = finalEvent.message.blocks.find((b) => b.type === "toolcall");
+    expect(finalToolBlock).toBeDefined();
+    expect(finalToolBlock && finalToolBlock.status).toBe("running"); // final 时执行结果未到：进行中
+
+    // 工具执行结果事件在 final 之后才到达（#D-04 必现时序）
+    fake.emit({ type: "tool_execution_start", toolCallId: "call_d4", toolName: "read", args: { path: "src/a.ts" } });
+    fake.emit({
+      type: "tool_execution_end",
+      toolCallId: "call_d4",
+      result: { content: [{ type: "text", text: "file body" }] },
+      isError: false,
+    });
+    fake.emit({
+      type: "message_end",
+      message: {
+        role: "toolResult",
+        toolCallId: "call_d4",
+        toolName: "read",
+        content: [{ type: "text", text: "file body" }],
+        isError: false,
+        timestamp: 2,
+      },
+    });
+
+    // 迟到的状态事件仍以同一 messageId/toolCallId 发出（webview 修复后按此路由命中卡片）
+    const lateStatuses = events
+      .slice(finalIdx + 1)
+      .filter((e) => e.kind === "toolcall_status") as Array<{ messageId: string; toolCallId: string; status: string }>;
+    expect(lateStatuses.length).toBeGreaterThan(0);
+    expect(lateStatuses.every((s) => s.messageId === finalEvent.messageId)).toBe(true);
+    const settled = lateStatuses[lateStatuses.length - 1];
+    expect(settled.toolCallId).toBe("call_d4");
+    expect(settled.status).toBe("success");
+
+    // 权威快照同步收敛为终态
+    const ui = bridge.getUiMessages();
+    const msg = ui.find((m) => m.id === finalEvent.messageId);
+    const block = msg?.blocks.find((b) => b.type === "toolcall");
+    expect(block && block.type === "toolcall" && block.status).toBe("success");
+  });
+
   it("工具失败状态（isError）", async () => {
     const { bridge, fakes, events } = makeBridge();
     await bridge.start();

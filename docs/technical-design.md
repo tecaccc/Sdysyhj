@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**已实现（MVP）** ｜ 版本：v0.1-draft ｜ 对应需求：docs/requirements.md v0.2.3
+> 状态：**已实现（MVP）** ｜ 版本：v0.1-draft ｜ 对应需求：docs/requirements.md v0.3
 
 ---
 
@@ -265,9 +265,9 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 - 输入框 slash command / skill 自动补全、MCP 管理 UI
 - VS Code Chat API 可选适配层
 
-## 10. FR 追溯表（实现映射，依据需求基线 v0.2.3）
+## 10. FR 追溯表（实现映射，依据需求基线 v0.3）
 
-实现文件位置以本仓库为准；未实现项标注原因。P0 全部实现，P1 全部实现，P2 标“二期”（不计 MVP 门禁）。验收口径按基线 v0.2.3 对齐（大输出默认尾部 200 行；“可用 pi”含最低版本判据；历史重放与会话 JSONL 一致；FR-CHAT-08 仅状态展示；thinking 枚举透传不固化；运行状态 settled 后回 idle、『已中止』为消息级标记；FR-SESS-07 外部修改后拦截交互直至刷新；消息数=消息总数 user+assistant；`extension_error` 展示通道=非阻断 toast + 全字段 Output 日志 + 同错误去重，FR-CHAT-07 错误卡片范围不变）。
+实现文件位置以本仓库为准；未实现项标注原因。P0 全部实现，P1 全部实现，P2 标“二期”（不计 MVP 门禁）。验收口径按基线 v0.3 对齐（大输出默认尾部 200 行；“可用 pi”含最低版本判据；历史重放与会话 JSONL 一致；FR-CHAT-08 仅状态展示；thinking 枚举透传不固化；运行状态 settled 后回 idle、『已中止』为消息级标记；FR-SESS-07 外部修改后拦截交互直至刷新；消息数=消息总数 user+assistant；`extension_error` 展示通道=非阻断 toast + 全字段 Output 日志 + 同错误去重，FR-CHAT-07 错误卡片范围不变；FR-CHAT-09 跟随判定阈值 40px、每轮流式开始默认跟随、跟随为会话内瞬时 UI 状态不持久化）。
 
 ### 10.1 聊天（FR-CHAT）
 
@@ -276,11 +276,12 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | FR-CHAT-01 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（`handleMessageUpdate`：text/thinking/toolcall delta 翻译）；`webview/main.ts`（消息路由）；`webview/render/messages.ts`（`TextBlockView` 流式追加 + 300ms 节流重排） | text delta 级实时渲染，不阻塞 UI |
 | FR-CHAT-02 | P0 | ✅ 已实现 | `webview/render/markdown.ts`（marked + highlight.js 语言高亮 + DOMPurify 消毒） | 支持标题/列表/表格/代码块/链接/行内代码；输出经消毒（NFR-03） |
 | FR-CHAT-03 | P0 | ✅ 已实现 | `webview/render/messages.ts`（`ThinkingBlockView`：`<details>` 默认折叠，展开后流式）；`src/bridge/piBridge.ts`（thinking_delta） | — |
-| FR-CHAT-04 | P0 | ✅ 已实现 | `webview/render/messages.ts`（`ToolCardView`：工具名/摘要/状态/展开输入输出）；`src/util/text.ts`（`truncateToTail`/`summarizeToolArgs`）；`src/bridge/piBridge.ts`（`tool_execution_*` 翻译、`getToolOutput` 宿主全量缓存）；`src/panel/chatPanel.ts`（`copy_output` → `vscode.env.clipboard`） | bash 展示命令与输出；默认保留尾部 200 行（`sdysyhj.outputTailLines` 默认 200），“复制全部”取完整输出 |
+| FR-CHAT-04 | P0 | ✅ 已实现 | `webview/render/messages.ts`（`ToolCardView`：工具名/摘要/状态/展开输入输出；`MessageView.finalize` 终稿块视图回填 `this.blocks`——#D-04 修复：toolResult 晚于 message_final 到达时 `toolcallStatus` 仍能按 toolCallId 命中卡片，状态随执行结果更新 running→success/error）；`src/util/text.ts`（`truncateToTail`/`summarizeToolArgs`）；`src/bridge/piBridge.ts`（`tool_execution_*` 翻译、`getToolOutput` 宿主全量缓存）；`src/panel/chatPanel.ts`（`copy_output` → `vscode.env.clipboard`） | bash 展示命令与输出；默认保留尾部 200 行（`sdysyhj.outputTailLines` 默认 200），“复制全部”取完整输出；#D-04 详见 §10.10 |
 | FR-CHAT-05 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（`abort`：RPC `abort`，`agent_settled(aborted)` → 瞬态 `aborted` 后回 `idle`）；`webview/main.ts`（Stop 按钮，中止后恢复可输入 + “已中止”标记）；`src/extension.ts`（`sdysyhj.abort` 命令） | 历史保留；状态流 streaming→aborted→idle（v0.2.2 口径 A：『已中止』为消息级标记，运行状态最终回 idle） |
 | FR-CHAT-06 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（`sendPrompt` 运行中 → `steer`/`followUp`）；`webview/main.ts`（插话模式下拉：steer/follow-up） | 默认模式取 `sdysyhj.sendMode` |
 | FR-CHAT-07 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（error 事件：prompt 被拒、`stopReason=error`、崩溃恢复；`handleExtensionError`：`extension_error` → 非阻断 toast + 全字段日志，Issue #2 / #D-03）；`src/bridge/rpcTransport.ts`（`PiRuntimeError` 含可行动指引与详情）；`webview/main.ts`（`showError` 错误卡片 + hint；`showToast` 一次性提示） | 未配置凭证/子进程崩溃/provider 报错均有可读信息与修复指引；上游扩展通知（`extension_error`）不进错误卡片——toast 一次性提示（60s 同键去重，文案含扩展路径+错误首行+Output 指引）+ 日志全字段（v0.2.3 澄清 #14） |
 | FR-CHAT-08 | P0 | ✅ 已实现 | `webview/main.ts`（头部 `status-line`）；`src/extension.ts`（VS Code 状态栏 `refreshStatusBar`）；`src/panel/messages.ts`（`run_state`/`model_info`/`session_name`） | 仅负责四字段（模型/thinking/运行状态/会话名）展示与状态流转（idle→starting→streaming→aborted/idle/error，settled 后回 idle，v0.2.2 口径 A）；点击切换交互归属 FR-MOD-01/02 |
+| FR-CHAT-09 | P1 | ✅ 已实现 | `webview/render/followState.ts`（纯逻辑状态机：跟随决策，无 DOM 依赖，40px 阈值/每轮默认跟随/打断/恢复/idle 门控）；`webview/main.ts`（接线薄层：`stream_start`→`onStreamStart` 默认置跟随态；`run_state`→`onRunState`；`messagesEl` scroll 监听→`onUserScroll(距底 px)`（程序滚动自标记区分）；消息追加/增量（text/thinking/toolcall delta、toolcall_status、message_final）后滚动决策统一走 `applyFollowScroll`；`loadHistory` 尾部一次性初始定位，不走向量决策） | 流式期间默认跟随（每轮流式开始重置为跟随态）；用户上滚距底 >40px 停止跟随且增量渲染不推动滚动位置；滚回 ≤40px 恢复；idle 不自动滚动；不持久化、无消息级标记（④）；“每轮”=一次 agent 运行，轮内多条助手消息的后续 stream_start 不覆盖用户打断（实现口径见 §10.10） |
 
 ### 10.2 会话管理（FR-SESS）
 
@@ -360,6 +361,24 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | #D-03（P1，FR-CHAT-07 展示通道口径）`extension_error` 展示治理缺陷：上游扩展噪音以持久错误卡片呈现且信息丢失——`emit("error")` 进 webview `showError` 持久卡片；丢弃 `extensionPath`/`event` 字段；无去重；hint 硬编码指向本机不存在的 `~/.pi/agent/extensions`（Issue #2；上游根因：会话重载后陈旧 ctx 异步回调触发扩展报错，本仓无法消除事件，只对展示负责） | `handleEvent` 的 `extension_error` 分支直接走错误卡片通道，与 FR-CHAT-07「需用户行动的错误」范围不符（v0.2.3 澄清 #14：展示通道=非阻断通知） | `src/bridge/piBridge.ts`（`handleExtensionError`：① toast 非阻断一次性提示；② 60s 同键（extensionPath+error）去重（仅抑制重复 toast，日志始终全量；过期键清理防无界增长）；③ toast 文案=扩展路径+错误首行（`firstLine` 120 截断）+尾部「详情见 Output「Sdysyhj」」指引；④ `logger.warn` 全字段 extensionPath/event/error（不截断不去重）；⑤ 删除误导 hint） | `test/unit/piBridge.test.ts`（Issue #2 回归 6 项：通道选择/文案字段/日志全字段/同键去重+日志不去重/不同键不去重/60s 窗口过期（fake timers）/缺字段容错）；`test/integration/pi-bridge.test.ts`（fake pi `EXTERR` 脚本：同键×2+异键×1 → toast 2 条、error 卡片 0、日志 3 条全量）；`test/helpers/fake-pi-cli.js`（新增 `EXTERR` 脚本化事件） |
 
 稳定性：修复后 `verify:unit` 与 `verify:integration` 并行负载下连跑 10 轮全绿（去重断言不依赖真实等待：同键同刻注入、窗口过期用 fake timers）。
+
+### 10.10 TASK-005 缺陷修复与实现记录（TODO-List 双项批次，需求基线 v0.3）
+
+#### 缺陷表（追加 #D-04）
+
+| 缺陷 | 根因 | 修复位置 | 回归验证 |
+|---|---|---|---|
+| #D-04（P1，FR-CHAT-04）工具调用卡片状态恒“进行中”（直播转路径必现） | agent 循环时序上 toolResult（toolcall_status）必然晚于含工具卡的助手消息 `message_final` 到达；`MessageView.finalize()` 执行 `this.blocks.clear()` 后 `createFinalBlock()` 重建 DOM 但不回填 `this.blocks`，而 `toolcallStatus()` 遍历 `this.blocks` 按 toolCallId 匹配——final 后恒为空 → 状态更新必然丢失（历史路径因 `refreshHistory` 按序处理 + 尾部收敛循环不触发，仅直播转必现） | `webview/render/messages.ts`（`finalize()`：终稿块视图按终稿块数组下标回填 `this.blocks`；`toolcallStatus` 按 toolCallId 匹配与键无关；流式期间行为不变；`ToolCardView.setStatus/setSummary` 经 `refresh()` 直接更新已挂载 DOM，finalize 后仍生效） | DOM 层无 jsdom 基建不硬造（基线 §5.4）：UI 手工 checklist + 自动兜底=桥侧既有测试（`test/unit/piBridge.test.ts` 工具卡状态用例：toolResult 晚于 message_end 时 `toolcall_status` 终态 success/error 断言）+ `test/unit/followState.test.ts`（同批次新增纯逻辑测试） |
+
+#### FR-CHAT-09 实现注记（流式输出自动跟随）
+
+- 架构：跟随决策抽为纯逻辑模块 `webview/render/followState.ts`（无 DOM 依赖，单测全覆盖）；`webview/main.ts` 仅做度量（`scrollHeight - clientHeight - scrollTop`，下限 0）与滚动执行接线。
+- 滚动决策统一入口 `applyFollowScroll()`，触发点两类：① 消息追加（`appendMessageView`：user_message/stream_start/message_final 兜底）与 message_final 终稿重排后同步调用；② 增量渲染点——`MutationObserver`（childList/subtree/characterData）监听 `messagesEl`，合批渲染（正文 300ms / thinking rAF）真正改 DOM 后立刻回底，使两次渲染之间视口始终距底 0px（①“每次增量渲染后保持底部”）；delta 事件到达时 DOM 尚未变化，不在此时滚动。错误卡片/提示（`errorsEl`）不属消息流，不入此决策。
+- 程序滚动自标记（`selfScrollPending`）：跟随逻辑发起的滚动同样触发 scroll 事件，须与用户滚动区分；已在底部时无位移不产生 scroll 事件亦不自标记，避免误吞下一次用户滚动。
+- 会话载入/切换（`loadHistory`）尾部一次性定位到底部：属 FR-CHAT-09 ④明确排除的“一次性初始定位”，不走向量决策；idle 期间消息追加（如发送消息回显）不自动滚动（④），下一轮 stream_start 重置跟随后即回底部。
+- 口径界定：“每轮” = 一次 agent 运行（run_state 进入 starting/streaming 起、回 idle/aborted/error 止）；每轮默认跟随的重置点取本轮运行内首个 `stream_start`（“自本轮流式输出开始计”）。agent 循环一轮含多条助手消息，轮内后续 `stream_start`（下一步消息）不重置跟随态——否则用户打断会在下一步开始时被覆盖，违反 ②“尊重用户意图”（打断后增量渲染不得为跟随而强制滚动）。
+
+稳定性：修复/实现后 `npm run typecheck` / `build` / `verify:unit`（11 文件 116 用例）/ `verify:integration`（4 文件 31 用例）全绿；新增测试均为确定性纯逻辑断言（无定时器/无异步等待）。
 
 ---
 
