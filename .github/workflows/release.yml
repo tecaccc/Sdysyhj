@@ -1,5 +1,5 @@
 # 发版流水线：双通道发布
-#   ① Microsoft Marketplace（vsce publish，需 secret VSCE_PAT）
+#   ① Microsoft Marketplace（vsce publish --oidc，Marketplace Trusted Publishing，免 PAT；需在发布者管理页登记策略，见 docs/release.md）
 #   ② GitHub Release（gh release，附 vsix，用自带 GITHUB_TOKEN）
 # 触发：
 #   - 推送 annotated tag v<version>（tag 提交中须已包含本文件）
@@ -135,6 +135,9 @@ jobs:
     needs: [test, package]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # Trusted Publishing：向 GitHub 请求 OIDC token（audience: marketplace.visualstudio.com）
     steps:
       - uses: actions/checkout@v4
         with:
@@ -148,24 +151,14 @@ jobs:
         with:
           name: vsix
 
-      - name: 检查 VSCE_PAT secret
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: |
-          if [ -z "$VSCE_PAT" ]; then
-            echo "::error::缺少 secret VSCE_PAT（Azure DevOps Personal Access Token，scope：Marketplace → Manage）。"
-            echo "::error::配置入口：仓库 Settings → Secrets and variables → Actions → New repository secret。步骤详见 docs/release.md"
-            exit 1
-          fi
-
-      - name: 发布（vsce publish）
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - name: 发布（vsce publish --oidc，Trusted Publishing）
         run: |
           VSIX=$(ls sdysyhj-*.vsix)
           echo "发布 $VSIX → publisher: $(node -p "require('./package.json').publisher")"
           # --skip-duplicate：重跑时若该版本已上架则跳过，保证幂等
-          npx -y "@vscode/vsce@${VSCE_VERSION}" publish -i "$VSIX" --skip-duplicate
+          # 401/403 排查：多为 Trusted Publishing 策略未登记或不匹配
+          #   （owner=tecaccc, repo=Sdysyhj, workflow=release.yml, environment 留空），见 docs/release.md
+          npx -y "@vscode/vsce@${VSCE_VERSION}" publish -i "$VSIX" --oidc --skip-duplicate
 
   # ── 3b. 创建 GitHub Release（附 vsix）────────────────────────────
   github-release:
