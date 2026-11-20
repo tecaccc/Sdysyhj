@@ -66,3 +66,8 @@ Webview（聊天 UI）⇄ ChatPanel ⇄ PiBridge（状态机/事件翻译）⇄ 
 ## 兼容性
 
 VS Code ≥ 1.85；Windows / macOS / Linux（Node 运行时随 VS Code）。
+
+## 开发与发布
+
+- 自测：`npm run typecheck` / `npm run build` / `npm run verify:unit` / `npm run verify:integration`；push/PR 到 main 自动跑 CI
+- 发版：推送 annotated tag `v<version>` 后由 GitHub Actions 自动打包发布到 [Marketplace](https://marketplace.visualstudio.com/) 与 GitHub Release，流程见 [`docs/release.md`](docs/release.md)

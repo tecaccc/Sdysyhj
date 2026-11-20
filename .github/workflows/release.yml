@@ -1,0 +1,222 @@
+# 发版流水线：双通道发布
+#   ① Microsoft Marketplace（vsce publish，需 secret VSCE_PAT）
+#   ② GitHub Release（gh release，附 vsix，用自带 GITHUB_TOKEN）
+# 触发：
+#   - 推送 annotated tag v<version>（tag 提交中须已包含本文件）
+#   - 手动 workflow_dispatch 指定已有 tag：用于 bootstrap（本文件落地前已推送的 tag）或补跑
+# 约束（DevelopmentGuidelines/versioning.md）：
+#   - tag v0.1.x ↔ package.json version ↔ CHANGELOG 条目 三处一致；tag 必须为 annotated
+# 流程：校验门禁 → 全量测试 → 打包 vsix → ①② 并行发布
+# 配置见 docs/release.md
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "要发布的 annotated tag（如 v0.1.2；留空默认按 tag 推送事件）"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  # 锁定 vsce 大版本，保证打包/发布行为可复现
+  VSCE_VERSION: "4"
+
+jobs:
+  # ── 1. 门禁 + 全量测试 ────────────────────────────────────────────
+  test:
+    name: 一致性门禁 + 全量自测
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          fetch-depth: 0 # 需要 tag 对象与历史做一致性检查
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 版本一致性门禁（tag ↔ package.json ↔ CHANGELOG ↔ annotated）
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
+          echo "发布 tag=$TAG version=$VERSION"
+
+          # ① tag 必须存在且为 annotated（versioning.md §3）
+          TYPE=$(git cat-file -t "$TAG" 2>/dev/null || true)
+          if [ "$TYPE" != "tag" ]; then
+            echo "::error::$TAG 不存在或不是 annotated tag；规范：git tag -a $TAG -m '<发版结论>'"
+            exit 1
+          fi
+
+          # ② tag ↔ package.json（唯一事实来源）
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag $TAG 与 package.json version $PKG_VERSION 不一致"
+            exit 1
+          fi
+
+          # ③ CHANGELOG 必须有对应条目（versioning.md §3/§6）
+          if ! grep -Eq "^## ${VERSION}( |—|\$)" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md 缺少 '## ${VERSION}' 条目"
+            exit 1
+          fi
+
+          echo "一致性门禁通过 ✅"
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查
+        run: npm run typecheck
+
+      - name: 构建
+        run: npm run build
+
+      - name: 单元测试
+        run: npm run verify:unit
+
+      - name: 集成测试
+        run: npm run verify:integration
+
+  # ── 2. 打包 vsix ─────────────────────────────────────────────────
+  package:
+    name: 打包 vsix
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建（dist/extension.js + media/main.js）
+        run: npm run build
+
+      - name: 打包（npx @vscode/vsce package）
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npx -y "@vscode/vsce@${VSCE_VERSION}" package -o "sdysyhj-${VERSION}.vsix"
+          echo "产物："
+          ls -lh "sdysyhj-${VERSION}.vsix"
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: sdysyhj-*.vsix
+          if-no-files-found: error
+          retention-days: 30
+
+  # ── 3a. 发布到 Microsoft Marketplace ─────────────────────────────
+  publish-marketplace:
+    name: 发布 Microsoft Marketplace
+    needs: [test, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+
+      - name: 检查 VSCE_PAT secret
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::error::缺少 secret VSCE_PAT（Azure DevOps Personal Access Token，scope：Marketplace → Manage）。"
+            echo "::error::配置入口：仓库 Settings → Secrets and variables → Actions → New repository secret。步骤详见 docs/release.md"
+            exit 1
+          fi
+
+      - name: 发布（vsce publish）
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          VSIX=$(ls sdysyhj-*.vsix)
+          echo "发布 $VSIX → publisher: $(node -p "require('./package.json').publisher")"
+          # --skip-duplicate：重跑时若该版本已上架则跳过，保证幂等
+          npx -y "@vscode/vsce@${VSCE_VERSION}" publish -i "$VSIX" --skip-duplicate
+
+  # ── 3b. 创建 GitHub Release（附 vsix）────────────────────────────
+  github-release:
+    name: 创建 GitHub Release
+    needs: [test, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # gh release create 需要
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+
+      - name: 提取 CHANGELOG 发布说明
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## "ver"( |—|$)" { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md | sed -e '/./,$!d' > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            echo "见 [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md)" > release-notes.md
+          fi
+
+          echo "── 发布说明 ──"
+          cat release-notes.md
+
+      - name: 创建 Release 并上传 vsix
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          VSIX=$(ls sdysyhj-*.vsix)
+
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG 已存在（重跑场景），补传资产"
+            gh release upload "$TAG" "$VSIX" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes-file release-notes.md \
+              --verify-tag \
+              --repo "$GITHUB_REPOSITORY" \
+              "$VSIX"
+            echo "Release $TAG 创建完成 ✅"
+          fi
