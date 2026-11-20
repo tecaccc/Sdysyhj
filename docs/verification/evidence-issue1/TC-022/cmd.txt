@@ -1,0 +1,5 @@
+# TC-022 独立核验（不复用研发测试）：反向语义 SC-EXT-IDLE
+# 前置：环境见 ENV-SETUP；一次性脚本在 /tmp/verify-harness（原文已归档本目录 script/）
+cd /tmp/verify-harness
+unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT
+HOME=/tmp/tmp.IQwszueu6m node scenario2-external-idle.cjs    # 断言全在脚本内，exit 0 = PASS

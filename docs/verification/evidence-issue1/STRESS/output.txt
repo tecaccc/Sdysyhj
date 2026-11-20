@@ -1,0 +1,98 @@
+== 并行 3 连跑（3 个 vitest 实例同目录并发，互为 CPU/进程负载）==
+PARALLEL-1 EXIT=0
+PARALLEL-3 EXIT=0
+PARALLEL-2 EXIT=0
+
+-- int-parallel-1.txt --
+
+> sdysyhj@0.1.0 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/verify-issue1
+
+
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+   Start at  11:09:20
+   Duration  3.60s (tests 94%, import 5%, worker 1%)
+
+
+-- int-parallel-2.txt --
+
+> sdysyhj@0.1.0 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/verify-issue1
+
+
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+   Start at  11:09:19
+   Duration  3.71s (tests 94%, import 4%, transform 1%, worker 1%)
+
+
+-- int-parallel-3.txt --
+
+> sdysyhj@0.1.0 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/verify-issue1
+
+
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+   Start at  11:09:20
+   Duration  3.59s (tests 94%, import 5%, worker 1%, transform 1%)
+
+
+== 顺序 3 连跑 ==
+SEQ-1 EXIT=0 / SEQ-2 EXIT=0 / SEQ-3 EXIT=0（每次均 4 文件 30 用例全绿）
+-- int-seq-1.txt --
+
+> sdysyhj@0.1.0 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/verify-issue1
+
+
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+   Start at  11:09:50
+   Duration  2.14s (tests 95%, import 3%, transform 1%, worker 1%)
+
+
+-- int-seq-2.txt --
+
+> sdysyhj@0.1.0 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/verify-issue1
+
+
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+   Start at  11:09:52
+   Duration  2.12s (tests 95%, import 3%, transform 1%, worker 1%)
+
+
+-- int-seq-3.txt --
+
+> sdysyhj@0.1.0 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/verify-issue1
+
+
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+   Start at  11:09:55
+   Duration  2.13s (tests 95%, import 3%, transform 1%, worker 1%)
+
+
+小结：6/6 全绿（并行 3 + 顺序 3，各 30/30），加首轮全量共 7 次 verify:integration 全绿，无间歇性失败

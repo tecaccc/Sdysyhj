@@ -1,0 +1,5 @@
+# SC-D02：#D-02 全新会话补学（正向 + 阴性对照）
+cd /tmp/verify-harness
+unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT
+HOME=/tmp/tmp.IQwszueu6m node scenario3-d02.cjs expect-clean
+HOME=/tmp/tmp.IQwszueu6m BRIDGE_BUNDLE=/tmp/verify-harness/bridge-bundle-prefix.cjs node scenario3-d02.cjs expect-bug

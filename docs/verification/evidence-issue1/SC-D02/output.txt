@@ -1,0 +1,17 @@
+===== 正向（ready-for-verify-r3，独立复跑留档）=====
+场景：SC-D02（#D-02 全新会话补学，期望=expect-clean）
+NOTE: 前置确认：启动 get_state 时 sessionFile=null（全新会话）
+NOTE: 首轮落盘：/tmp/verify-sc3-p9FkWo/home/.pi/agent/sessions/--tmp-verify-sc3-p9FkWo-workspace--/session-fresh.jsonl（3 行）
+NOTE: settled 后观测到 get_state 二次调用（refreshState 补学）
+NOTE: 外部写入检出成功，延迟 2075ms（≤5000ms 门禁）
+RESULT: PASS（settled 补学 sessionFile，后续外部写入可检出，首轮无误报）
+
+===== 阴性对照（预修复 4c24316，历史执行输出）=====
+场景：SC-D02（#D-02 全新会话补学，期望=expect-bug）
+NOTE: 前置确认：启动 get_state 时 sessionFile=null（全新会话）
+NOTE: 首轮落盘：/tmp/verify-sc3-K5heoc/.../session-fresh.jsonl（3 行）
+NOTE: 阴性对照：settled 后无 get_state 补学（预修复代码 #D-02 表现）
+NOTE: 阴性对照复现 #D-02：外部写入未检出（预修复代码 sessionFile 永不补学）
+RESULT: PASS（阴性对照如预期复现 #D-02 漏检）
+
+小结：正向 PASS（settled 后 get_state 二次调用补学 sessionFile，外部写入 2074ms 检出，首轮内部写入无误报）；阴性对照复现漏检（补学缺失→watcher 永不跟踪→外部写入不可检出）

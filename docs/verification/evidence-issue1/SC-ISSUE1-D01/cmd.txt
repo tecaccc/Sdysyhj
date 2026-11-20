@@ -1,0 +1,7 @@
+# SC-ISSUE1-D01：Issue #1 独立重放（#D-01，正向 + 阴性对照）
+# 正向：被测标签 ready-for-verify-r3 的 bundle（bridge-bundle.cjs）
+# 阴性：预修复提交 4c24316 的独立克隆 bundle（bridge-bundle-prefix.cjs）——必须复现缺陷，证明场景有判别力
+cd /tmp/verify-harness
+unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT
+for i in 1 2 3; do HOME=/tmp/tmp.IQwszueu6m node scenario1-issue1.cjs expect-clean; done
+for i in 1 2 3; do HOME=/tmp/tmp.IQwszueu6m BRIDGE_BUNDLE=/tmp/verify-harness/bridge-bundle-prefix.cjs node scenario1-issue1.cjs expect-bug; done

@@ -1,0 +1,8 @@
+cd /tmp/verify-issue1
+export HOME=$(mktemp -d)；unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT
+npm run typecheck
+npm run build
+npm run verify:unit
+npm run verify:integration
+# 佐证：FR-SESS-07 相关 4 个套件文件 verbose 名录
+npx vitest run test/unit/sessionStore.test.ts test/unit/piBridge.test.ts test/integration/pi-bridge.test.ts test/integration/defects-regression.test.ts --reporter=verbose

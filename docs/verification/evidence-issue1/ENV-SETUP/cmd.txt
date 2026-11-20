@@ -1,0 +1,8 @@
+rm -rf /tmp/verify-issue1
+git clone /data/workspace/Sdysyhj /tmp/verify-issue1
+cd /tmp/verify-issue1 && git checkout ready-for-verify-r3
+git status --porcelain        # 须为空
+git describe --tags           # 证据头
+git rev-parse HEAD
+npm ci                        # 离线优先
+uname -sr && node --version && npm --version && date -Is

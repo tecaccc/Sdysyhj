@@ -1,0 +1,24 @@
+$ git clone /data/workspace/Sdysyhj /tmp/verify-issue1
+正克隆到 '/tmp/verify-issue1'... 完成。
+$ git checkout ready-for-verify-r3
+HEAD 目前位于 e084223 fix(sess): 修复外部修改检测误报——本插件 pi 子进程写入三重豁免（Issue #1 / #D-01）
+$ git status --porcelain
+（空输出，退出码 0）
+$ git describe --tags
+ready-for-verify-r3
+$ git rev-parse HEAD
+e084223c36745ead02d4e53e375643fd8b334865
+$ npm ci
+added 167 packages, and audited 168 packages in 5s（exit 0；仅 allow-scripts 警告，无 error）
+$ uname -sr && node --version && npm --version && date -Is
+Linux 5.14.0-687.15.1.el9_8.x86_64 | v24.19.0 | 11.17.0 | 2026-11-20T10:49:44+08:00
+
+证据头（见 env-header.txt）：
+- git describe --tags: ready-for-verify-r3
+- HEAD: e084223c36745ead02d4e53e375643fd8b334865
+- OS: Linux 5.14.0-687.15.1.el9_8.x86_64（RHEL 9 内核）
+- Node: v24.19.0 / npm 11.17.0
+- 日期: 2026-11-20（执行窗口 10:49–11:12 +08:00）
+- 核验隔离：全部执行于克隆 /tmp/verify-issue1（分离头 @ ready-for-verify-r3）；主仓库 /data/workspace/Sdysyhj 零写操作
+- 环境硬化（沿验证剧本 §1.2）：每次运行 unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT；HOME 指向临时目录
+- 阴性对照副本：/tmp/verify-issue1-prefix @ 4c24316（预修复提交，独立 npm ci + 独立 esbuild bundle）

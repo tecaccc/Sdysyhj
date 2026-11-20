@@ -1,0 +1,127 @@
+== npm run typecheck（exit 0）==
+
+> sdysyhj@0.1.0 typecheck
+> tsc --noEmit
+（无输出，exit 0）
+
+== npm run build（exit 0）==
+（esbuild 宿主 bundle + webview bundle）
+⚡ Done in 12ms
+  media/main.js       560.3kb
+  media/main.css        9.3kb
+  media/main.js.map   997.2kb
+  media/main.css.map   16.7kb
+⚡ Done in 44ms
+
+== npm run verify:unit（exit 0）==
+
+> sdysyhj@0.1.0 verify:unit
+> vitest run test/unit
+
+
+ RUN  v5.1.0 /tmp/verify-issue1
+
+
+ Test Files  10 passed (10)
+      Tests  97 passed (97)
+   Start at  10:51:37
+   Duration  5.02s (tests 89%, transform 7%, import 3%, worker 1%)
+
+    Isolate  10 workers spawned · ~135ms startup each (spawn + environment, per file)
+             at least ~315ms faster with isolate: false — reuses workers across files instead of one per file
+
+
+== npm run verify:integration（exit 0，首轮全量）==
+
+> sdysyhj@0.1.0 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/verify-issue1
+
+
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+   Start at  10:51:55
+   Duration  2.14s (tests 91%, transform 4%, import 4%, worker 1%)
+
+
+== 佐证：verbose 4 文件（exit 0，54/54；节选 FR-SESS-07 相关用例名）==
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 外部修改检测：watcher 回调 → external_change（FR-SESS-07） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#4 回归：外部修改后 prompt 被拦截并引导刷新；刷新后恢复（FR-SESS-07 口径 C） 1ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > 运行态门控接线：starting 挂起，idle/aborted 恢复并同步基线（#D-01 R2） 2ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > (a) starting/streaming 期间会话文件变化只吸收不报警；settled 后恢复正常检测（#D-01） 254ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > (b) idle 下迟到 entry_appended：先落盘后事件不误报（#D-01 R1） 121ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > (c) idle 下真实外部写入在一个轮询周期内检出（≤5s 检测语义保持，#D-01） 87ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > #D-02 全新会话：settled 后补学 sessionFile 并进入跟踪，外部写入可检出（R3） 105ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#4（FR-SESS-07）外部修改拦截（口径 C） > 检测外部修改后 prompt 被拦截并引导刷新；刷新后恢复 353ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > 外部修改/删除可检测；无变化不误报 2ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > markSynced 同步基线（本端写入不误报） 2ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > start/stop 定时检查触发回调 82ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > setSuspended（#D-01）：挂起期间变化只吸收不报警；恢复先同步基线再正常检测 243ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > Issue #1 / #D-01/#D-02 回归重放：第二条消息全程无 external_change，随后外部写入检出（FR-SESS-07） 997ms
+
+== verbose 全文 ==
+
+ RUN  v5.1.0 /tmp/verify-issue1
+
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 启动 → prompt → 工具调用链 → settled（含 thinking/tool 卡片事件） 89ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 启动后加载状态与历史 4ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt → 流式 → settled 全链路；run_state 转移 starting→streaming→idle 4ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > message_end 为权威终稿，覆盖流式增量 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > abort：agent_settled(aborted) → 状态流 streaming→aborted→idle，历史保留（缺陷#3 回归，口径 A） 2ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 运行中发送 → steer 排队（FR-CHAT-06） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 运行中发送 follow-up 模式 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 工具卡片：执行状态 + 输出截断保留尾部 + 复制全部取全量（FR-CHAT-04） 3ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 工具失败状态（isError） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 子进程崩溃自动重启一次并提示（NFR-02）；再次崩溃进入 error 3ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt 被拒：错误展示 + 恢复可输入（FR-CHAT-05/07） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > provider 报错（stopReason=error）展示可读信息与指引 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 外部修改检测：watcher 回调 → external_change（FR-SESS-07） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 历史重建：工具结果绑定到卡片（FR-SESS-03） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 模型切换后 model_info 更新（FR-MOD-01） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinking 等级切换/循环（FR-MOD-02） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 会话命名（FR-SESS-04） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 新建/切换会话：session_reset + 历史重建（FR-SESS-01/03） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinkingDefault 在新建会话时透传（FR-MOD-02：枚举不固化） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinkingDefault 为空时不干预 pi 自身设置 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#6 回归：关键路径日志 4 类齐全（会话创建/prompt/abort/子进程退出） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#4 回归：外部修改后 prompt 被拦截并引导刷新；刷新后恢复（FR-SESS-07 口径 C） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#4 回归：切换/新建会话同样解除陈旧拦截 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#2 回归：stderr/协议异常写入日志并脱敏（FR-CMD-02） 2ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > 运行态门控接线：starting 挂起，idle/aborted 恢复并同步基线（#D-01 R2） 2ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 错误运行（ERROR）：错误展示 + 状态恢复 73ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#1（FR-CMD-05）打包布局内置运行时 > 复现脚本形态：激活 → ready → source=bundled 可用（vsix 布局） 256ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > MOCK-STDERR：stderr 原文与协议异常写入日志（含脱敏） 68ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 子进程崩溃 → 自动重启一次；再崩溃 → error 态 + 可行动指引（NFR-02/FR-CHAT-07） 119ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 会话切换：历史恢复（session_reset + history_loaded） 47ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > (a) starting/streaming 期间会话文件变化只吸收不报警；settled 后恢复正常检测（#D-01） 254ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 新建会话清空历史（FR-SESS-01） 60ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > steer 插话排队（FR-CHAT-06） 85ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > (b) idle 下迟到 entry_appended：先落盘后事件不误报（#D-01 R1） 121ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > stderr 无换行尾部在子进程退出时也会冲刷 90ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > (c) idle 下真实外部写入在一个轮询周期内检出（≤5s 检测语义保持，#D-01） 87ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > #D-02 全新会话：settled 后补学 sessionFile 并进入跟踪，外部写入可检出（R3） 105ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > dispose 强制停止子进程（无僵尸） 239ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > NFR-01 代理：≥600 delta 零丢失 + 全量渲染 ≤30s 68ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#4（FR-SESS-07）外部修改拦截（口径 C） > 检测外部修改后 prompt 被拦截并引导刷新；刷新后恢复 353ms
+ ✓ test/unit/sessionStore.test.ts > encodeSessionDirName > 与 pi 一致：去首分隔符、[/\\:] → '-'，外裹 --…-- 5ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 解析标题（session_info 名称优先）、消息数、时间 3ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 无命名时标题取首条用户消息摘要 2ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 按修改时间倒序；mostRecentSession 返回最新 3ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 目录不存在返回空数组 1ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 损坏行跳过不致命 1ms
+ ✓ test/unit/sessionStore.test.ts > defaultSessionsRoot > 环境变量优先 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > 外部修改/删除可检测；无变化不误报 2ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > markSynced 同步基线（本端写入不误报） 2ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#6（NFR-05）关键路径日志 > 会话创建 / prompt / abort / 子进程退出 4 类齐全 139ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > FR-SESS-03：切换会话重放历史与会话 JSONL 一致（含压缩状态条目） 51ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > start/stop 定时检查触发回调 82ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > setSuspended（#D-01）：挂起期间变化只吸收不报警；恢复先同步基线再正常检测 243ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > Issue #1 / #D-01/#D-02 回归重放：第二条消息全程无 external_change，随后外部写入检出（FR-SESS-07） 997ms
+
+ Test Files  4 passed (4)
+      Tests  54 passed (54)
+   Start at  11:12:53
+   Duration  2.08s (tests 94%, import 3%, transform 2%, worker 1%)
+

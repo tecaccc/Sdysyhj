@@ -1,0 +1,5 @@
+# 压力抽查（任务书第 5 步）：verify:integration 并行 3 连跑 + 顺序 3 连跑
+cd /tmp/verify-issue1
+unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT
+for i in 1 2 3; do (HOME=<tmp> npm run verify:integration > int-parallel-$i.txt 2>&1; echo "PARALLEL-$i EXIT=$?" >> parallel-exits.txt) & done; wait
+for i in 1 2 3; do HOME=<tmp> npm run verify:integration > int-seq-$i.txt 2>&1; echo "SEQ-$i EXIT=$?"; done

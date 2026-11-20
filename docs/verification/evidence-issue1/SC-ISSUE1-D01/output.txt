@@ -1,0 +1,56 @@
+===== 正向（ready-for-verify-r3）sc1-r3-run1.txt =====
+场景：SC-ISSUE1（#D-01 独立重放，期望=expect-clean）
+NOTE: 续接会话文件：/tmp/verify-sc1-xcqMdq/home/.pi/agent/sessions/--tmp-verify-sc1-xcqMdq-home--/session-verify-seed.jsonl
+NOTE: 落盘→首响应窗口实测 3504ms（要求 ≥3000ms）
+NOTE: watcher 轮询周期 2500ms，窗口 3500ms ⇒ 窗口内必然发生 ≥1 次轮询
+NOTE: run_state 序列：starting → streaming → idle → starting → streaming → idle
+RESULT: PASS（全程无 external_change、无拦截、第二条消息正常发送并完成）
+===== 正向（ready-for-verify-r3）sc1-r3-run2.txt =====
+场景：SC-ISSUE1（#D-01 独立重放，期望=expect-clean）
+NOTE: 续接会话文件：/tmp/verify-sc1-m2A9rA/home/.pi/agent/sessions/--tmp-verify-sc1-m2A9rA-home--/session-verify-seed.jsonl
+NOTE: 落盘→首响应窗口实测 3505ms（要求 ≥3000ms）
+NOTE: watcher 轮询周期 2500ms，窗口 3500ms ⇒ 窗口内必然发生 ≥1 次轮询
+NOTE: run_state 序列：starting → streaming → idle → starting → streaming → idle
+RESULT: PASS（全程无 external_change、无拦截、第二条消息正常发送并完成）
+===== 正向（ready-for-verify-r3）sc1-r3-run3.txt =====
+场景：SC-ISSUE1（#D-01 独立重放，期望=expect-clean）
+NOTE: 续接会话文件：/tmp/verify-sc1-YvdvKG/home/.pi/agent/sessions/--tmp-verify-sc1-YvdvKG-home--/session-verify-seed.jsonl
+NOTE: 落盘→首响应窗口实测 3504ms（要求 ≥3000ms）
+NOTE: watcher 轮询周期 2500ms，窗口 3500ms ⇒ 窗口内必然发生 ≥1 次轮询
+NOTE: run_state 序列：starting → streaming → idle → starting → streaming → idle
+RESULT: PASS（全程无 external_change、无拦截、第二条消息正常发送并完成）
+
+===== 阴性对照（预修复 4c24316）sc1-prefix-run1.txt =====
+场景：SC-ISSUE1（#D-01 独立重放，期望=expect-bug）
+NOTE: 续接会话文件：/tmp/verify-sc1-pszcCI/home/.pi/agent/sessions/--tmp-verify-sc1-pszcCI-home--/session-verify-seed.jsonl
+NOTE: 落盘→首响应窗口实测 3504ms（要求 ≥3000ms）
+NOTE: watcher 轮询周期 2500ms，窗口 3500ms ⇒ 窗口内必然发生 ≥1 次轮询
+NOTE: 阴性对照复现误报 × 1（符合预期：旧代码缺陷）
+NOTE: 阴性对照：prompt 命令 1→1（被拦截，未达子进程——复现用户报障）
+NOTE: 阴性对照：第二条消息拦截错误 × 1（复现用户报障）
+NOTE: run_state 序列：starting → streaming → idle
+RESULT: PASS（阴性对照如预期复现缺陷，证明场景有判别力）
+
+===== 阴性对照（预修复 4c24316）sc1-prefix-run2.txt =====
+场景：SC-ISSUE1（#D-01 独立重放，期望=expect-bug）
+NOTE: 续接会话文件：/tmp/verify-sc1-uNMvye/home/.pi/agent/sessions/--tmp-verify-sc1-uNMvye-home--/session-verify-seed.jsonl
+NOTE: 落盘→首响应窗口实测 3505ms（要求 ≥3000ms）
+NOTE: watcher 轮询周期 2500ms，窗口 3500ms ⇒ 窗口内必然发生 ≥1 次轮询
+NOTE: 阴性对照复现误报 × 1（符合预期：旧代码缺陷）
+NOTE: 阴性对照：prompt 命令 1→1（被拦截，未达子进程——复现用户报障）
+NOTE: 阴性对照：第二条消息拦截错误 × 1（复现用户报障）
+NOTE: run_state 序列：starting → streaming → idle
+RESULT: PASS（阴性对照如预期复现缺陷，证明场景有判别力）
+
+===== 阴性对照（预修复 4c24316）sc1-prefix-run3.txt =====
+场景：SC-ISSUE1（#D-01 独立重放，期望=expect-bug）
+NOTE: 续接会话文件：/tmp/verify-sc1-bpfN3w/home/.pi/agent/sessions/--tmp-verify-sc1-bpfN3w-home--/session-verify-seed.jsonl
+NOTE: 落盘→首响应窗口实测 3504ms（要求 ≥3000ms）
+NOTE: watcher 轮询周期 2500ms，窗口 3500ms ⇒ 窗口内必然发生 ≥1 次轮询
+NOTE: 阴性对照复现误报 × 1（符合预期：旧代码缺陷）
+NOTE: 阴性对照：prompt 命令 1→1（被拦截，未达子进程——复现用户报障）
+NOTE: 阴性对照：第二条消息拦截错误 × 1（复现用户报障）
+NOTE: run_state 序列：starting → streaming → idle
+RESULT: PASS（阴性对照如预期复现缺陷，证明场景有判别力）
+
+小结：正向 3/3 exit 0（全程无 external_change、无拦截、第二条消息正常送达并完成）；阴性对照 3/3 exit 0（均复现误报 external_change ×1 + 第二条消息被拦截、prompt 未达子进程——用户报障复现）
