@@ -1,0 +1,5 @@
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 错误运行（ERROR）：错误展示 + 状态恢复 71ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 子进程崩溃 → 自动重启一次；再崩溃 → error 态 + 可行动指引（NFR-02/FR-CHAT-07） 121ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 子进程崩溃自动重启一次并提示（NFR-02）；再次崩溃进入 error 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt 被拒：错误展示 + 恢复可输入（FR-CHAT-05/07） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > provider 报错（stopReason=error）展示可读信息与指引 0ms

@@ -1,0 +1,27 @@
+PASS A01-通道-toast :: toast 已发出: 扩展错误（/home/verify/.pi/agent/npm/pi-loop/main.js）：This extension ctx is stale after session replacement or reload.（详情见 Output「Sdysyhj」）
+PASS A02-文案-路径 :: toast 含扩展路径 (true)
+PASS A03-文案-错误首行 :: toast 含错误首行原文
+PASS A04-文案-Output指引 :: toast 含 Output 指引: 扩展错误（/home/verify/.pi/agent/npm/pi-loop/main.js）：This extension ctx is stale after session replacement or reload.（详情见 Output「Sdysyhj」）
+PASS A05-文案-仅首行 :: toast 不含错误第二/三行
+PASS A06-日志全字段 :: logger.warn 含 extensionPath+event+多行 error 全文
+PASS A07-同键去重 :: 同键 3 连发窗口内 toast 次数=1（期望 1，键=路径A+同一 error）
+PASS A08-日志不去重 :: 同键 3 连发 logger.warn 次数=3（期望 3）
+PASS A09-异键-不同路径 :: 不同 extensionPath 各自 toast
+PASS A10-异键-不同错误 :: 同路径不同 error 各自 toast
+PASS A11-缺路径容错 :: 缺 extensionPath 仍 toast 且含占位：扩展错误（未知扩展）：boom without path（详情见 Output「Sdysyhj」）
+PASS A12-缺路径日志 :: 缺路径日志占位：extension_error 事件：extensionPath=(无) event=timer error=boom without path
+PASS A13-缺错误容错 :: 缺 error 仍 toast 且含占位与路径：扩展错误（/home/verify/.pi/agent/npm/subagents/main.js）：未知错误（详情见 Output「Sdysyhj」）
+PASS A14-首行截断120 :: toast 首行截断 120+省略号且不含后续行
+PASS A15-日志不截断 :: logger.warn 含 150 字符全行 + 后续行
+PASS A16-窗口外再现 :: 60s 窗口外同键再次 toast（键A 累计 2，期望 2）
+PASS A17-窗口外日志 :: 窗口外第 4 次同键仍记日志（=4，期望 4）
+PASS A18-extension_error-零错误卡片 :: extension_error 场景 error 事件数=0（期望 0）
+PASS A19-误导hint已移除 :: 含旧误导 hint 的消息数=0（期望 0）
+PASS A20-provider报错-错误卡片 :: provider 报错走 error 通道：模型返回错误：rate limited (HTTP 429)
+PASS A21-provider报错-指引 :: 错误卡片含修复指引：请检查 provider 配置与额度（`pi auth` / `pi config`），或更换模型后重试。
+PASS A22-崩溃-错误卡片 :: 二次崩溃走 error 通道：Pi 子进程反复崩溃，已停止自动重启。
+PASS A23-崩溃-指引 :: 崩溃卡片含修复指引：请运行 `pi auth` 检查凭证；检查 sdysyhj.piPath 是否指向有效 pi；查看 Output「Sdysyhj」日志中的 stderr 详情。
+
+===== 汇总 =====
+PASS=23 FAIL=0
+toasts(total)=8 errors(total)=3 extWarns=9

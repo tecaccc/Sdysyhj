@@ -1,0 +1,12 @@
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > MOCK-STDERR：stderr 原文与协议异常写入日志（含脱敏） 64ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > stderr 无换行尾部在子进程退出时也会冲刷 89ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > Issue #2 / #D-03 回归：extension_error 走 toast（非阻断）+ 同键去重 + 日志全字段（FR-CHAT-07 澄清 #14） 67ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#2 回归：stderr/协议异常写入日志并脱敏（FR-CMD-02） 1ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 通道选择：extension_error 走 toast（非阻断）——无 error 事件、无误导 hint，文案含路径/错误首行/Output 指引 4ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 日志全字段：logger.warn 含 extensionPath/event/error 全文（多行不截断） 2ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 同键去重：相同 error+extensionPath 60s 窗口内只 toast 一次，日志仍全量 2ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 不同键不去重：extensionPath 或 error 任一不同即各自 toast 1ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 60s 窗口外同键重复事件再次 toast（fake timers，确定性无等待） 12ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 缺字段容错：无 extensionPath/error 仍 toast 与记日志（占位文案，不抛错） 2ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 无法解析的行进入 onAnomaly（协议异常日志，FR-CMD-02） 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > onStderr：行缓冲转发 stderr 原文，退出时冲刷无换行尾部（FR-CMD-02） 23ms

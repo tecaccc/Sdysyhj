@@ -1,0 +1,8 @@
+# TC-031 ｜ FR-CMD-02（P0）｜ Output Channel 记录 stderr 与协议异常 ｜ 自动 → 判定 PASS
+# 证据三源：
+#  1) 交付套件复跑（_suites/ 全绿；本目录 suite-lines.txt 摘录）：
+#     integration「MOCK-STDERR：stderr 原文与协议异常写入日志（含脱敏）」「stderr 无换行尾部在子进程退出时也会冲刷」
+#     unit「RpcClient > 无法解析的行进入 onAnomaly」「onStderr：行缓冲转发…」「缺陷#2 回归：stderr/协议异常写入日志并脱敏」
+#  2) 澄清 #14 的 FR-CMD-02 面（extension_error 全字段入日志）——独立重放（../EXTERR-REPLAY/output.txt）：
+#     A06 logger.warn 含 extensionPath+event+多行 error 全文；A12 缺路径占位 (无)；A15 150 字符全行+后续行（不截断）；A17 去重仅作用 toast，日志 4/4 全量
+#  3) 通道名称「Sdysyhj」与脱敏：套件断言复跑全绿（defects-regression 含脱敏断言）；toast 文案尾部「详情见 Output「Sdysyhj」」（A04）

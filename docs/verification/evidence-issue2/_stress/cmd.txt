@@ -1,0 +1,6 @@
+# 压力抽查（verify:integration 并行 3 + 顺序 2）——首轮因 30min 超时中断未执行，本轮补齐（总调度裁决 A，2026-11-20）
+cd /tmp/verify-issue2
+unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT
+export HOME=/tmp/tmp.RnUA5C1PaR   # 与全量自测同一隔离 HOME
+bash /tmp/vh-issue2/stress-run.sh   # 驱动脚本原文见本目录 script/stress-run.sh
+# 判定：5 次运行 exit 均 0 且各 31/31 绿 → ALL-PASS；间歇失败按 FAIL

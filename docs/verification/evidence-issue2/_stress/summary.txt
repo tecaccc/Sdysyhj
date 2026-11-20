@@ -1,0 +1,9 @@
+== 压力抽查（补跑）start 2026-11-20T16:08:16+08:00 ==
+parallel window: 2026-11-20T16:08:16+08:00 -> 2026-11-20T16:08:21+08:00
+sequential window: 2026-11-20T16:08:21+08:00 -> 2026-11-20T16:08:26+08:00
+parallel-1: exit=0 (Tests  31 passed)
+parallel-2: exit=0 (Tests  31 passed)
+parallel-3: exit=0 (Tests  31 passed)
+sequential-1: exit=0 (Tests  31 passed)
+sequential-2: exit=0 (Tests  31 passed)
+== end 2026-11-20T16:08:26+08:00; overall=ALL-PASS ==

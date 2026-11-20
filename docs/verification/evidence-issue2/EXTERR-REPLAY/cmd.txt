@@ -1,0 +1,8 @@
+# 独立重放（不复用研发 test/）：PiBridge+RpcClient 取自被测标签 src 经 esbuild 打 bundle，配自写 fake pi
+# 环境：克隆干净检出 ready-for-verify-r4（git status --porcelain 空）；unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT；HOME=/tmp/vh-fake-home
+# 步骤：
+#  1) node script/bundle.mjs            # entry.ts re-export 被测 src/bridge/{piBridge,rpcClient}，产出 piBridge-bundle.cjs（构建产物未入库，可由本命令重建）
+#  2) node script/probe2.cjs            # 链路探针（fake pi RPC 往返自检，历史中间产物）
+#  3) node script/replay-exterr.cjs     # 主重放：时钟 patch 前置加载；场景 S1-S8（extension_error）+ S9/S10（反向）
+# 判定：输出 PASS=23 FAIL=0 且 exit 0（见 output.txt，run8，2026-11-20 15:34）
+# 注：run7.log 为 23 项中 A16 一次计数谓词误判（harness 自身缺陷，双键文本重叠），修正后 run8 全绿；两份日志经研发零接触、均由测试 Agent 独立产生

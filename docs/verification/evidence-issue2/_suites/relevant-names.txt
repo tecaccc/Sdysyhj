@@ -1,0 +1,32 @@
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 错误运行（ERROR）：错误展示 + 状态恢复 71ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 子进程崩溃 → 自动重启一次；再崩溃 → error 态 + 可行动指引（NFR-02/FR-CHAT-07） 121ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > MOCK-STDERR：stderr 原文与协议异常写入日志（含脱敏） 64ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > stderr 无换行尾部在子进程退出时也会冲刷 89ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > Issue #2 / #D-03 回归：extension_error 走 toast（非阻断）+ 同键去重 + 日志全字段（FR-CHAT-07 澄清 #14） 67ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 工具失败状态（isError） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 子进程崩溃自动重启一次并提示（NFR-02）；再次崩溃进入 error 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt 被拒：错误展示 + 恢复可输入（FR-CHAT-05/07） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > provider 报错（stopReason=error）展示可读信息与指引 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#2 回归：stderr/协议异常写入日志并脱敏（FR-CMD-02） 1ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 通道选择：extension_error 走 toast（非阻断）——无 error 事件、无误导 hint，文案含路径/错误首行/Output 指引 4ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 日志全字段：logger.warn 含 extensionPath/event/error 全文（多行不截断） 2ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 同键去重：相同 error+extensionPath 60s 窗口内只 toast 一次，日志仍全量 2ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 不同键不去重：extensionPath 或 error 任一不同即各自 toast 1ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 60s 窗口外同键重复事件再次 toast（fake timers，确定性无等待） 12ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 缺字段容错：无 extensionPath/error 仍 toast 与记日志（占位文案，不抛错） 2ms
+ ✓ test/unit/stderr-ordering.test.ts > stderr 排空屏障（agent_settled 派发顺序保证） > settled 派发前，本次运行已写入的 stderr 必定已进入日志转发 2081ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > 显式 piPath 启动失败 → 含详情的可行动错误 4ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 未识别命令返回 success:false（错误处理） 42ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 无法解析的行进入 onAnomaly（协议异常日志，FR-CMD-02） 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 子进程退出时挂起请求被拒绝，错误含 stderr 24ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > prompt 成功返回 disposition；失败返回 error 24ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > onStderr：行缓冲转发 stderr 原文，退出时冲刷无换行尾部（FR-CMD-02） 23ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 与内置均不可用 → PiRuntimeError 含可行动指引 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径不存在 → 含错误详情的可行动指引 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径启动失败（探测不过）→ 错误含详情 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径版本低于最低支持 → 含详情的可行动错误 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > 布局内无内置运行时 → null（由上层报可行动错误） 1ms
+ ✓ test/unit/redact.test.ts > redactSecrets > Authorization / Bearer 脱敏 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 非法 JSON 返回 parseError 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 无 type 字段返回 parseError 0ms
+ ✓ test/unit/stderr-ordering.test.ts > stderr 排空屏障（agent_settled 派发顺序保证） > 屏障不打乱事件 FIFO 顺序（settled 前后的事件保序） 2075ms

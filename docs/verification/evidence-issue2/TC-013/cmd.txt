@@ -1,0 +1,9 @@
+# TC-013 ｜ FR-CHAT-07（P0）｜ 三类异常的可读错误 + 修复指引 ｜ 自动 → 判定 PASS
+# 证据三源：
+#  1) 交付套件复跑（_suites/unit-output.txt、_suites/integration-output.txt 全绿；本目录 suite-lines.txt 摘录相关用例名）
+#  2) 测试 Agent 独立重放反向场景 S9/S10（../EXTERR-REPLAY/output.txt A20-A23）：
+#     provider 报错（stopReason=error）→ 错误卡片「模型返回错误：rate limited (HTTP 429)」+ 修复指引（pi auth/额度/换模型）
+#     子进程二次崩溃 → 错误卡片「Pi 子进程反复崩溃…」+ 修复指引（pi auth / sdysyhj.piPath / Output 日志）
+#  3) 澄清 #14 边界（extension_error 不得进错误卡片）：独立重放 A18——8 个 extension_error 场景 error 事件数=0
+# SC-013c（空 HOME 无凭证）由套件「prompt 被拒：错误展示 + 恢复可输入（FR-CHAT-05/07）」与
+# rpc-client/runtime 失败路径用例覆盖（指引含 pi auth），复跑全绿。

@@ -1,0 +1,10 @@
+# 全量自测独立复跑（研发自述不采信，测试 Agent 亲跑；环境：克隆 ready-for-verify-r4 干净检出，
+# unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT，
+# HOME=/tmp/tmp.RnUA5C1PaR 隔离，npm ci --no-audit --no-fund）
+cd /tmp/verify-issue2
+npm run typecheck           # exit 0（无输出即通过）→ 见 typecheck-output.txt
+npm run build               # exit 0 → 见 build-output.txt
+npm run verify:unit         # exit 0：10 文件 103 用例 → unit-output.txt
+npm run verify:integration  # exit 0：4 文件 31 用例 → integration-output.txt
+npx vitest run test/unit test/integration --reporter=verbose | grep -E "✓|✗" | grep -iE "..." 
+                            # FR-CHAT-07/FR-CMD-02 相关用例名筛取 → relevant-names.txt（32 行，全 ✓）
