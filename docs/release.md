@@ -98,8 +98,54 @@ Trusted Publishing 不可用时（如需从 Actions 之外手动 `vsce publish`�
 
 - `v0.1.2` 及之前：tag 提交中无 release.yml，且 `publisher` 仍为旧值 `sdysyhj`——这些版本**只走 GitHub Release**（手动 dispatch 补发即可），Marketplace 上架自 `v0.1.3`（publisher=`tecacc` + Trusted Publishing）起。
 
+## 验证发布是否成功（四层校验）
+
+### 层 0：CI 运行全绿
+
+- 入口：<https://github.com/tecaccc/Sdysyhj/actions/workflows/release.yml>
+- Release 流水线 4 个 job 全部成功：*一致性门禁+全量自测 / 打包 vsix / 发布 Microsoft Marketplace / 创建 GitHub Release*；任一失败可点开日志定位（两个发布 job 独立，重跑不影响另一通道）
+
+### 层 1：GitHub Release（通道②）
+
+```bash
+# 页面：https://github.com/tecaccc/Sdysyhj/releases
+# API：
+curl -s https://api.github.com/repos/tecaccc/Sdysyhj/releases/latest | grep -E '"tag_name"|"name"'
+# 下载 vsix 后可核对内嵌版本（vsix 即 zip）：
+curl -sLO https://github.com/tecaccc/Sdysyhj/releases/latest/download/sdysyhj-0.1.X.vsix
+unzip -p sdysyhj-0.1.X.vsix extension/package.json | grep -E '"version"|"publisher"'
+```
+
+核对：Release 标题 = `v0.1.X`；正文 = CHANGELOG 对应条目；资产含 `sdysyhj-0.1.X.vsix`（约 20 MB）。
+
+### 层 2：Marketplace 上架（通道①）
+
+```bash
+# 命令（未上架时报 ERROR not found，上架后列出版本/安装量）：
+npx @vscode/vsce show tecacc.sdysyhj
+```
+
+或页面：<https://marketplace.visualstudio.com/items?itemName=tecacc.sdysyhj>（未上架为 404）。
+核对：显示的最新 Version = tag 版本；Publisher = tecacc；Versions 页有对应日期。
+
+### 层 3：实装验证（终端验证）
+
+```bash
+# 从 Marketplace 安装：
+code --install-extension tecacc.sdysyhj
+# 或从 Release 资产离线装：
+curl -sLO https://github.com/tecaccc/Sdysyhj/releases/latest/download/sdysyhj-0.1.X.vsix
+code --install-extension sdysyhj-0.1.X.vsix
+# 核对已装版本：
+code --list-extensions --show-versions | grep -i sdysyhj
+# 期望输出：tecacc.sdysyhj@0.1.X
+```
+
+装完打开 VS Code → 侧边栏 Sdysyhj 图标 → 验证基本功能（新建会话、发消息）。
+
 ## 校验清单（发版后）
 
-- [ ] Marketplace 上 `tecacc.sdysyhj` 新版本可见，版本号、CHANGELOG 页一致
-- [ ] GitHub Release `v0.1.x` 存在，附 `sdysyhj-0.1.x.vsix`，正文为 CHANGELOG 条目
-- [ ] CI run 全绿；Actions artifact 中有对应 vsix
+- [ ] 层 0：Release CI run 4 job 全绿
+- [ ] 层 1：GitHub Release `v0.1.x` 存在，附 `sdysyhj-0.1.x.vsix`，正文为 CHANGELOG 条目
+- [ ] 层 2：`vsce show tecacc.sdysyhj` 列出新版本；Marketplace 页面可访问
+- [ ] 层 3：`code --install-extension` 后 `--list-extensions` 显示 `tecacc.sdysyhj@0.1.x`
