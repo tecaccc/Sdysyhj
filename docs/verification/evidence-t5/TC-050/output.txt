@@ -1,0 +1,21 @@
+== SC-050a（TC-050 ④ 会话无痕）：完整滚动交互不出现在 webview→宿主边界与源级 ==
+  PASS  (iii) 滚动交互期间出站消息 kind 全部 ∈ 已知 WebviewToHost 白名单
+  PASS  (iii) 出站消息无任何携带滚动/跟随状态的消息
+  PASS  (iii) 除初始 ready 外交互期间零出站（滚动不产生任何宿主可见副作用）
+  PASS  (源级) FollowState 仅被 webview/main.ts 与自身引用
+  PASS  (源级) UiMessage 类型无跟随/滚动字段
+  PASS  (源级) 扩展宿主侧无会话文件写入（会话 JSONL 由 pi 子进程产生）
+== SC-050b（TC-050 ④ 不跨插件/面板重载持久化）==
+  PASS  前置：第 1 轮以打断态收尾（final 重排后距底仍 >40px）
+  PASS  前置：重载后历史回放完成（一次性初始定位落定，距底 0）
+  PASS  前置：发送前用户滚至距底 150px（构造可判别初态）
+  PASS  idle 下 user_message 回显不自动滚动（④）
+  PASS  (b) 重载后第 2 轮首个增量渲染点即“在底部”（默认跟随，未沿用任何持久化旧值）
+  PASS  (b) 第 2 轮后续渲染点持续在底部
+  PASS  (b) 两个面板实例均未调用 vscode.getState/setState（无持久化读写）
+== SC-050c（TC-050 ④ idle 不自动滚动）：载入落定 ≥1s 后 ≥2s 观察窗恒定 ==
+  PASS  前置：载入定位落定（一次性初始定位允许，距底 0）
+  PASS  (c) 观察窗（≥2s）内 scrollTop 恒定（无自动滚动）
+  PASS  (c) 探针：idle 下 DOM 增长（user_message 回显）不自动滚动
+
+TC-050 接线层判定：16 PASS / 0 FAIL

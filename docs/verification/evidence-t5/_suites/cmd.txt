@@ -1,0 +1,5 @@
+cd /tmp/verify-t5 && npm run typecheck
+npm run build
+npm run verify:unit
+npm run verify:integration
+(临时 HOME=/tmp/tmp.EvESgT5g8g；克隆自 /data/workspace/Sdysyhj，检出 ready-for-verify-r5=13da513)

@@ -1,0 +1,7 @@
+# TC-047/048/049 共用证据（纯逻辑 + 接线层，SC↔脚本映射见下）
+cd /tmp/verify-t5 && ./node_modules/.bin/esbuild webview/render/followState.ts --bundle --format=cjs --platform=node --outfile=/tmp/t5harness/followState.bundle.cjs
+node /tmp/t5harness/tc047-050-pure.cjs                      # 纯逻辑模块驱动（27 断言）→ output-pure.txt
+node /tmp/t5harness/tc047-049-wiring.cjs                    # 生产 bundle vm 驱动（24 断言）→ output-wiring-047-049.txt
+# 依赖：npm run build 产出的生产 webview bundle /tmp/verify-t5/media/main.js（见 _suites/build-output.txt）
+# SC↔映射：SC-047a/047b=输出「SC-047a/SC-047b」段；SC-048=「SC-048」段；SC-049=「SC-049」段
+# 负对照（harness 灵敏度）：bundle 副本移除 onStreamStart 默认跟随置位后重跑 → negative-control/output.txt（3 FAIL，SC-047a 失跟随被捕获）

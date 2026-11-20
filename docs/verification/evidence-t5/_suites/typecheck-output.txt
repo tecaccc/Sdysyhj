@@ -1,0 +1,5 @@
+
+> sdysyhj@0.1.2 typecheck
+> tsc --noEmit
+
+EXIT=0

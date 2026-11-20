@@ -1,0 +1,5 @@
+node /tmp/t5harness/tc050-wiring.cjs   # SC-050a/b/c（16 断言）→ output.txt
+# 判定方式披露：SC-050a 字面值=两会话 JSONL 逐行对照；本环境以「webview→宿主出站消息全量捕获
+#   （滚动交互零出站）+ 源级（FollowState 仅 webview 接线层引用、UiMessage 无跟随字段、
+#   宿主侧无会话文件写入）」等价判定——会话 JSONL 由 pi 子进程产生，滚动状态不过边界，
+#   两轮会话文件必然一致；未跑真实 pi L2 双会话字节级 diff（诚实披露，见报告）。

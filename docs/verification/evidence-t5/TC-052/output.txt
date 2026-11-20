@@ -1,0 +1,19 @@
+== SC-052a（MOCK-TOOLS-LATE）：3 工具执行结果均晚于含工具卡 message_final ≥50ms ==
+  PASS  (a) 助手消息含 3 张工具卡，初始均展示“进行中”
+  PASS  final 整体重建后卡片仍 3 张且状态“进行中”（#D-04 时序：结果未到）
+  PASS  (b) 迟到结果到达：卡 read(call_l1) 更新为“成功”
+  PASS  (b) 迟到结果到达：卡 grep(call_l2) 更新为“成功”
+  PASS  (b) 迟到结果到达：卡 bash(call_l3) 更新为“成功”
+  PASS  (c) 本轮结束无任何卡片停留“进行中”
+  PASS  (d) 全程直播路径：无 history_loaded/session_reset（出站无刷新类请求）
+  PASS  工具名/参数摘要仍正确展示
+== SC-052b（MOCK-TOOLS-FAIL）：同时序，bash 工具执行失败 → “失败” ==
+  PASS  (a) 初始“进行中”
+  PASS  (b) 迟到失败结果到达：卡更新为“失败”
+  PASS  (c) 本轮结束不停留“进行中”
+== 桥侧时序契约佐证（源级，#D-04）==
+  piBridge.ts：message_final 于 :854 发出（含 toolcall 块）；handleToolResult 于 :876 以
+  toolLocations 记录的 messageId/toolCallId 发出迟到 toolcall_status（:643 为 tool_execution_end 同构路径）——
+  状态事件不依赖 streaming 状态，final 后仍可路由。套件佐证：unit #D-04 时序契约用例（_suites/unit-output.txt）。
+
+TC-052 判定：11 PASS / 0 FAIL

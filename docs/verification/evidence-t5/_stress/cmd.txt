@@ -1,0 +1,4 @@
+压力抽查（TASK-005 派单口径）：并行 3 + 顺序 2，共 5 轮 verify:integration。
+并行：for i in 1 2 3; do (npm run verify:integration > run$i.txt 2>&1) & done; wait
+顺序：for i in 4 5; do npm run verify:integration > run$i.txt 2>&1; done
+结果：5/5 全绿（31/31），零间歇失败。

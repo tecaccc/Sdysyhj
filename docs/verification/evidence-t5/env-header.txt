@@ -1,0 +1,15 @@
+被测锚点（检出时态）：git describe --tags = ready-for-verify-r5（精确命中，无 -N-g 后缀）
+被测 HEAD = 13da513160780e2c6c78f9a3d65aaf955e542340
+tag 对象类型 = annotated tag（git cat-file -t = tag）
+核验产物 = 在同一克隆内以提交叠加（任务许可的 git 纪律；禁 push；src/test/需求/用例零改动），
+  故执行期当前 describe 会带 -N-g 后缀——被测对象始终为上述锚点 commit，产物 commit 不改变被测代码。
+OS = Linux 5.14.0-687.15.1.el9_8.x86_64（RHEL 9 内核，单机 Linux，无图形界面）
+Node / npm = v24.19.0 / 11.17.0
+日期 = 2026-11-20（+08:00），执行窗口 18:2x–18:5x
+克隆 = git clone /data/workspace/Sdysyhj /tmp/verify-t5 → git checkout ready-for-verify-r5
+工作区 = git status --porcelain 为空（检出后即核；npm install 对 package-lock 的 2 行扰动已还原复净）
+临时 HOME = /tmp/tmp.EvESgT5g8g；unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR PI_CODING_AGENT PI_SUBAGENTS_PI_CODING_AGENT_PACKAGE_ROOT
+依赖安装 = npm install --no-audit --no-fund（任务指定口径，非 npm ci）
+主仓库 /data/workspace/Sdysyhj = 零写（本克隆为唯一写侧；对主仓库仅 clone 源与 TASK-005 未跟踪缺陷单的只读读取）
+判据输入 = docs/requirements.md v0.3（FR-CHAT-09 / FR-CHAT-04）+ docs/test-cases.md v0.3（TC-047~TC-052）
+  + TASK-005 §1 #D-04 缺陷单（注意：该任务单在主仓库为未跟踪工作区文件，未随标签入库——见报告观察项）

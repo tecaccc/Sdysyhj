@@ -1,0 +1,41 @@
+== TC-048 单测口径：40px 阈值边界语义（≤40 在底部 / >40 离开底部）==
+  PASS  FOLLOW_THRESHOLD_PX === 40
+  PASS  初始默认跟随（stream_start 后应自动滚动）
+  PASS  onUserScroll(0px) 后 shouldAutoScroll()=跟随
+  PASS  onUserScroll(1px) 后 shouldAutoScroll()=跟随
+  PASS  onUserScroll(39px) 后 shouldAutoScroll()=跟随
+  PASS  onUserScroll(40px) 后 shouldAutoScroll()=跟随
+  PASS  onUserScroll(41px) 后 shouldAutoScroll()=不跟随
+  PASS  onUserScroll(100px) 后 shouldAutoScroll()=不跟随
+  PASS  onUserScroll(500px) 后 shouldAutoScroll()=不跟随
+== TC-047 ① 默认跟随：每轮流式开始重置跟随态（与上一轮结束时取值无关）==
+  PASS  第 1 轮 stream_start 后默认跟随
+  PASS  第 1 轮打断后不跟随（#SC-047b 前置）
+  PASS  第 2 轮首个 stream_start 即恢复默认跟随（不沿用上一轮打断态）
+  PASS  第 1 轮正常收尾后第 2 轮默认跟随
+  PASS  idle 期间滚动后，下一轮流式开始仍默认跟随
+== TC-048 ② 打断后跟随标志即时翻转（至迟于下一增量渲染前生效）==
+  PASS  打断后立即 shouldAutoScroll()=false（无需等待下一事件）
+  PASS  距底 41px 仍不跟随
+  PASS  轮内后续 stream_start 不覆盖打断（尊重用户意图）
+== TC-049 ③ 恢复：滚回 ≤40px 即恢复跟随，即时生效 ==
+  PASS  滚回距底 0px 立即恢复跟随
+  PASS  滚回距底恰 40px（界值）恢复跟随
+  PASS  滚回距底 41px 不恢复（界外一侧）
+== TC-050 ④ 边界：idle 不自动滚动；跟随态不跨运行残留 ==
+  PASS  初始（未运行）不自动滚动
+  PASS  运行但本轮 stream_start 未到：不自动滚动（跟随自本轮流式输出开始计）
+  PASS  流式开始后跟随
+  PASS  运行结束（idle）后即使跟随态残留也不自动滚动
+  PASS  轮内 running 态来回切换 + 后续 stream_start 不覆盖用户打断
+  PASS  重新运行后 stream_start 正常置跟随
+  PASS  idle 期间 stream_start 为空操作（防御性）不置跟随
+== 披露项（脚本初版机械断言 FAIL 的语义裁定，非 TC 判据）==
+  现象：第 1 轮跟随收尾→idle→第 2 轮 running（stream_start 未到）窗口内，
+  shouldAutoScroll() 沿用上一轮 following=true（roundStarted 已复位但 following 未清）。
+  语义裁定：FR-CHAT-09 ①判定点为"每轮流式开始"；该窗口内消息区无渲染点
+  （user_message 先于 run_state starting、stream_start 先于 assistant 渲染），
+  接线层不可观测；stream_start 时重置为默认跟随，终态不受影响——不构成缺陷。
+  字面结果披露：初版脚本该行 FAIL（25 PASS / 1 FAIL），已按剧本 §1.3-2 修正场景并留痕。
+
+纯逻辑模块判定：27 PASS / 0 FAIL

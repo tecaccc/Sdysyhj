@@ -1,0 +1,17 @@
+
+> sdysyhj@0.1.2 build
+> node esbuild.mjs
+
+
+  dist/extension.js       77.4kb
+  dist/extension.js.map  171.6kb
+
+⚡ Done in 11ms
+
+  media/main.js        563.1kb
+  media/main.css         9.3kb
+  media/main.js.map   1007.2kb
+  media/main.css.map    16.7kb
+
+⚡ Done in 43ms
+EXIT=0

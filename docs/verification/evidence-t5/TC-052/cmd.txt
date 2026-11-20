@@ -1,0 +1,7 @@
+node /tmp/t5harness/tc052-wiring.cjs                     # SC-052a/052b（11 断言）→ output.txt
+node /tmp/t5harness/make-negctl.cjs                      # 生成 #D-04 修复前 bundle 副本（/tmp，不入库）
+node /tmp/t5harness/tc052-negctl.cjs                     # 负对照：期望 FAIL → negative-control/output.txt（实际 6 FAIL，复现"恒进行中"）
+# 判定方式披露：DOM 层无现成测试基建 → /tmp 手写极简 DOM shim（minidom.js，~300 行）+ node:vm
+#   加载【生产构建产物 media/main.js】（npm run build 产出，见 _suites/build-output.txt）驱动直播路径；
+#   dompurify 在 shim 下 isSupported=false 优雅降级（sanitize 原样返回，不影响工具卡断言）。
+#   桥侧（宿主→webview 消息发射）由套件 unit #D-04 时序契约用例 + 源级（piBridge.ts :854/:876/:643）佐证。

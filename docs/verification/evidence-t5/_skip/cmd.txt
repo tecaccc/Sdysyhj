@@ -1,0 +1,4 @@
+范围外 TC → SKIP（TASK-005 裁决：本批 = hotfix #D-04 + 单条新 FR-CHAT-09 裁剪，仅核验 TC-047~TC-052）：
+  TC-001~TC-046：属 TASK-001/003/004 轮次，R1/R2 已核验（report-95cb259 / report-ce2c7a2 / report-e084223 / report-e9ae693），
+    本轮不重复执行；全量套件复跑（unit 117/117、integration 31/31，_suites/）作为回归面证据，未发现既有功能受损。
+  TC-020/033/034：P2 延后（SKIP-DEFERRED，既有裁决）。

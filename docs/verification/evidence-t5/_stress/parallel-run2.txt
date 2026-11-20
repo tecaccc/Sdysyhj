@@ -1,0 +1,14 @@
+
+> sdysyhj@0.1.2 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/verify-t5
+
+
+ Test Files  4 passed (4)
+      Tests  31 passed (31)
+   Start at  18:45:44
+   Duration  3.86s (tests 94%, import 5%, worker 1%)
+
+EXIT=0
