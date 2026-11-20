@@ -6,9 +6,10 @@ import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { PiBridge, type BridgeEvent, type PiRpcClient } from "../../src/bridge/piBridge";
+import { PiBridge, type BridgeEvent, type PiRpcClient, type SessionWatcherLike } from "../../src/bridge/piBridge";
 import { RpcClient } from "../../src/bridge/rpcClient";
 import type { ResolvedRuntime } from "../../src/bridge/rpcTransport";
+import { SessionFileWatcher } from "../../src/session/sessionStore";
 import { MemoryLogger } from "../../src/util/log";
 
 const FAKE_CLI = fileURLToPath(new URL("../helpers/fake-pi-cli.js", import.meta.url));
@@ -25,7 +26,9 @@ afterEach(() => {
   fs.rmSync(logDir, { recursive: true, force: true });
 });
 
-function makeBridge(options: { env?: Record<string, string> } = {}): { bridge: PiBridge; events: BridgeEvent[] } {
+function makeBridge(
+  options: { env?: Record<string, string>; createWatcher?: (cb: () => void) => SessionWatcherLike } = {}
+): { bridge: PiBridge; events: BridgeEvent[] } {
   const events: BridgeEvent[] = [];
   const runtime: ResolvedRuntime = {
     source: "bundled",
@@ -46,6 +49,7 @@ function makeBridge(options: { env?: Record<string, string> } = {}): { bridge: P
     logger: new MemoryLogger(),
     tailLines: 200,
     sendMode: "steer",
+    createWatcher: options.createWatcher,
   });
   bridge.onAny((event) => events.push(event));
   return { bridge, events };
@@ -57,6 +61,17 @@ function spawnCount(): number {
       .readFileSync(logFile, "utf8")
       .split("\n")
       .filter((l) => l.includes('"event":"spawn"')).length;
+  } catch {
+    return 0;
+  }
+}
+
+function promptCount(): number {
+  try {
+    return fs
+      .readFileSync(logFile, "utf8")
+      .split("\n")
+      .filter((l) => l.includes('"type":"prompt"')).length;
   } catch {
     return 0;
   }
@@ -310,4 +325,47 @@ describe("PiBridge + mock 子进程集成", () => {
 
     await bridge.dispose();
   });
+
+  it("Issue #1 / #D-01/#D-02 回归重放：第二条消息全程无 external_change，随后外部写入检出（FR-SESS-07）", async () => {
+    // 续接既有会话（文件已存在）→ 启动即进入跟踪（面板重开后发第二条消息的前置态）
+    const sessionFile = path.join(logDir, "resumed-session.jsonl");
+    fs.writeFileSync(
+      sessionFile,
+      JSON.stringify({ type: "session", version: 3, id: "resumed", timestamp: "2026-01-01T00:00:00.000Z", cwd: logDir }) + "\n"
+    );
+
+    const { bridge, events } = makeBridge({
+      env: { FAKE_PI_SESSION_FILE: sessionFile },
+      // 真实 SessionFileWatcher（压缩轮询周期验证与生产一致的检测语义）
+      createWatcher: (cb) => new SessionFileWatcher({ intervalMs: 50, onExternalChange: cb }),
+    });
+    await bridge.start();
+
+    // 第一条消息：子进程 prompt 接受时物理写 user 条目（turn_start 边界）+ 流式回复落盘
+    await bridge.sendPrompt("hello");
+    await waitFor(() => bridge.getRunState() === "idle", 8000, "first turn settled");
+    expect(events.some((e) => e.kind === "external_change")).toBe(false);
+    const written = fs.readFileSync(sessionFile, "utf8");
+    expect(written.includes('"role":"user"')).toBe(true); // 物理落盘确实发生
+    expect(written.includes('"role":"assistant"')).toBe(true);
+
+    // 第二条消息（Issue #1 场景）：user 条目落盘后首响应延迟 600ms（≥10 个轮询周期的静默窗口）
+    await bridge.sendPrompt("SLOW");
+    await waitFor(() => bridge.getRunState() === "idle", 8000, "second turn settled");
+    expect(events.some((e) => e.kind === "external_change")).toBe(false); // 全程无误报、未被拦截
+    expect(promptCount()).toBe(2); // 两次 prompt 均真实送达子进程
+
+    // 随后真实外部写入（终端 pi 追加同一会话）→ 一个轮询周期内检出（#D-02：新会话路径已补学）
+    fs.appendFileSync(sessionFile, '{"type":"message","message":{"role":"user","content":"terminal pi"}}\n');
+    await waitFor(() => events.some((e) => e.kind === "external_change"), 5000, "external change detected");
+
+    // 检出后拦截后续交互（口径 C 不受影响）
+    await bridge.sendPrompt("after-external");
+    await new Promise((r) => setTimeout(r, 300));
+    expect(promptCount()).toBe(2); // 未再发新 prompt
+    const errors = events.filter((e) => e.kind === "error") as Array<{ message: string; hint?: string }>;
+    expect(errors.some((e) => e.message.includes("拦截"))).toBe(true);
+
+    await bridge.dispose();
+  }, 30000);
 });

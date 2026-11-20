@@ -174,6 +174,11 @@ type WebviewToHost =
 - 历史列表：经 RPC 会话命令（`get_state` / 会话树 / `switch_session`）读取 pi 原生 session 存储，**不另建副本**
 - 恢复：切换会话后用 `get_messages` 重建 UI 历史；上下文/压缩状态由 pi 侧权威管理
 - 命名：`set_session_name`
+- 外部修改检测（FR-SESS-07）：`SessionFileWatcher` 以 mtime/size 2500ms 轮询（保证 ≤5s 检测时限）发现“插件之外”的写入。本插件 pi 子进程写入的三重豁免（Issue #1 / #D-01）：
+  1. `entry_appended` 事件 = 本端条目落盘的精确信号，到达即 `markSynced` 同步基线（覆盖 turn_start 边界 user 条目写入与迟到事件）；
+  2. 运行态门控 `setSuspended`：starting/streaming 期间轮询只吸收变化（更新基线）不报警，回 idle/aborted 恢复检测并先 `markSynced`；
+  3. assistant `message_final`、回 idle/aborted、刷新/切换等时机的 `markSynced` 兑底。
+  另：`agent_settled` 时若 `sessionFile` 为空则 `refreshState` 补学新会话路径（#D-02：全新会话首轮落盘后路径才可见，否则 watcher 永不跟踪 → 漏报）。
 - 分支（P2）：`get_tree` / `fork`，UI 二期实现
 
 ### 3.6 配置项（package.json contributes.configuration，仅 UI 相关）
@@ -287,7 +292,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | FR-SESS-04 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（`renameSession`：RPC `set_session_name` + `session_info_changed`）；`src/panel/chatPanel.ts`（`showRenameInput`）；`webview/main.ts`（点会话名重命名） | — |
 | FR-SESS-05 | P2 | ⏭ 二期 | — | 依赖 pi 分支树 UI（`fork`/`get_tree`），UI 延后到二期 |
 | FR-SESS-06 | P0 | ✅ 已实现 | 单活动会话 + 历史切换（`webview/main.ts` 单消息流；无并行标签） | — |
-| FR-SESS-07 | P1 | ✅ 已实现 | `src/session/sessionStore.ts`（`SessionFileWatcher`：mtime/size 对比，2.5s 轮询）；`src/bridge/piBridge.ts`（`external_change` 事件 + `sessionStale` 拦截）；`webview/main.ts`（提示横幅 + 刷新按钮） | v0.2.2 口径 C：检测后提示刷新且拦截后续 prompt（不发 RPC、引导刷新）；刷新/新建/切换会话后解除；本端写入 `markSynced` 豁免 |
+| FR-SESS-07 | P1 | ✅ 已实现 | `src/session/sessionStore.ts`（`SessionFileWatcher`：mtime/size 对比，2.5s 轮询 + `setSuspended` 运行态门控）；`src/bridge/piBridge.ts`（`external_change` 事件 + `sessionStale` 拦截；`entry_appended` → `markSynced` 豁免；`setRunState` 挂起/恢复接线；`agent_settled` 补学 `sessionFile`）；`webview/main.ts`（提示横幅 + 刷新按钮） | v0.2.2 口径 C：检测后提示刷新且拦截后续 prompt（不发 RPC、引导刷新）；刷新/新建/切换会话后解除；仅真实外部修改触发——本端写入经 `entry_appended` 豁免 + 运行态挂起（starting/streaming 只吸收不报警，回 idle/aborted 恢复并同步基线；Issue #1 #D-01）+ 全新会话路径 settled 后补学跟踪（#D-02）；检测时限 ≤5s（2.5s 轮询，一个周期内检出） |
 
 ### 10.3 文件与工作区（FR-FILE）
 
@@ -338,6 +343,15 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | #2 补（交付验收退回）：stderr 转发与 `agent_settled` 时序竞态（负载下间歇失败） | stdout/stderr 为两个独立 fd，libuv 同一 poll 批次内回调顺序不与子进程写入顺序一致；旧实现同步派发 settled，stderr 可能尚未进入日志 | `src/bridge/rpcClient.ts`（有序派发队列 + `stderrDrainBarrier`：`agent_settled` 经两连 `setImmediate` 让出（poll 阶段及其 nextTick/微任务先于 check 阶段，已就绪 stderr 必先落地）后再派发；FIFO 保序不打乱其他事件） | `test/unit/stderr-ordering.test.ts`（可控子进程确定性复现竞态：settled 先处理、stderr 后送达→ 断言 stderr 全部先于 settled；FIFO 保序）；验收：verify:integration 连续 10+10 次全绿（含并行 verify:unit 负载） |
 
 口径 B（消息数=消息总数 user+assistant）：实现已符合，无改动。
+
+### 10.8 Issue #1 缺陷修复记录（TASK-003，#D-01/#D-02）
+
+| 缺陷 | 根因 | 修复位置 | 回归测试 |
+|---|---|---|---|
+| #D-01（P1，FR-SESS-07）外部修改检测误报：pi 子进程在 turn_start 边界落盘 user 条目后、首个 assistant `message_final` 前，2500ms 轮询落入“已落盘、未 markSynced”窗口 → 误报“会话在插件之外被修改”并拦截第二条消息（Issue #1） | ① `entry_appended` 事件在 `handleEvent` default 分支仅记 debug 日志，不参与基线同步；② `SessionFileWatcher` 轮询不区分运行状态（无运行态门控） | `src/bridge/piBridge.ts`（`handleEvent` 新增 `entry_appended` 分支 → `watcher.markSynced()`；`setRunState`：starting→`setSuspended(true)`，idle/aborted→`setSuspended(false)`+`markSynced`；`SessionWatcherLike` 增加 `setSuspended` 语义）；`src/session/sessionStore.ts`（`SessionFileWatcher.setSuspended`：挂起期间轮询只吸收变化不报警，恢复时先 `markSynced` 再检测） | `test/unit/piBridge.test.ts`（运行态门控接线；(a) starting/streaming 期间会话文件变化只吸收不报警、settled 后恢复正常检测；(b) idle 下迟到 `entry_appended` 不误报；(c) idle 下真实外部写入一个轮询周期内检出）；`test/unit/sessionStore.test.ts`（`setSuspended` 原语）；`test/integration/pi-bridge.test.ts`（“第二条消息”全链路重放：fake 子进程 prompt 接受时物理写会话文件 + `entry_appended` + 延迟首响应，全程无 `external_change`，随后外部追加检出并拦截） |
+| #D-02（P2，FR-SESS-07）全新会话外部修改检测失效（漏报）：`sessionFile` 仅在 start/crash/new/switch 的 `refreshState` 中学习，新会话首轮结束后仍为空 → watcher 永不跟踪 | `agent_settled` 处理无补学逻辑 | `src/bridge/piBridge.ts`（`agent_settled` 回 idle 后若 `sessionFile` 为空 → `await refreshState()` 补学路径并 `track`；此时已回 idle，`track`→`markSynced` 不会吞掉真实外部修改） | `test/unit/piBridge.test.ts`（#D-02：settled 补学后进入跟踪，随后的外部写入可检出）；`test/integration/pi-bridge.test.ts`（重放场景检出段） |
+
+稳定性：修复后 `verify:unit`（97 用例）与 `verify:integration`（30 用例）并行负载下连跑 10 轮全绿（时序类断言均有界确定性等待）。
 
 ---
 

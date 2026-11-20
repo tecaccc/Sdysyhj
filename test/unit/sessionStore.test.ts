@@ -147,4 +147,27 @@ describe("SessionFileWatcher（FR-SESS-07）", () => {
     watcher.dispose();
     expect(fired).toBeGreaterThanOrEqual(1);
   });
+
+  it("setSuspended（#D-01）：挂起期间变化只吸收不报警；恢复先同步基线再正常检测", async () => {
+    const filePath = path.join(tmpRoot, "watched4.jsonl");
+    fs.writeFileSync(filePath, "a\n");
+    let fired = 0;
+    const watcher = new SessionFileWatcher({ intervalMs: 20, onExternalChange: () => (fired += 1) });
+    watcher.track(filePath);
+    watcher.setSuspended(true); // starting/streaming：挂起
+    watcher.start();
+
+    fs.appendFileSync(filePath, "b\n"); // 本插件 pi 子进程运行中写入
+    await new Promise((r) => setTimeout(r, 80)); // ≥4 个轮询周期
+    expect(fired).toBe(0); // 只吸收（基线仍更新）不报警
+
+    watcher.setSuspended(false); // 回 idle/aborted：恢复（内部先 markSynced 吸收挂起期写入）
+    await new Promise((r) => setTimeout(r, 80));
+    expect(fired).toBe(0); // 恢复时基线已同步，不追溯报警
+
+    fs.appendFileSync(filePath, "c\n"); // 真实外部写入
+    await new Promise((r) => setTimeout(r, 80));
+    expect(fired).toBeGreaterThanOrEqual(1); // 恢复后正常检测
+    watcher.dispose();
+  });
 });

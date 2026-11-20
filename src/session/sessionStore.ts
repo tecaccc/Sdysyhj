@@ -148,13 +148,17 @@ export interface ExternalChangeOptions {
 
 /**
  * 会话外部修改检测（FR-SESS-07）：
- * 插件空闲时以 mtime/size 对比发现“会话在插件之外被修改”，提示用户刷新，不静默继续陈旧状态。
- * 内部写入（本插件的 pi 子进程）后调用 markSynced() 同步基线即可豁免。
+ * 以 mtime/size 轮询对比发现“会话在插件之外被修改”，提示用户刷新，不静默继续陈旧状态。
+ * 本插件 pi 子进程写入的三重豁免（Issue #1 / #D-01）：
+ * ① 运行态（starting/streaming）挂起检测（setSuspended）：变化只吸收（更新基线）不报警；
+ * ② entry_appended 事件 = 本端条目落盘的精确信号，消费方即时 markSynced 同步基线；
+ * ③ 回 idle/aborted、assistant message_final、刷新/切换等时机 markSynced 兜底。
  */
 export class SessionFileWatcher {
   private timer: ReturnType<typeof setInterval> | null = null;
   private baseline: { mtimeMs: number; size: number } | null = null;
   private filePath: string | null = null;
+  private suspended = false;
 
   constructor(private readonly options: ExternalChangeOptions) {}
 
@@ -167,6 +171,16 @@ export class SessionFileWatcher {
   /** 将当前文件状态记为“已同步”（本端写入完成后调用）。 */
   markSynced(): void {
     this.baseline = this.currentStat();
+  }
+
+  /**
+   * 运行态门控（#D-01）：挂起期间轮询仍更新基线（吸收本插件 pi 子进程的写入），
+   * 但绝不触发 onExternalChange；恢复时先 markSynced 再恢复正常检测。
+   */
+  setSuspended(suspended: boolean): void {
+    if (this.suspended === suspended) return;
+    this.suspended = suspended;
+    if (!suspended) this.markSynced();
   }
 
   /** 单次检查；返回是否检测到外部变化。 */
@@ -183,7 +197,8 @@ export class SessionFileWatcher {
   start(): void {
     if (this.timer) return;
     this.timer = setInterval(() => {
-      if (this.check()) {
+      // check() 无论是否挂起都更新基线（吸收变化）；挂起时仅抑制报警（#D-01）
+      if (this.check() && !this.suspended) {
         try {
           this.options.onExternalChange();
         } catch {

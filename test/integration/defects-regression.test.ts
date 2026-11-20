@@ -176,6 +176,7 @@ describe("缺陷#4（FR-SESS-07）外部修改拦截（口径 C）", () => {
         const impl: SessionWatcherLike = {
           track: () => undefined,
           markSynced: () => undefined,
+          setSuspended: () => undefined,
           start: () => undefined,
           dispose: () => undefined,
         };

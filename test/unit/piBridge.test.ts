@@ -1,13 +1,25 @@
 // PiBridge 单测：事件翻译、运行状态机、崩溃恢复、steer、工具卡片截断（FakeRpcClient 注入）。
+// 含 Issue #1（#D-01/#D-02）外部修改检测回归：运行态门控 / entry_appended 豁免 / settled 补学。
 
-import { describe, expect, it } from "vitest";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PiBridge, type BridgeEvent, type SessionWatcherLike } from "../../src/bridge/piBridge";
 import type { ResolvedRuntime } from "../../src/bridge/rpcTransport";
 import type { AgentMessage, RpcEvent } from "../../src/bridge/protocol";
+import { SessionFileWatcher } from "../../src/session/sessionStore";
 import { MemoryLogger, createRedactingLogger } from "../../src/util/log";
 import { FakeRpcClient } from "../helpers/fake-rpc-client";
 
 const runtime: ResolvedRuntime = { source: "bundled", command: "node", baseArgs: ["/tmp/cli.js"], detail: "test" };
+
+/** 假 watcher 模式下的调用记录（realWatcher 模式不记录） */
+interface FakeWatcherCalls {
+  track: Array<string | null>;
+  markSynced: number;
+  setSuspended: boolean[];
+}
 
 interface Harness {
   bridge: PiBridge;
@@ -15,19 +27,31 @@ interface Harness {
   events: BridgeEvent[];
   logger: MemoryLogger;
   watcher: { cb: (() => void) | null; watcher: SessionWatcherLike };
+  calls: FakeWatcherCalls;
 }
 
-function makeBridge(options: { tailLines?: number; sendMode?: "steer" | "followUp"; thinkingDefault?: string; promptResult?: { ok: boolean; disposition?: string; error?: string } } = {}): Harness {
+function makeBridge(
+  options: {
+    tailLines?: number;
+    sendMode?: "steer" | "followUp";
+    thinkingDefault?: string;
+    promptResult?: { ok: boolean; disposition?: string; error?: string };
+    /** 注入真实 SessionFileWatcher（文件级回归）；sessionFile 同时作为 fake.state.sessionFile 初始值（null=无，#D-02 场景） */
+    realWatcher?: { sessionFile: string | null; intervalMs: number };
+  } = {}
+): Harness {
   const fakes: FakeRpcClient[] = [];
   const events: BridgeEvent[] = [];
   const logger = new MemoryLogger();
   const watcher: Harness["watcher"] = { cb: null, watcher: null as unknown as SessionWatcherLike };
+  const calls: FakeWatcherCalls = { track: [], markSynced: 0, setSuspended: [] };
   const bridge = new PiBridge({
     cwd: "/tmp",
     runtime,
     createClient: () => {
       const fake = new FakeRpcClient();
       if (options.promptResult) fake.promptResult = options.promptResult;
+      if (options.realWatcher) fake.state.sessionFile = options.realWatcher.sessionFile ?? undefined;
       fakes.push(fake);
       return fake;
     },
@@ -37,9 +61,15 @@ function makeBridge(options: { tailLines?: number; sendMode?: "steer" | "followU
     thinkingDefault: options.thinkingDefault,
     createWatcher: (cb) => {
       watcher.cb = cb;
+      if (options.realWatcher) {
+        const impl = new SessionFileWatcher({ intervalMs: options.realWatcher.intervalMs, onExternalChange: cb });
+        watcher.watcher = impl;
+        return impl;
+      }
       const impl: SessionWatcherLike = {
-        track: () => undefined,
-        markSynced: () => undefined,
+        track: (p) => calls.track.push(p),
+        markSynced: () => (calls.markSynced += 1),
+        setSuspended: (s) => calls.setSuspended.push(s),
         start: () => undefined,
         dispose: () => undefined,
       };
@@ -48,7 +78,7 @@ function makeBridge(options: { tailLines?: number; sendMode?: "steer" | "followU
     },
   });
   bridge.onAny((event) => events.push(event));
-  return { bridge, fakes, events, logger, watcher };
+  return { bridge, fakes, events, logger, watcher, calls };
 }
 
 function kinds(events: BridgeEvent[]): string[] {
@@ -514,7 +544,7 @@ describe("PiBridge 状态机与事件翻译", () => {
       sendMode: "steer",
       createWatcher: (cb) => {
         void cb;
-        return { track: () => undefined, markSynced: () => undefined, start: () => undefined, dispose: () => undefined };
+        return { track: () => undefined, markSynced: () => undefined, setSuspended: () => undefined, start: () => undefined, dispose: () => undefined };
       },
     });
     await bridge.start();
@@ -533,11 +563,169 @@ describe("PiBridge 状态机与事件翻译", () => {
   });
 });
 
-async function waitFor(predicate: () => boolean, timeoutMs = 2000): Promise<void> {
+describe("Issue #1 回归（#D-01/#D-02，FR-SESS-07）", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "sdysyhj-stalewatch-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  it("运行态门控接线：starting 挂起，idle/aborted 恢复并同步基线（#D-01 R2）", async () => {
+    const { bridge, fakes, calls } = makeBridge();
+    await bridge.start();
+    expect(calls.setSuspended).toEqual([]); // idle 启动：不挂起
+
+    await bridge.sendPrompt("hello"); // → starting：挂起（streaming 仅可自 starting 迁入，保持挂起）
+    expect(bridge.getRunState()).toBe("starting");
+    expect(calls.setSuspended).toEqual([true]);
+
+    const fake = fakes[0];
+    fake.emit({ type: "agent_start" }); // → streaming：无新挂起/恢复调用
+    expect(calls.setSuspended).toEqual([true]);
+    fake.emit({ type: "agent_settled", aborted: false }); // → idle：恢复
+    expect(bridge.getRunState()).toBe("idle");
+    expect(calls.setSuspended).toEqual([true, false]);
+    expect(calls.markSynced).toBeGreaterThanOrEqual(1); // 恢复时基线同步
+
+    await bridge.sendPrompt("again");
+    fake.emit({ type: "agent_settled", aborted: true }); // → aborted → idle：同样恢复
+    expect(bridge.getRunState()).toBe("idle");
+    expect(calls.setSuspended[calls.setSuspended.length - 1]).toBe(false);
+
+    await bridge.dispose();
+  });
+
+  it("(a) starting/streaming 期间会话文件变化只吸收不报警；settled 后恢复正常检测（#D-01）", async () => {
+    const sessionFile = path.join(tmpDir, "session.jsonl");
+    fs.writeFileSync(sessionFile, '{"type":"session","id":"s1"}\n');
+    const { bridge, fakes, events } = makeBridge({ realWatcher: { sessionFile, intervalMs: 25 } });
+    await bridge.start();
+    const fake = fakes[0];
+
+    // 续接会话已在跟踪；发送后进入 starting（挂起）
+    await bridge.sendPrompt("hello");
+    expect(bridge.getRunState()).toBe("starting");
+    // turn_start 边界 user 条目落盘（本插件子进程写入；无 entry_appended 信号的最坏情形）
+    fs.appendFileSync(sessionFile, '{"type":"message","message":{"role":"user","content":"hello"}}\n');
+    await sleep(120); // ≥4 个轮询周期落在“已落盘、未 markSynced”窗口（Issue #1 触发窗口）
+    expect(events.some((e) => e.kind === "external_change")).toBe(false);
+
+    // streaming：继续吸收
+    fake.emit({ type: "agent_start" });
+    expect(bridge.getRunState()).toBe("streaming");
+    fs.appendFileSync(sessionFile, '{"type":"message","message":{"role":"assistant"}}\n');
+    await sleep(120);
+    expect(events.some((e) => e.kind === "external_change")).toBe(false);
+
+    // 未被误置 sessionStale：运行中后续发送走 steer 排队而非拦截
+    await bridge.sendPrompt("still running");
+    expect(fake.steers).toEqual(["still running"]);
+
+    // settled → idle：恢复检测（运行期间写入全部吸收，不追溯报警）
+    fake.emit({ type: "message_start", message: { role: "assistant", content: [], stopReason: "pending" } });
+    fake.emit({
+      type: "message_end",
+      message: { role: "assistant", content: [{ type: "text", text: "hi" }], stopReason: "stop", timestamp: 1 },
+    });
+    fake.emit({ type: "agent_settled", aborted: false });
+    expect(bridge.getRunState()).toBe("idle");
+    expect(events.some((e) => e.kind === "external_change")).toBe(false);
+
+    // settled 后真实外部写入 → 一个轮询周期内检出（检测已恢复）
+    fs.appendFileSync(sessionFile, '{"type":"message","message":{"role":"user","content":"terminal pi"}}\n');
+    await waitFor(() => events.some((e) => e.kind === "external_change"), 2000, "external_change after settle");
+    // sessionStale 置位：后续 prompt 被拦截（口径 C）
+    await bridge.sendPrompt("after-external");
+    expect(fake.prompts.map((p) => p.message)).toEqual(["hello"]);
+
+    await bridge.dispose();
+  });
+
+  it("(b) idle 下迟到 entry_appended：先落盘后事件不误报（#D-01 R1）", async () => {
+    const sessionFile = path.join(tmpDir, "late-entry.jsonl");
+    fs.writeFileSync(sessionFile, '{"type":"session","id":"s2"}\n');
+    const { bridge, fakes, events } = makeBridge({ realWatcher: { sessionFile, intervalMs: 25 } });
+    await bridge.start();
+    const fake = fakes[0];
+    expect(bridge.getRunState()).toBe("idle");
+
+    // 子进程已物理落盘（迟到），entry_appended 事件随即到达（同一事件循环，均在下一轮询 tick 前）
+    fs.appendFileSync(sessionFile, '{"type":"message","message":{"role":"user","content":"late"}}\n');
+    fake.emit({ type: "entry_appended", entry: { type: "message", message: { role: "user", content: "late" } } });
+    await sleep(120); // ≥4 个轮询周期
+    expect(events.some((e) => e.kind === "external_change")).toBe(false);
+
+    // 未置 sessionStale：后续 prompt 正常发出（不被拦截）
+    await bridge.sendPrompt("next");
+    expect(fake.prompts.map((p) => p.message)).toEqual(["next"]);
+
+    await bridge.dispose();
+  });
+
+  it("(c) idle 下真实外部写入在一个轮询周期内检出（≤5s 检测语义保持，#D-01）", async () => {
+    const sessionFile = path.join(tmpDir, "external.jsonl");
+    fs.writeFileSync(sessionFile, '{"type":"session","id":"s3"}\n');
+    const { bridge, fakes, events } = makeBridge({ realWatcher: { sessionFile, intervalMs: 40 } });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await sleep(80); // 基线稳定（ ≥1 个空转周期，排除启动噪声）
+    expect(events.some((e) => e.kind === "external_change")).toBe(false);
+    fs.appendFileSync(sessionFile, '{"type":"message","message":{"role":"user","content":"terminal write"}}\n');
+    // 生产默认 intervalMs=2500（保证 ≤5s 检出时限）；此处压缩周期验证同一“一个周期内检出”语义
+    await waitFor(() => events.some((e) => e.kind === "external_change"), 2000, "external_change within poll cycle");
+
+    // 检出后 sessionStale：prompt 被拦截（FR-SESS-07 口径 C 不受影响）
+    await bridge.sendPrompt("blocked");
+    expect(fake.prompts.length).toBe(0);
+
+    await bridge.dispose();
+  });
+
+  it("#D-02 全新会话：settled 后补学 sessionFile 并进入跟踪，外部写入可检出（R3）", async () => {
+    const sessionFile = path.join(tmpDir, "fresh-session.jsonl");
+    const { bridge, fakes, events } = makeBridge({ realWatcher: { sessionFile: null, intervalMs: 25 } });
+    await bridge.start(); // 全新会话：启动时 get_state 无文件路径 → watcher 不跟踪
+    const fake = fakes[0];
+    expect(fake.state.sessionFile).toBeUndefined();
+    await bridge.sendPrompt("first");
+    expect(bridge.getRunState()).toBe("starting");
+
+    // 首轮运行中子进程创建并落盘会话文件（挂起窗口内被吸收，不误报）
+    fs.writeFileSync(sessionFile, '{"type":"session","id":"fresh"}\n');
+    await sleep(80);
+    expect(events.some((e) => e.kind === "external_change")).toBe(false);
+
+    // settled：已回 idle → refreshState 补学新会话路径（观察点：model_info 再次发出，即 get_state 已返回）
+    const modelInfoBefore = events.filter((e) => e.kind === "model_info").length;
+    fake.state.sessionFile = sessionFile;
+    fake.emit({ type: "agent_settled", aborted: false });
+    expect(bridge.getRunState()).toBe("idle");
+    await waitFor(
+      () => events.filter((e) => e.kind === "model_info").length === modelInfoBefore + 1,
+      2000,
+      "settled 补学 refreshState"
+    );
+
+    // 补学后 watcher 进入跟踪：随后的真实外部写入被检出（修复前永不跟踪 → 漏报）
+    fs.appendFileSync(sessionFile, '{"type":"message","message":{"role":"user","content":"terminal"}}\n');
+    await waitFor(() => events.some((e) => e.kind === "external_change"), 2000, "external_change after backfill");
+
+    await bridge.dispose();
+  });
+});
+
+async function waitFor(predicate: () => boolean, timeoutMs = 2000, label = "condition"): Promise<void> {
   const start = Date.now();
   for (;;) {
     if (predicate()) return;
-    if (Date.now() - start > timeoutMs) throw new Error("waitFor 超时");
+    if (Date.now() - start > timeoutMs) throw new Error(`waitFor 超时：${label}`);
     await new Promise((r) => setTimeout(r, 5));
   }
 }

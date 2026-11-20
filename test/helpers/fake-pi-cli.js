@@ -5,6 +5,9 @@
 // 环境变量：
 //   FAKE_PI_LOG     追加记录 spawn/命令的 JSONL 日志文件（测试断言用）
 //   FAKE_PI_FIXTURE get_messages / switch_session 返回的消息 JSON 文件（数组）
+//   FAKE_PI_SESSION_FILE 会话 JSONL 文件路径；设置后 prompt 接受时物理落盘条目
+//                    并广播 entry_appended 事件（模拟真实 pi 在 turn_start 边界写 user
+//                    条目 / 终稿落盘，Issue #1 #D-01 回归）；未设置时行为与旧版一致
 //
 // 特殊 prompt 消息（触发脚本化行为）：
 //   "CRASH_NOW"  → 输出部分事件后进程退出 code=3（子进程崩溃）
@@ -12,6 +15,7 @@
 //   "TOOL"       → 完整工具调用链（thinking + toolcall + tool_execution + toolResult + 第二轮回复）
 //   "LONG"       → 持续流式输出直到 abort
 //   "FLOOD"      → 一次性输出 600 个 text delta（NFR-01 代理判据：零丢失）
+//   "SLOW"       → 首响应延迟 600ms 的简单回复（thinking 模型首响应延迟窗口，Issue #1）
 //   "STDERR"     → stderr 输出 E2E-STDERR-MARKER 行 + stdout 输出非法 JSONL 行（FR-CMD-02）
 //   "STDERRKEY"  → stderr 输出含凭证样文本（验证日志脱敏）
 //   "UNICODE"    → text delta 内含 U+2028/U+2029（帧解析边界）
@@ -80,12 +84,26 @@ function loadFixtureMessages() {
   return defaultMessages();
 }
 
+// 模拟真实 pi 的会话文件落盘（仅 FAKE_PI_SESSION_FILE 设置时启用）
+const sessionFilePath = process.env.FAKE_PI_SESSION_FILE || null;
+
+/** 条目落盘（追加 JSONL 行）并广播 entry_appended（真实 pi：_commitBoundaryDrafts）。 */
+function commitEntry(entry) {
+  if (!sessionFilePath) return;
+  try {
+    fs.appendFileSync(sessionFilePath, JSON.stringify(entry) + "\n");
+  } catch {
+    // 忽略：落盘失败不影响事件流
+  }
+  send({ type: "entry_appended", entry });
+}
+
 const state = {
   provider: "mock",
   modelId: "mock-alpha",
   thinkingLevel: "high",
   sessionName: "mock-session",
-  sessionFile: "/tmp/fake-pi-session.jsonl",
+  sessionFile: sessionFilePath || "/tmp/fake-pi-session.jsonl",
   sessionId: "fake-session-id",
   messages: loadFixtureMessages(),
   streaming: false,
@@ -135,8 +153,24 @@ function runSimpleText() {
   send({ type: "message_update", usage: USAGE, assistantMessageEvent: { type: "text_end", contentIndex: 0, content: "Hello world" } });
   const final = assistantMessage([{ type: "text", text: "Hello world" }], "stop");
   send({ type: "message_end", message: final });
+  if (sessionFilePath) commitEntry({ type: "message", id: "e-sec", parentId: null, timestamp: new Date().toISOString(), message: final });
   state.messages.push({ role: "user", content: state.lastPrompt, timestamp: Date.now() }, final);
   send({ type: "agent_settled", aborted: false });
+}
+
+// Issue #1 触发窗口：prompt 接受后 user 条目已落盘，首响应延迟期间多个 watcher 轮询周期过去
+function runSlow() {
+  send({ type: "agent_start" });
+  send({ type: "message_start", message: assistantMessage([], "pending") });
+  send({ type: "message_update", usage: USAGE, assistantMessageEvent: { type: "text_start", contentIndex: 0 } });
+  setTimeout(() => {
+    send({ type: "message_update", usage: USAGE, assistantMessageEvent: { type: "text_delta", contentIndex: 0, delta: "slow reply" } });
+    const final = assistantMessage([{ type: "text", text: "slow reply" }], "stop");
+    send({ type: "message_end", message: final });
+    if (sessionFilePath) commitEntry({ type: "message", id: "e-slow", parentId: null, timestamp: new Date().toISOString(), message: final });
+    state.messages.push({ role: "user", content: state.lastPrompt, timestamp: Date.now() }, final);
+    send({ type: "agent_settled", aborted: false });
+  }, 600);
 }
 
 function runFlood() {
@@ -299,11 +333,23 @@ function handleCommand(cmd) {
       state.lastPrompt = cmd.message;
       respond(cmd, { disposition: "started" });
       const message = String(cmd.message ?? "");
+      // 模拟真实 pi：turn_start 边界将 user 条目落盘并广播 entry_appended（仅显式启用时）
+      if (sessionFilePath) {
+        send({ type: "turn_start" });
+        commitEntry({
+          type: "message",
+          id: "e-user",
+          parentId: null,
+          timestamp: new Date().toISOString(),
+          message: { role: "user", content: cmd.message, timestamp: Date.now() },
+        });
+      }
       if (message === "CRASH_NOW") runCrash();
       else if (message === "ERROR") runError();
       else if (message === "TOOL") runTool();
       else if (message === "LONG") runLong();
       else if (message === "FLOOD") runFlood();
+      else if (message === "SLOW") runSlow();
       else if (message === "STDERR") runStderr(false);
       else if (message === "STDERRKEY") runStderr(true);
       else if (message === "UNICODE") runUnicode();

@@ -88,6 +88,11 @@ export interface PiRpcClient {
 export interface SessionWatcherLike {
   track(filePath: string | null): void;
   markSynced(): void;
+  /**
+   * 运行态门控（FR-SESS-07，#D-01）：true=挂起（轮询只吸收变化不报警）；
+   * 恢复（false）时实现方须先 markSynced 再恢复正常检测。
+   */
+  setSuspended(suspended: boolean): void;
   start(): void;
   dispose(): void;
 }
@@ -210,7 +215,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
   }
 
   private attach(client: PiRpcClient): void {
-    this.unsubs.push(client.onEvent((event) => this.handleEvent(event)));
+    this.unsubs.push(client.onEvent((event) => void this.handleEvent(event)));
     this.unsubs.push(
       client.onExit((info) => {
         if (this.disposed || info.intentional) return;
@@ -498,7 +503,13 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
   private setRunState(state: RunState, detail?: string): void {
     this.runState = state;
     this.emit("run_state", detail !== undefined ? { state, detail } : { state });
-    if (state === "idle" || state === "aborted") {
+    if (state === "starting") {
+      // 运行态门控（#D-01）：starting/streaming 期间本插件 pi 子进程持续写会话文件，
+      // watcher 只吸收变化（更新基线）不报警
+      this.watcher.setSuspended(true);
+    } else if (state === "idle" || state === "aborted") {
+      // 恢复检测：解除挂起（内部先 markSynced 重置基线），再兑底同步一次
+      this.watcher.setSuspended(false);
       this.watcher.markSynced();
     }
   }
@@ -565,7 +576,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
 
   // ---------- 事件翻译 ----------
 
-  private handleEvent(event: RpcEvent): void {
+  private async handleEvent(event: RpcEvent): Promise<void> {
     switch (event.type) {
       case "agent_start":
         if (this.runState === "starting") this.setRunState("streaming");
@@ -646,8 +657,18 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
           this.setRunState("aborted");
         }
         this.setRunState("idle");
+        if (this.sessionFile === null) {
+          // #D-02：全新会话首轮落盘后 get_state 才有文件路径——settled 补学使 watcher 进入跟踪；
+          // 此时已回 idle，track→markSynced 只吸收本端已落盘内容，不会吞掉真实外部修改
+          await this.refreshState();
+        }
         break;
       }
+      case "entry_appended":
+        // 本插件 pi 子进程条目落盘的精确信号（#D-01）：即时同步基线，
+        // 使轮询不会把 turn_start 边界的 user 条目写入误判为外部修改
+        this.watcher.markSynced();
+        break;
       case "session_info_changed":
         this.sessionName = event.name ?? "";
         this.emit("session_name", { name: this.sessionName });
@@ -677,7 +698,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
       default: {
         // 未知/未处理事件：记录协议异常供排障（FR-CMD-02）
         const type = (event as { type: string }).type;
-        if (type === "bash_execution_update" || type === "entry_appended" || type === "queue_update") {
+        if (type === "bash_execution_update" || type === "queue_update") {
           this.options.logger.debug(`RPC 事件：${type}`);
         } else {
           this.options.logger.debug(`未处理 RPC 事件：${type}`);
