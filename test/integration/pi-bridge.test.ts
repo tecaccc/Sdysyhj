@@ -28,8 +28,9 @@ afterEach(() => {
 
 function makeBridge(
   options: { env?: Record<string, string>; createWatcher?: (cb: () => void) => SessionWatcherLike } = {}
-): { bridge: PiBridge; events: BridgeEvent[] } {
+): { bridge: PiBridge; events: BridgeEvent[]; logger: MemoryLogger } {
   const events: BridgeEvent[] = [];
+  const logger = new MemoryLogger();
   const runtime: ResolvedRuntime = {
     source: "bundled",
     command: process.execPath,
@@ -46,13 +47,13 @@ function makeBridge(
         cwd,
         env: { ...process.env, FAKE_PI_LOG: logFile, ...options.env },
       }) as unknown as PiRpcClient,
-    logger: new MemoryLogger(),
+    logger,
     tailLines: 200,
     sendMode: "steer",
     createWatcher: options.createWatcher,
   });
   bridge.onAny((event) => events.push(event));
-  return { bridge, events };
+  return { bridge, events, logger };
 }
 
 function spawnCount(): number {
@@ -322,6 +323,32 @@ describe("PiBridge + mock 子进程集成", () => {
     expect(card.status).toBe("success");
     expect(card.output).toBe("文件内容……");
     expect(a2.blocks[0]).toEqual({ type: "text", text: "a.ts 是一个工具模块。" });
+
+    await bridge.dispose();
+  });
+
+  it("Issue #2 / #D-03 回归：extension_error 走 toast（非阻断）+ 同键去重 + 日志全字段（FR-CHAT-07 澄清 #14）", async () => {
+    const { bridge, events, logger } = makeBridge();
+    await bridge.start();
+
+    // fake pi：同键 extension_error ×2 + 异键 ×1（随后简单回复）
+    await bridge.sendPrompt("EXTERR");
+    await waitFor(() => bridge.getRunState() === "idle", 8000, "exterr run settled");
+
+    // 通道：不进聊天区错误卡片，走一次性 toast
+    expect(events.filter((e) => e.kind === "error")).toHaveLength(0);
+    const toasts = events.filter((e) => e.kind === "toast") as Array<{ text: string }>;
+    expect(toasts).toHaveLength(2); // 同键×2 去重为 1 + 异键 1
+    const stale = toasts.find((t) => t.text.includes("pi-loop"));
+    expect(stale?.text).toContain("This extension ctx is stale after session replacement or reload"); // 错误首行
+    expect(stale?.text).toContain("详情见 Output「Sdysyhj」");
+    expect(stale?.text).not.toContain("runner.js:482"); // 多行错误只取首行
+
+    // 日志全量：3 条全字段（含多行错误全文）
+    const warns = logger.lines.filter((l) => l.startsWith("[warn] extension_error"));
+    expect(warns).toHaveLength(3);
+    expect(warns.filter((l) => l.includes("extensionPath=/home/u/.pi/agent/npm/pi-loop/main.js"))).toHaveLength(2);
+    expect(warns.some((l) => l.includes("at core/extensions/runner.js:482"))).toBe(true); // 全文，含堆栈行
 
     await bridge.dispose();
   });

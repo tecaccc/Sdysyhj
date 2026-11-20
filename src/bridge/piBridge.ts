@@ -115,6 +115,9 @@ export interface PiBridgeOptions {
   createWatcher?: (onExternalChange: () => void) => SessionWatcherLike;
 }
 
+/** #D-03（Issue #2）：extension_error 同键（extensionPath+error）toast 去重窗口 */
+const EXTENSION_ERROR_TOAST_DEDUP_MS = 60_000;
+
 interface ToolLocation {
   messageId: string;
 }
@@ -155,6 +158,8 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
   private disposed = false;
   /** 会话陈旧（外部修改待刷新）：拦截后续 prompt，直至刷新完成（FR-SESS-07） */
   private sessionStale = false;
+  /** #D-03：extension_error toast 去重（key=extensionPath+\0+error → 上次 toast 时刻；仅抑制重复 toast，日志始终全量） */
+  private extensionErrorToastAt = new Map<string, number>();
 
   private sessionId = "";
   private sessionName = "";
@@ -693,7 +698,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
         this.emit("toast", { text: event.aborted ? "上下文压缩已中止" : "上下文压缩完成" });
         break;
       case "extension_error":
-        this.emit("error", { message: `扩展错误：${event.error ?? "未知错误"}`, hint: "请检查 ~/.pi/agent/extensions 下的扩展。" });
+        this.handleExtensionError(event);
         break;
       default: {
         // 未知/未处理事件：记录协议异常供排障（FR-CMD-02）
@@ -705,6 +710,31 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
         }
       }
     }
+  }
+
+  /**
+   * #D-03（Issue #2，FR-CHAT-07 展示通道口径 / 需求基线澄清 #14）：上游 pi 扩展系统错误为
+   * 非阻断通知——toast 一次性提示（60s 同键去重）+ Output 日志全字段；
+   * 不进聊天区错误卡片（那是需用户行动的错误），也不输出指向本机目录的误导 hint。
+   */
+  private handleExtensionError(event: { extensionPath?: string; event?: string; error?: string }): void {
+    const extensionPath = event.extensionPath ?? "";
+    const errorText = event.error ?? "";
+    // 日志全字段（不截断、不去重；经 logger 统一脱敏入 Output「Sdysyhj」，FR-CMD-02/NFR-05）
+    this.options.logger.warn(
+      `extension_error 事件：extensionPath=${extensionPath || "(无)"} event=${event.event ?? "(无)"} error=${errorText || "(无)"}`
+    );
+    const key = `${extensionPath}\u0000${errorText}`;
+    const now = Date.now();
+    for (const [k, at] of this.extensionErrorToastAt) {
+      if (now - at >= EXTENSION_ERROR_TOAST_DEDUP_MS) this.extensionErrorToastAt.delete(k); // 清理过期键，防无界增长
+    }
+    const last = this.extensionErrorToastAt.get(key);
+    if (last !== undefined && now - last < EXTENSION_ERROR_TOAST_DEDUP_MS) return; // 窗口内同键：只记日志不再 toast
+    this.extensionErrorToastAt.set(key, now);
+    this.emit("toast", {
+      text: `扩展错误（${extensionPath || "未知扩展"}）：${firstLine(errorText || "未知错误", 120)}（详情见 Output「Sdysyhj」）`,
+    });
   }
 
   private handleMessageUpdate(delta: import("./protocol").AssistantMessageEvent): void {

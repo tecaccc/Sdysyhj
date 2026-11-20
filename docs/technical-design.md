@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**已实现（MVP）** ｜ 版本：v0.1-draft ｜ 对应需求：docs/requirements.md v0.2.2
+> 状态：**已实现（MVP）** ｜ 版本：v0.1-draft ｜ 对应需求：docs/requirements.md v0.2.3
 
 ---
 
@@ -265,9 +265,9 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 - 输入框 slash command / skill 自动补全、MCP 管理 UI
 - VS Code Chat API 可选适配层
 
-## 10. FR 追溯表（实现映射，依据需求基线 v0.2.2）
+## 10. FR 追溯表（实现映射，依据需求基线 v0.2.3）
 
-实现文件位置以本仓库为准；未实现项标注原因。P0 全部实现，P1 全部实现，P2 标“二期”（不计 MVP 门禁）。验收口径按基线 v0.2.2 对齐（大输出默认尾部 200 行；“可用 pi”含最低版本判据；历史重放与会话 JSONL 一致；FR-CHAT-08 仅状态展示；thinking 枚举透传不固化；运行状态 settled 后回 idle、『已中止』为消息级标记；FR-SESS-07 外部修改后拦截交互直至刷新；消息数=消息总数 user+assistant）。
+实现文件位置以本仓库为准；未实现项标注原因。P0 全部实现，P1 全部实现，P2 标“二期”（不计 MVP 门禁）。验收口径按基线 v0.2.3 对齐（大输出默认尾部 200 行；“可用 pi”含最低版本判据；历史重放与会话 JSONL 一致；FR-CHAT-08 仅状态展示；thinking 枚举透传不固化；运行状态 settled 后回 idle、『已中止』为消息级标记；FR-SESS-07 外部修改后拦截交互直至刷新；消息数=消息总数 user+assistant；`extension_error` 展示通道=非阻断 toast + 全字段 Output 日志 + 同错误去重，FR-CHAT-07 错误卡片范围不变）。
 
 ### 10.1 聊天（FR-CHAT）
 
@@ -279,7 +279,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | FR-CHAT-04 | P0 | ✅ 已实现 | `webview/render/messages.ts`（`ToolCardView`：工具名/摘要/状态/展开输入输出）；`src/util/text.ts`（`truncateToTail`/`summarizeToolArgs`）；`src/bridge/piBridge.ts`（`tool_execution_*` 翻译、`getToolOutput` 宿主全量缓存）；`src/panel/chatPanel.ts`（`copy_output` → `vscode.env.clipboard`） | bash 展示命令与输出；默认保留尾部 200 行（`sdysyhj.outputTailLines` 默认 200），“复制全部”取完整输出 |
 | FR-CHAT-05 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（`abort`：RPC `abort`，`agent_settled(aborted)` → 瞬态 `aborted` 后回 `idle`）；`webview/main.ts`（Stop 按钮，中止后恢复可输入 + “已中止”标记）；`src/extension.ts`（`sdysyhj.abort` 命令） | 历史保留；状态流 streaming→aborted→idle（v0.2.2 口径 A：『已中止』为消息级标记，运行状态最终回 idle） |
 | FR-CHAT-06 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（`sendPrompt` 运行中 → `steer`/`followUp`）；`webview/main.ts`（插话模式下拉：steer/follow-up） | 默认模式取 `sdysyhj.sendMode` |
-| FR-CHAT-07 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（error 事件：prompt 被拒、`stopReason=error`、崩溃恢复）；`src/bridge/rpcTransport.ts`（`PiRuntimeError` 含可行动指引与详情）；`webview/main.ts`（`showError` 错误卡片 + hint） | 未配置凭证/子进程崩溃/provider 报错均有可读信息与修复指引 |
+| FR-CHAT-07 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（error 事件：prompt 被拒、`stopReason=error`、崩溃恢复；`handleExtensionError`：`extension_error` → 非阻断 toast + 全字段日志，Issue #2 / #D-03）；`src/bridge/rpcTransport.ts`（`PiRuntimeError` 含可行动指引与详情）；`webview/main.ts`（`showError` 错误卡片 + hint；`showToast` 一次性提示） | 未配置凭证/子进程崩溃/provider 报错均有可读信息与修复指引；上游扩展通知（`extension_error`）不进错误卡片——toast 一次性提示（60s 同键去重，文案含扩展路径+错误首行+Output 指引）+ 日志全字段（v0.2.3 澄清 #14） |
 | FR-CHAT-08 | P0 | ✅ 已实现 | `webview/main.ts`（头部 `status-line`）；`src/extension.ts`（VS Code 状态栏 `refreshStatusBar`）；`src/panel/messages.ts`（`run_state`/`model_info`/`session_name`） | 仅负责四字段（模型/thinking/运行状态/会话名）展示与状态流转（idle→starting→streaming→aborted/idle/error，settled 后回 idle，v0.2.2 口径 A）；点击切换交互归属 FR-MOD-01/02 |
 
 ### 10.2 会话管理（FR-SESS）
@@ -315,7 +315,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | 编号 | 优先级 | 状态 | 实现位置 | 备注 |
 |---|---|---|---|---|
 | FR-CMD-01 | P0 | ✅ 已实现 | `package.json`（`contributes.commands`/`menus`）；`src/extension.ts`（注册） | Open Chat / New Session / Abort / Show Session History / Report Issue 齐备 |
-| FR-CMD-02 | P0 | ✅ 已实现 | `src/util/log.ts`（Logger + 脱敏包装）；`src/util/redact.ts`（NFR-03）；`src/extension.ts`（Output Channel「Sdysyhj」）；`src/bridge/rpcClient.ts`（`onStderr` 行缓冲原文转发、`onAnomaly` 协议异常）；`src/bridge/piBridge.ts`（`attach` 接线 stderr/异常→日志） | 子进程 stderr 原文、RPC 协议异常实时入 Output Channel（脱敏）；退出时冲刷无换行尾部 |
+| FR-CMD-02 | P0 | ✅ 已实现 | `src/util/log.ts`（Logger + 脱敏包装）；`src/util/redact.ts`（NFR-03）；`src/extension.ts`（Output Channel「Sdysyhj」）；`src/bridge/rpcClient.ts`（`onStderr` 行缓冲原文转发、`onAnomaly` 协议异常）；`src/bridge/piBridge.ts`（`attach` 接线 stderr/异常→日志；`handleExtensionError`：`extension_error` 全字段 warn 入日志，Issue #2 / #D-03） | 子进程 stderr 原文、RPC 协议异常实时入 Output Channel（脱敏）；退出时冲刷无换行尾部；`extension_error` 全字段（extensionPath/event/error，不截断不去重）入日志 |
 | FR-CMD-03 | P2 | ⏭ 二期 | — | 不计 MVP 门禁；MVP 阶段命令文本直接发送即可生效；`/` 自动补全不做（二期） |
 | FR-CMD-04 | P2 | ⏭ 二期 | — | 复用 pi 的 MCP 配置自动生效，无专门 UI（二期） |
 | FR-CMD-05 | P0 | ✅ 已实现 | `src/bridge/rpcTransport.ts`（`resolvePiRuntime`：auto=PATH 探测→内置回退；path=显式指定；bundled=内置；失败抛 `PiRuntimeError` 含详情+指引；`defaultResolveBundledCli` 逐级向上探测 node_modules，兼容打包布局）；`package.json`（`sdysyhj.piRuntime`/`sdysyhj.piPath`）；`src/bridge/piBridge.ts`（`buildArgs`） | “可用 pi”判据：`pi --version` 退出 0 且含版本号且 ≥ 最低支持版本（`MIN_SUPPORTED_PI_VERSION` = 0.84.0）；不满足则回退内置运行时；打包布局（<ext>/dist + <ext>/node_modules）已回归验证 |
@@ -352,6 +352,14 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | #D-02（P2，FR-SESS-07）全新会话外部修改检测失效（漏报）：`sessionFile` 仅在 start/crash/new/switch 的 `refreshState` 中学习，新会话首轮结束后仍为空 → watcher 永不跟踪 | `agent_settled` 处理无补学逻辑 | `src/bridge/piBridge.ts`（`agent_settled` 回 idle 后若 `sessionFile` 为空 → `await refreshState()` 补学路径并 `track`；此时已回 idle，`track`→`markSynced` 不会吞掉真实外部修改） | `test/unit/piBridge.test.ts`（#D-02：settled 补学后进入跟踪，随后的外部写入可检出）；`test/integration/pi-bridge.test.ts`（重放场景检出段） |
 
 稳定性：修复后 `verify:unit`（97 用例）与 `verify:integration`（30 用例）并行负载下连跑 10 轮全绿（时序类断言均有界确定性等待）。
+
+### 10.9 Issue #2 缺陷修复记录（TASK-004，#D-03）
+
+| 缺陷 | 根因 | 修复位置 | 回归测试 |
+|---|---|---|---|
+| #D-03（P1，FR-CHAT-07 展示通道口径）`extension_error` 展示治理缺陷：上游扩展噪音以持久错误卡片呈现且信息丢失——`emit("error")` 进 webview `showError` 持久卡片；丢弃 `extensionPath`/`event` 字段；无去重；hint 硬编码指向本机不存在的 `~/.pi/agent/extensions`（Issue #2；上游根因：会话重载后陈旧 ctx 异步回调触发扩展报错，本仓无法消除事件，只对展示负责） | `handleEvent` 的 `extension_error` 分支直接走错误卡片通道，与 FR-CHAT-07「需用户行动的错误」范围不符（v0.2.3 澄清 #14：展示通道=非阻断通知） | `src/bridge/piBridge.ts`（`handleExtensionError`：① toast 非阻断一次性提示；② 60s 同键（extensionPath+error）去重（仅抑制重复 toast，日志始终全量；过期键清理防无界增长）；③ toast 文案=扩展路径+错误首行（`firstLine` 120 截断）+尾部「详情见 Output「Sdysyhj」」指引；④ `logger.warn` 全字段 extensionPath/event/error（不截断不去重）；⑤ 删除误导 hint） | `test/unit/piBridge.test.ts`（Issue #2 回归 6 项：通道选择/文案字段/日志全字段/同键去重+日志不去重/不同键不去重/60s 窗口过期（fake timers）/缺字段容错）；`test/integration/pi-bridge.test.ts`（fake pi `EXTERR` 脚本：同键×2+异键×1 → toast 2 条、error 卡片 0、日志 3 条全量）；`test/helpers/fake-pi-cli.js`（新增 `EXTERR` 脚本化事件） |
+
+稳定性：修复后 `verify:unit` 与 `verify:integration` 并行负载下连跑 10 轮全绿（去重断言不依赖真实等待：同键同刻注入、窗口过期用 fake timers）。
 
 ---
 

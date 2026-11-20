@@ -306,6 +306,15 @@ function runStderr(withKey) {
   runSimpleText();
 }
 
+// Issue #2 / #D-03：上游扩展系统错误事件（会话重载后陈旧 ctx 的异步回调触发，多行错误文本）
+function runExtensionError() {
+  const staleError = "This extension ctx is stale after session replacement or reload\n  at core/extensions/runner.js:482";
+  send({ type: "extension_error", extensionPath: "/home/u/.pi/agent/npm/pi-loop/main.js", event: "subagent-async", error: staleError });
+  send({ type: "extension_error", extensionPath: "/home/u/.pi/agent/npm/pi-loop/main.js", event: "subagent-async", error: staleError }); // 同键重复（toast 去重验证）
+  send({ type: "extension_error", extensionPath: "/home/u/.pi/agent/npm/subagents/main.js", event: "timer", error: "Extension context invalidated" });
+  runSimpleText();
+}
+
 function runCrash() {
   send({ type: "agent_start" });
   send({ type: "message_start", message: assistantMessage([], "pending") });
@@ -352,6 +361,7 @@ function handleCommand(cmd) {
       else if (message === "SLOW") runSlow();
       else if (message === "STDERR") runStderr(false);
       else if (message === "STDERRKEY") runStderr(true);
+      else if (message === "EXTERR") runExtensionError();
       else if (message === "UNICODE") runUnicode();
       else runSimpleText();
       return;

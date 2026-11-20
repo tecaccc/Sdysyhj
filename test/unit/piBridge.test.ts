@@ -4,7 +4,7 @@
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PiBridge, type BridgeEvent, type SessionWatcherLike } from "../../src/bridge/piBridge";
 import type { ResolvedRuntime } from "../../src/bridge/rpcTransport";
 import type { AgentMessage, RpcEvent } from "../../src/bridge/protocol";
@@ -717,6 +717,116 @@ describe("Issue #1 回归（#D-01/#D-02，FR-SESS-07）", () => {
     fs.appendFileSync(sessionFile, '{"type":"message","message":{"role":"user","content":"terminal"}}\n');
     await waitFor(() => events.some((e) => e.kind === "external_change"), 2000, "external_change after backfill");
 
+    await bridge.dispose();
+  });
+});
+
+describe("Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径）", () => {
+  const STALE_ERROR = "This extension ctx is stale after session replacement or reload\n  at core/extensions/runner.js:482";
+
+  it("通道选择：extension_error 走 toast（非阻断）——无 error 事件、无误导 hint，文案含路径/错误首行/Output 指引", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    fakes[0].emit({
+      type: "extension_error",
+      extensionPath: "/home/u/.pi/agent/npm/pi-loop/main.js",
+      event: "subagent-async",
+      error: STALE_ERROR,
+    });
+
+    expect(events.filter((e) => e.kind === "error")).toHaveLength(0); // 不再进聊天区错误卡片
+    const toasts = events.filter((e) => e.kind === "toast") as Array<{ text: string }>;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0].text).toContain("/home/u/.pi/agent/npm/pi-loop/main.js"); // 扩展路径
+    expect(toasts[0].text).toContain("This extension ctx is stale after session replacement or reload"); // 错误首行
+    expect(toasts[0].text).toContain("详情见 Output「Sdysyhj」"); // 尾部指引
+    expect(toasts[0].text).not.toContain("runner.js:482"); // 多行错误只取首行
+    expect(toasts[0].text).not.toContain("~/.pi/agent/extensions"); // 误导 hint 已删除
+    await bridge.dispose();
+  });
+
+  it("日志全字段：logger.warn 含 extensionPath/event/error 全文（多行不截断）", async () => {
+    const { bridge, fakes, logger } = makeBridge();
+    await bridge.start();
+    fakes[0].emit({
+      type: "extension_error",
+      extensionPath: "/home/u/.pi/agent/npm/pi-loop/main.js",
+      event: "subagent-async",
+      error: STALE_ERROR,
+    });
+
+    const warns = logger.lines.filter((l) => l.startsWith("[warn] extension_error"));
+    expect(warns).toHaveLength(1);
+    expect(warns[0]).toContain("extensionPath=/home/u/.pi/agent/npm/pi-loop/main.js");
+    expect(warns[0]).toContain("event=subagent-async");
+    expect(warns[0]).toContain(`error=${STALE_ERROR}`); // 全文，含第二行堆栈
+    await bridge.dispose();
+  });
+
+  it("同键去重：相同 error+extensionPath 60s 窗口内只 toast 一次，日志仍全量", async () => {
+    const { bridge, fakes, events, logger } = makeBridge();
+    await bridge.start();
+    const event = {
+      type: "extension_error" as const,
+      extensionPath: "/home/u/.pi/agent/npm/pi-loop/main.js",
+      event: "subagent-async",
+      error: "stale ctx",
+    };
+    fakes[0].emit(event);
+    fakes[0].emit(event);
+    fakes[0].emit(event);
+
+    expect(events.filter((e) => e.kind === "toast")).toHaveLength(1); // toast 去重
+    expect(logger.lines.filter((l) => l.startsWith("[warn] extension_error"))).toHaveLength(3); // 日志不去重
+    await bridge.dispose();
+  });
+
+  it("不同键不去重：extensionPath 或 error 任一不同即各自 toast", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    fakes[0].emit({ type: "extension_error", extensionPath: "/npm/a/main.js", error: "boom A" });
+    fakes[0].emit({ type: "extension_error", extensionPath: "/npm/b/main.js", error: "boom A" }); // 路径不同
+    fakes[0].emit({ type: "extension_error", extensionPath: "/npm/a/main.js", error: "boom B" }); // 错误不同
+
+    expect(events.filter((e) => e.kind === "toast")).toHaveLength(3);
+    await bridge.dispose();
+  });
+
+  it("60s 窗口外同键重复事件再次 toast（fake timers，确定性无等待）", async () => {
+    vi.useFakeTimers();
+    try {
+      const { bridge, fakes, events } = makeBridge();
+      await bridge.start();
+      const event = {
+        type: "extension_error" as const,
+        extensionPath: "/npm/pi-loop/main.js",
+        error: "stale ctx",
+      };
+      fakes[0].emit(event);
+      expect(events.filter((e) => e.kind === "toast")).toHaveLength(1);
+
+      vi.advanceTimersByTime(60_000); // 到达窗口边界：窗口内（<60s）不再重复，期满可再提示
+      fakes[0].emit(event);
+      expect(events.filter((e) => e.kind === "toast")).toHaveLength(2);
+      await bridge.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("缺字段容错：无 extensionPath/error 仍 toast 与记日志（占位文案，不抛错）", async () => {
+    const { bridge, fakes, events, logger } = makeBridge();
+    await bridge.start();
+    fakes[0].emit({ type: "extension_error", event: "timer" });
+
+    const toasts = events.filter((e) => e.kind === "toast") as Array<{ text: string }>;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0].text).toContain("未知扩展");
+    expect(toasts[0].text).toContain("未知错误");
+    expect(toasts[0].text).toContain("详情见 Output「Sdysyhj」");
+    const warn = logger.lines.find((l) => l.startsWith("[warn] extension_error"));
+    expect(warn).toContain("event=timer");
+    expect(warn).toContain("extensionPath=(无)");
     await bridge.dispose();
   });
 });
