@@ -16,3 +16,8 @@ tsconfig.json
 media/*.map
 media/main.js.map
 *.log
+
+# 本地保留文件（c122da6 决策不入库；防本地打包与 CI 产物不一致）
+DevelopmentGuidelines/**
+TODO-List.md
+.pi-loop.json
