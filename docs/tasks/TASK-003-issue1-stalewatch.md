@@ -3,7 +3,7 @@
 > 来源：GitHub Issue #1（tecaccc，2026-11-20 09:54 +0800，type:bug）
 > 链接：https://github.com/tecaccc/Sdysyhj/issues/1
 > 流水线：缺陷单 → 研发修复 → 交付验收 → 独立核验 → 发版 0.1.1 → 回写 Issue 闭环
-> 状态：研发派发中
+> 状态：已闭环（发版 0.1.1，Issue #1 回写关闭）
 
 ## 1. 缺陷单
 
@@ -39,8 +39,17 @@
 - 2026-11-20 ~09:55 总调度：巡检发现 Issue #1，分诊 type:bug，根因分析完成（证据见 §1）
 - 2026-11-20 总调度：缺陷单 #D-01/#D-02 立案，R1-R5 契约下达，派发研发 Agent（fresh context）
 - 通道事件：Issue 标签写入（agent:in-progress）触发 MCP 交互表单待人工提交，暂未生效；标签批次合并至闭环回写时重试，不阻塞流水线
+- 2026-11-20 10:13-10:43 研发 Agent：R1-R5 全部实施，自测四项全绿（unit 97/integration 30）；30 分钟起时上限起时中断（汇报未及输出），现场完好保留
+- 2026-11-20 ~10:45 总调度 ④ 交付验收：**通过**。写权限合规（仅研发边界内文件）；追溯表 FR-SESS-07 已同步；亲自复跑四项全绿；集成 4 连跑稳定；verify 脚本名未改。commit `e084223`，标签 `ready-for-verify-r3` 已推送
+- 2026-11-20 ~10:50 总调度：派发核验 Agent（fresh context）：/tmp 干净检出 + 独立脚本 + 阴性对照双臂 + 压测；其完成全部执行与证据归档（六目录）后报告撰写阶段连续遭遇提供方瞬断（socket→504→socket→socket→socket，凡六次），依 §7.2 指数退避（280s/540s/1080s）三次重试；最终以全新上下文接力撰写者完成报告（§2.4 隔离升级，报告内置顶披露）
+- 2026-11-20 ~12:35 测试 Agent：核验报告 report-e084223 + evidence-issue1 交付（克隆内 commit `b79a306`）；权限核验通过（仅 docs/verification/）
+- 2026-11-20 总调度：报告完整性检查通过（七件套齐备、接力披露置顶、4 处证据瑕疵逐条披露）→ **核验裁决：PASS（hotfix 范围零 FAIL；#D-01/#D-02 双臂成立；TC-022 PASS；压测 6/6；SKIP 45 条系 §4 裁剪范围外，后续全量核验轮补齐）**；cherry-pick 合入 `c1488d4`
 
-## 4. 发版计划
+## 4. 发版记录（versioning.md §5 剧本执行）
 
-- 版本：0.1.0 → **0.1.1**（versioning.md：PATCH +1、五处一致、`v0.1.1` annotated tag、CHANGELOG 条目注明 Issue #1 与 #D-01/#D-02）
-- 触发条件：核验报告相关 TC PASS + 交付验收通过
+- 前置确认：核验 PASS + 交付验收通过 ✅
+- 步骤 2-5（机械性研发步骤）：**由总调度代执行**（披露：子代理通道当日 6 次瞬断 + 2 次起时，机械步骤无设计裁量，代执行后人类可复核）——版本 0.1.0→0.1.1；CHANGELOG 置顶条目；四项自测全绿；`npx @vscode/vsce package` 产出 `sdysyhj-0.1.1.vsix`（8777 文件 20.4MB），旧 0.1.0 vsix 已移除
+- 步骤 6 一致性门禁：① package.json 0.1.1 ② CHANGELOG 顶部 0.1.1 条目 ③ v 标签（提交时打 v0.1.1）④ 仅存 sdysyhj-0.1.1.vsix ✅；密钥扫描 CLEAN ✅
+- 步骤 7：commit `chore(release): v0.1.1` + annotated tag `v0.1.1` + push（本提交）
+- 步骤 8（GitHub Release）：未启用（与 v0.1.0 无 Release 先例保持一致，最小写入）
+- 原计划触发条件即 §4 裁剪裁决：hotfix 范围=FR-SESS-07 相关 + 回归重放（已留痕）
