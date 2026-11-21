@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.7 — 实验面板：assistant-ui 迁移试点阶段①（TASK-009 / FR-AUI-01~06）
+
+- 新增独立实验性聊天面板「聊天（实验）」：命令面板搜索 Open Chat (Lab) 打开（Activity Bar 侧边栏第二视图位，不替换默认聊天面板）；基于 assistant-ui（React）验证 UI 层迁移可行性，**默认聊天面板行为零变更**（本版为实验性质，阶段①不切默认面板）
+- 面板内含路线 A（fetch-bridge，官方 fetch 桥接）/ 路线 B（ExternalStoreRuntime，复用既有消息协议）双切片，可随时切换对比，互不干扰
+- 以真实 pi 事件序列录制的 golden fixture 回放驱动验收（离线可重现，不依赖真实模型/网络）；含 XSS 探针文本保真与请求中止链路验证
+- VS Code 主题映射（--vscode-* 变量）：浅色/深色主题正文与气泡对比度实测 ≥4.5:1（WCAG AA）
+- 依赖安全面：9 项新增依赖全部精确版本锁定；实验面板 strict CSP（无 unsafe-eval/unsafe-inline，zod jitless 模式）；webview 产物 1.1 MiB（预算 3 MiB）、宿主增量 0.35 MiB（预算 1 MiB）、默认面板依赖图无 React 污染
+- 核验：report-f7a3518 PASS（15 项自动判定全过 + 6 项真机 checklist 兜底全过）
+
 ## 0.1.6 — 用户消息重复气泡修复 + 协议 golden fixture（TASK-008 / FR-CHAT-11）
 
 - 修复发送消息后出现两条相同气泡记录的缺陷（FR-CHAT-11）：pi 对用户 prompt 必回发 user 确认回声，插件自己的乐观展示与回声终稿各持不同消息 id 无法对账，导致同一消息被渲染两次；现发送后即时单条展示，回声到达后原条目就地更新，全程恰好一条
