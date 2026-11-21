@@ -83,7 +83,8 @@ agent_start → turn_start → message_start(user) → message_end(user)
 
 - 发版提交：`e9fc9d8`（chore(release): v0.1.6）+ annotated tag `v0.1.6`（2026-11-21 19:3x +0800 推送）
 - **通道②（GitHub Release）：✅ 成功**（19:38 +0800 发布，id 453615388）——https://github.com/tecaccc/Sdysyhj/releases/tag/v0.1.6 ；附件 `sdysyhj-0.1.6.vsix`（21,395,301 B，sha256 26447905…babe）；即 CI 门禁+全量测试+打包全过
-- **通道①（Marketplace）：⏳ 延迟/待复查**——tag 推送 +10min 时 gallery 最新可见仍为 0.1.5（v0.1.5 发版当时同样延迟后确认，非异常）；已排定 +25min 定时复查，仍未可见则并入 TASK-002 巡检留置事项
+- **通道①（Marketplace）：✅ 成功**——+35min 复查（19:21 +0800）gallery 最新可见 0.1.6（审核延迟约半小时，与 v0.1.5 先例一致）；扩展页 https://marketplace.visualstudio.com/items?itemName=tecacc.sdysyhj 
+- **两通道齐 → TASK-008 彻底闭环**（2026-11-21 19:21）
 - 版本五处一致：①package.json 0.1.6 ✓ ②CHANGELOG 置顶 ✓ ③tag v0.1.6 ✓ ④vsix（CI 产物，见附件）✓ ⑤GitHub Release ✓
 
 
