@@ -29,6 +29,13 @@
 - 步骤 7：commit `chore(release): v0.1.5` + annotated tag `v0.1.5` + push
 - 步骤 8：CI 自动——tag 推送触发 release.yml：门禁+全量测试 → 打包 → ① Marketplace（Trusted Publishing/OIDC）② GitHub Release；结果回填于 §4
 
-## 4. CI 发布结果（tag 推送后回填）
+## 4. CI 发布结果（tag 推送后回查，2026-11-21 12:46 +0800）
 
-- （待回填：通道① Marketplace 上架链接、通道② Release 链接、CI 运行链接）
+- **通道② GitHub Release：✅ 成功**（04:35:24Z，发布耗时约 1 分钟，与 v0.1.4 一致——即门禁+全量测试+打包全过）
+  - Release：https://github.com/tecaccc/Sdysyhj/releases/tag/v0.1.5
+  - 附件：`sdysyhj-0.1.5.vsix`（21,388,147 B，sha256:2bff17ae…）
+- **通道① Marketplace：⏳ 暂不可见**（gallery API 实测最新版本仍为 0.1.3，上架 11 分钟后未更新）——两种可能：上架传播延迟 / 再次失败（本工具集无 Actions 运行日志可查）；已安排 12:53 复查，若仍为 0.1.3 则记录疑似失败，需人类查 Actions 日志：
+  - 扩展页：https://marketplace.visualstudio.com/items?itemName=tecacc.sdysyhj
+  - Actions：https://github.com/tecaccc/Sdysyhj/actions/workflows/release.yml
+- 佐证事实：v0.1.3 确已上架成功（Marketplace 现存版本 0.1.3，类目 Other）——与 §1 根因分析一致
+- （复查处补记见下）
