@@ -81,5 +81,11 @@ agent_start → turn_start → message_start(user) → message_end(user)
 
 ## 5. 发版记录
 
+- 发版提交：`e9fc9d8`（chore(release): v0.1.6）+ annotated tag `v0.1.6`（2026-11-21 19:3x +0800 推送）
+- **通道②（GitHub Release）：✅ 成功**（19:38 +0800 发布，id 453615388）——https://github.com/tecaccc/Sdysyhj/releases/tag/v0.1.6 ；附件 `sdysyhj-0.1.6.vsix`（21,395,301 B，sha256 26447905…babe）；即 CI 门禁+全量测试+打包全过
+- **通道①（Marketplace）：⏳ 延迟/待复查**——tag 推送 +10min 时 gallery 最新可见仍为 0.1.5（v0.1.5 发版当时同样延迟后确认，非异常）；已排定 +25min 定时复查，仍未可见则并入 TASK-002 巡检留置事项
+- 版本五处一致：①package.json 0.1.6 ✓ ②CHANGELOG 置顶 ✓ ③tag v0.1.6 ✓ ④vsix（CI 产物，见附件）✓ ⑤GitHub Release ✓
+
+
 - 0.1.5 → 0.1.6（PATCH +1，versioning.md §5 剧本：五处一致、CHANGELOG 置顶、`v0.1.6` annotated tag 推送触发 CI）。
 - 发版闭环同一时点执行通道 A 回写：TODO-List.md 条目①改 `[x]` → 归档 `archive/2026-11-21.md`（附 FR/缺陷单/任务单/版本追溯）→ 从待实现移除 → 归档索引更新。
