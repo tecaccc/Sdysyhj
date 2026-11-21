@@ -265,9 +265,9 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 - 输入框 slash command / skill 自动补全、MCP 管理 UI
 - VS Code Chat API 可选适配层
 
-## 10. FR 追溯表（实现映射，依据需求基线 v0.3）
+## 10. FR 追溯表（实现映射，依据需求基线 v0.4）
 
-实现文件位置以本仓库为准；未实现项标注原因。P0 全部实现，P1 全部实现，P2 标“二期”（不计 MVP 门禁）。验收口径按基线 v0.3 对齐（大输出默认尾部 200 行；“可用 pi”含最低版本判据；历史重放与会话 JSONL 一致；FR-CHAT-08 仅状态展示；thinking 枚举透传不固化；运行状态 settled 后回 idle、『已中止』为消息级标记；FR-SESS-07 外部修改后拦截交互直至刷新；消息数=消息总数 user+assistant；`extension_error` 展示通道=非阻断 toast + 全字段 Output 日志 + 同错误去重，FR-CHAT-07 错误卡片范围不变；FR-CHAT-09 跟随判定阈值 40px、每轮流式开始默认跟随、跟随为会话内瞬时 UI 状态不持久化）。
+实现文件位置以本仓库为准；未实现项标注原因。P0 全部实现，P1 全部实现，P2 标“二期”（不计 MVP 门禁）。验收口径按基线 v0.4 对齐（大输出默认尾部 200 行；“可用 pi”含最低版本判据；历史重放与会话 JSONL 一致；FR-CHAT-08 仅状态展示；thinking 枚举透传不固化；运行状态 settled 后回 idle、『已中止』为消息级标记；FR-SESS-07 外部修改后拦截交互直至刷新；消息数=消息总数 user+assistant；`extension_error` 展示通道=非阻断 toast + 全字段 Output 日志 + 同错误去重，FR-CHAT-07 错误卡片范围不变；FR-CHAT-09 跟随判定阈值 40px、每轮流式开始默认跟随、跟随为会话内瞬时 UI 状态不持久化；FR-CHAT-10 内容列 max-width 960px 居中/输入框圆角 8px/发送图标化/用户右侧气泡、助手左侧无气泡/HH:mm 时间戳替代角色前缀；FR-FILE-02 `@` 选择器为唯一文件引用入口；FR-CMD-03 P1 转正（get_commands 命令全集、实时过滤、键盘导航、选中插入）；FR-MOD-01③ 底部内联选择器与状态栏/命令面板三入口等价；FR-MOD-04 token 权威取值=最近一条助手消息 usage.totalTokens、窗口=get_state contextWindow、百分比四舍五入取整、无助手消息显示 —）。
 
 ### 10.1 聊天（FR-CHAT）
 
@@ -281,7 +281,8 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | FR-CHAT-06 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（`sendPrompt` 运行中 → `steer`/`followUp`）；`webview/main.ts`（插话模式下拉：steer/follow-up） | 默认模式取 `sdysyhj.sendMode` |
 | FR-CHAT-07 | P0 | ✅ 已实现 | `src/bridge/piBridge.ts`（error 事件：prompt 被拒、`stopReason=error`、崩溃恢复；`handleExtensionError`：`extension_error` → 非阻断 toast + 全字段日志，Issue #2 / #D-03）；`src/bridge/rpcTransport.ts`（`PiRuntimeError` 含可行动指引与详情）；`webview/main.ts`（`showError` 错误卡片 + hint；`showToast` 一次性提示） | 未配置凭证/子进程崩溃/provider 报错均有可读信息与修复指引；上游扩展通知（`extension_error`）不进错误卡片——toast 一次性提示（60s 同键去重，文案含扩展路径+错误首行+Output 指引）+ 日志全字段（v0.2.3 澄清 #14） |
 | FR-CHAT-08 | P0 | ✅ 已实现 | `webview/main.ts`（头部 `status-line`）；`src/extension.ts`（VS Code 状态栏 `refreshStatusBar`）；`src/panel/messages.ts`（`run_state`/`model_info`/`session_name`） | 仅负责四字段（模型/thinking/运行状态/会话名）展示与状态流转（idle→starting→streaming→aborted/idle/error，settled 后回 idle，v0.2.2 口径 A）；点击切换交互归属 FR-MOD-01/02 |
-| FR-CHAT-09 | P1 | ✅ 已实现 | `webview/render/followState.ts`（纯逻辑状态机：跟随决策，无 DOM 依赖，40px 阈值/每轮默认跟随/打断/恢复/idle 门控）；`webview/main.ts`（接线薄层：`stream_start`→`onStreamStart` 默认置跟随态；`run_state`→`onRunState`；`messagesEl` scroll 监听→`onUserScroll(距底 px)`（程序滚动自标记区分）；消息追加/增量（text/thinking/toolcall delta、toolcall_status、message_final）后滚动决策统一走 `applyFollowScroll`；`loadHistory` 尾部一次性初始定位，不走向量决策） | 流式期间默认跟随（每轮流式开始重置为跟随态）；用户上滚距底 >40px 停止跟随且增量渲染不推动滚动位置；滚回 ≤40px 恢复；idle 不自动滚动；不持久化、无消息级标记（④）；“每轮”=一次 agent 运行，轮内多条助手消息的后续 stream_start 不覆盖用户打断（实现口径见 §10.10） |
+| FR-CHAT-09 | P1 | ✅ 已实现 | `webview/render/followState.ts`（纯逻辑状态机：跟随决策，无 DOM 依赖，40px 阈值/每轮默认跟随/打断/恢复/idle 门控）；`webview/main.ts`（接线薄层：`stream_start`→`onStreamStart` 默认置跟随态；`run_state`→`onRunState`；`#messages` 滚动容器 scroll 监听→`onUserScroll(距底 px)`（程序滚动自标记区分）；消息追加/增量（text/thinking/toolcall delta、toolcall_status、message_final）后滚动决策统一走 `applyFollowScroll`；`loadHistory` 尾部一次性初始定位，不走向量决策） | 流式期间默认跟随（每轮流式开始重置为跟随态）；用户上滚距底 >40px 停止跟随且增量渲染不推动滚动位置；滚回 ≤40px 恢复；idle 不自动滚动；不持久化、无消息级标记（④）；“每轮”=一次 agent 运行，轮内多条助手消息的后续 stream_start 不覆盖用户打断（实现口径见 §10.10；v0.4 消息区拆分滚动容器/内容列后度量仍取自 `#messages` 滚动容器） |
+| FR-CHAT-10 | P1 | ✅ 已实现 | `webview/styles/styles.css`（① `.content-col` 内容列 `max-width: 960px` + 左右 `margin: auto`，消息区/错误区/输入区共用于同一列；② `.input-shell` 输入框容器 `border-radius: 8px`；④ `.message-user` 右对齐 + `.message-body` 气泡包裹（背景色+圆角）、`.message-assistant` 左对齐无气泡；`.message-time`）；`src/panel/chatPanel.ts`（HTML：`#messages-col`/`#errors-col`/`#input-col` 内容列容器、`#input-shell`、③ 图标发送按钮 `#btn-send`（内联 SVG 上箭头，无文字标签，`aria-label="发送"`/`title="发送"`）、底部行 `#model-selector`/`#usage-line`）；`webview/render/messages.ts`（⑤ 去 User/Assistant 角色前缀，改 `.message-time` HH:mm 时间戳，终稿以权威 timestamp 覆盖）；`webview/render/format.ts`（`formatHHmm` 纯函数） | ① 内容列最大宽度定值 960px（面板更宽时左右留白相等）；② 输入框容器圆角 8px；③ 发送图标化，可访问性名称="发送"；④ 用户右侧气泡/助手左侧无气泡；⑤ 每条用户/助手消息展示 HH:mm（本地时区，可断言 `^\d{2}:\d{2}$`）；thinking 折叠块与工具卡片功能标签不受影响 |
 
 ### 10.2 会话管理（FR-SESS）
 
@@ -300,16 +301,17 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | 编号 | 优先级 | 状态 | 实现位置 | 备注 |
 |---|---|---|---|---|
 | FR-FILE-01 | P0 | ✅ 已实现 | `src/extension.ts`（cwd = `workspaceFolders[0]`，多根取第一个；无工作区 = 用户主目录并提示文件工具受限）；`src/bridge/piBridge.ts`（子进程 cwd） | — |
-| FR-FILE-02 | P0 | ✅ 已实现 | `webview/main.ts`（输入 `@` 触发）；`src/panel/chatPanel.ts`（`showFilePicker`：工作区文件 QuickPick）；`webview/main.ts`（`file_ref` 插入路径） | — |
+| FR-FILE-02 | P0 | ✅ 已实现 | `webview/main.ts`（输入 `@` 触发选择器，v0.4 起为唯一文件引用入口）；`src/panel/chatPanel.ts`（`showFilePicker`：工作区文件 QuickPick；`file_ref` 插入路径；v0.4 修订：输入区已无 `btn-file` 添加文件按钮及其接线） | v0.4 修订：`@` 选择器为唯一文件引用入口，输入区无独立“添加文件”按钮（DOM 可断言：无 `#btn-file`）；FR-FILE-03 右键发送不受影响 |
 | FR-FILE-03 | P1 | ✅ 已实现 | `package.json`（explorer/editor 右键菜单）；`src/extension.ts`（`sdysyhj.sendToPi`）；`src/panel/chatPanel.ts`（`sendToPi`：路径/选区预填 prompt 素材） | 选区含行号标注；预填输入框可编辑后发送 |
 
 ### 10.4 模型控制（FR-MOD）
 
 | 编号 | 优先级 | 状态 | 实现位置 | 备注 |
 |---|---|---|---|---|
-| FR-MOD-01 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（`listModels`/`setModel`：RPC `get_available_models`/`set_model`）；`src/panel/chatPanel.ts`（`showModelPicker`）；状态栏刷新 | — |
+| FR-MOD-01 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（`listModels`/`setModel`：RPC `get_available_models`/`set_model`）；`src/panel/chatPanel.ts`（① 状态栏入口 `showModelPicker`；② 命令面板 `sdysyhj.switchModel`；③ 底部内联选择器：`request_models`→`models_list` 数据通道 + `set_model` 切换通道，复用同一 `bridge.setModel`）；`webview/main.ts`（③ `#model-selector` 常显当前模型、点击弹 `#model-menu` 列表、选中即切换，`model_info` 事件驱动展示同步）；状态栏刷新（`src/extension.ts`） | 三入口等价（均终接 `bridge.setModel` → `refreshState` → `model_info` 事件 → 状态栏/头部/底部选择器同步更新）；v0.4 增补入口③ |
 | FR-MOD-02 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（`setThinkingLevel`/`cycleThinkingLevel`：RPC `set_thinking_level`/`cycle_thinking_level`）；`src/panel/chatPanel.ts`（`showThinkingPicker`，含“循环切换”项）；`src/util/config.ts`（`thinkingDefault` 透传） | 等级枚举以 pi 侧 `get_available_thinking_levels` 返回为准，透传不固化（`sdysyhj.thinkingDefault` 为自由字符串） |
-| FR-MOD-03 | P1 | ✅ 已实现 | pi 会话文件持久（`model_change`/`thinking_level_change` 条目）；`src/extension.ts`（启动续接最近会话 + `get_state` 回显状态栏） | 切换结果随会话保留，重启插件后反映 |
+| FR-MOD-03 | P1 | ✅ 已实现 | pi 会话文件持久（`model_change`/`thinking_level_change` 条目）；`src/extension.ts`（启动续接最近会话 + `get_state` 回显状态栏）；`webview/main.ts`（底部模型选择器随 `model_info` 事件同步展示，重启后 ready 回放 `model_info` 同样覆盖） | 切换结果随会话保留，重启插件后反映在状态栏与底部模型选择器（v0.4 展示口径补齐） |
+| FR-MOD-04 | P1 | ✅ 已实现 | `src/bridge/piBridge.ts`（① `captureUsage`：`message_update` 携带 Usage 即时捕获 + `message_end` 权威终稿覆盖；② `refreshState` 读 `get_state` `model.contextWindow`；`emitUsageInfo` 变化即透出（同值去重）；④ `refreshHistory` 取新会话最后一条助手消息 usage、无则重置 null，`newSession` 同步重置；`getUsageInfo` 快照供 ready 重放）；`src/panel/messages.ts`（`usage_info` 协议消息）；`src/panel/chatPanel.ts`（ready 重放 `usage_info`）；`webview/render/format.ts`（`formatContextUsage` 纯函数：k/M 缩写 + 百分比四舍五入取整）；`webview/main.ts`（`#usage-line` 展示，`usageEl.title` 含千分位详情） | ③ 展示 token 数及占窗口百分比（`12.3k / 200k (6%)`）；无助手消息显示 —；窗口未知仅展示 token 数；compaction toast 行为不变（不在本 FR 范围） |
 
 ### 10.5 命令与集成（FR-CMD）
 
@@ -317,14 +319,14 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 |---|---|---|---|---|
 | FR-CMD-01 | P0 | ✅ 已实现 | `package.json`（`contributes.commands`/`menus`）；`src/extension.ts`（注册） | Open Chat / New Session / Abort / Show Session History / Report Issue 齐备 |
 | FR-CMD-02 | P0 | ✅ 已实现 | `src/util/log.ts`（Logger + 脱敏包装）；`src/util/redact.ts`（NFR-03）；`src/extension.ts`（Output Channel「Sdysyhj」）；`src/bridge/rpcClient.ts`（`onStderr` 行缓冲原文转发、`onAnomaly` 协议异常）；`src/bridge/piBridge.ts`（`attach` 接线 stderr/异常→日志；`handleExtensionError`：`extension_error` 全字段 warn 入日志，Issue #2 / #D-03） | 子进程 stderr 原文、RPC 协议异常实时入 Output Channel（脱敏）；退出时冲刷无换行尾部；`extension_error` 全字段（extensionPath/event/error，不截断不去重）入日志 |
-| FR-CMD-03 | P2 | ⏭ 二期 | — | 不计 MVP 门禁；MVP 阶段命令文本直接发送即可生效；`/` 自动补全不做（二期） |
+| FR-CMD-03 | P1 | ✅ 已实现 | `src/bridge/protocol.ts`（`RpcSlashCommand` 类型：name 不含前导 `/`，与 pi rpc-types 对齐）；`src/bridge/rpcClient.ts`（`getCommands`：RPC `get_commands`，解析 `data.commands`）；`src/bridge/piBridge.ts`（`PiRpcClient.getCommands` 接口 + `listCommands` 封装：失败记日志返回空）；`src/panel/chatPanel.ts`（`request_commands`→`commands` 回发）；`src/panel/messages.ts`（`SlashCommandInfo` 协议）；`webview/render/commandMenu.ts`（纯逻辑：`/` 前缀触发、名称/描述子串不区分大小写过滤、↑/↓ 环绕导航、`insertText`=`/`+命令名，无匹配/空全集隐藏）；`webview/main.ts`（接线：input 事件实时过滤、Enter 选中插入不发送、Esc 关闭、鼠标点击等效选中、首次 `/` 请求命令全集、会话切换后缓存失效重取） | v0.4 P2→P1 转正；⑤ `get_commands` 不可用/返回空不显示菜单，`/` 开头文本可直接发送透传；选中后焦点保持输入框，后续沿用 Enter 发送 |
 | FR-CMD-04 | P2 | ⏭ 二期 | — | 复用 pi 的 MCP 配置自动生效，无专门 UI（二期） |
 | FR-CMD-05 | P0 | ✅ 已实现 | `src/bridge/rpcTransport.ts`（`resolvePiRuntime`：auto=PATH 探测→内置回退；path=显式指定；bundled=内置；失败抛 `PiRuntimeError` 含详情+指引；`defaultResolveBundledCli` 逐级向上探测 node_modules，兼容打包布局）；`package.json`（`sdysyhj.piRuntime`/`sdysyhj.piPath`）；`src/bridge/piBridge.ts`（`buildArgs`） | “可用 pi”判据：`pi --version` 退出 0 且含版本号且 ≥ 最低支持版本（`MIN_SUPPORTED_PI_VERSION` = 0.84.0）；不满足则回退内置运行时；打包布局（<ext>/dist + <ext>/node_modules）已回归验证 |
 
 ### 10.6 设计偏差与实现说明
 
 1. **协议层自实现 RpcClient（等价封装）**。官方 npm 包 `@earendil-works/pi-coding-agent`（1.5.2）的 `exports` 未导出 `RpcClient` 子路径（deep import 触发 `ERR_PACKAGE_PATH_NOT_EXPORTED`），故按任务约定以 §1 的 JSONL 约定自实现：`src/bridge/jsonl.ts`（严格 LF 切分、`StringDecoder`、禁用 readline）、`src/bridge/rpcClient.ts`（请求/响应 id 关联、超时、事件分发、stdin 关闭有序退出）。集成测试以 mock 子进程（`test/helpers/fake-pi-cli.js`）全链路验证帧解析与命令语义。该包仍作为 dependency 提供内置运行时（`dist/bundle/cli.js`）。
-2. **宿主↔webview 消息协议补充**。在 3.4 节示意判别联合基础上补充实现所需消息：`config`/`ready`（就绪回放）、`toolcall_status`（工具执行状态/输出增量，FR-CHAT-04 必需）、`session_name`、`toast`、`external_change`、`file_ref`、`input_prefill`（FR-FILE-02/03）。语义与渲染策略（delta 追加、`message_final` 权威覆盖、DOM 尾部截断 + 宿主缓存复制全部）与 3.4 节一致。
+2. **宿主↔webview 消息协议补充**。在 3.4 节示意判别联合基础上补充实现所需消息：`config`/`ready`（就绪回放）、`toolcall_status`（工具执行状态/输出增量，FR-CHAT-04 必需）、`session_name`、`toast`、`external_change`、`file_ref`、`input_prefill`（FR-FILE-02/03）。语义与渲染策略（delta 追加、`message_final` 权威覆盖、DOM 尾部截断 + 宿主缓存复制全部）与 3.4 节一致。v0.4（TASK-006）追加：`request_commands`/`commands`（FR-CMD-03 命令全集拉取）、`request_models`/`models_list`/`set_model`（FR-MOD-01③ 底部内联选择器，与既有入口同源）、`usage_info`（FR-MOD-04 用量透出，桥侧变化即发 + ready 重放快照）。
 3. **启动自动续接最近会话**。为满足 FR-MOD-03“重启插件后反映在状态栏”，扩展启动时以 `--session` 续接当前工作区最近会话（等价 `pi -c`）；与 FR-SESS-01/03 行为兼容。
 4. **依赖未降级**。`marked` + `dompurify` + `highlight.js` 均经 npm 安装成功（pinned：marked 18.2.1 / dompurify 3.4.18 / highlight.js 11.12.0），未启用轻量自实现替代。
 5. **测试工具链**。Vitest 5（unit + integration 均 `vitest run`，离线可重跑）；`@types/node@22` 仅为满足 vitest 工具链 peer 约束，扩展编译目标仍为 node18（esbuild target）。
@@ -379,6 +381,22 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 - 口径界定：“每轮” = 一次 agent 运行（run_state 进入 starting/streaming 起、回 idle/aborted/error 止）；每轮默认跟随的重置点取本轮运行内首个 `stream_start`（“自本轮流式输出开始计”）。agent 循环一轮含多条助手消息，轮内后续 `stream_start`（下一步消息）不重置跟随态——否则用户打断会在下一步开始时被覆盖，违反 ②“尊重用户意图”（打断后增量渲染不得为跟随而强制滚动）。
 
 稳定性：修复/实现后 `npm run typecheck` / `build` / `verify:unit`（11 文件 116 用例）/ `verify:integration`（4 文件 31 用例）全绿；新增测试均为确定性纯逻辑断言（无定时器/无异步等待）。
+
+### 10.11 TASK-006 实现记录（TODO 批次二 8 项 → 5 组 FR 变动，需求基线 v0.4）
+
+来源：通道 A 人类直接指令（docs/tasks/TASK-006-todolist2-ui.md）；产品基线 v0.3→v0.4。8 项素材 → FR 映射：素材①④⑤⑥→FR-CHAT-10；素材②→FR-FILE-02 修订；素材③→FR-CMD-03（P2→P1 转正）；素材⑦→FR-MOD-01③/FR-MOD-03 修订；素材⑧→FR-MOD-04 新增。
+
+| 变更 | 实现要点 | 主要位置 |
+|---|---|---|
+| FR-CHAT-10 聊天面板视觉规范 | ① 内容列：`#messages`/`#errors`/`#input-area` 各自内层 `.content-col`（`max-width: 960px` + `margin-left/right: auto`）共享同一居中列；消息区拆分滚动容器（`#messages`）与内容列（`#messages-col`），FR-CHAT-09 度量仍取滚动容器；② 输入框容器 `.input-shell` 圆角 8px；③ 发送按钮图标化：内联 SVG 上箭头、无文字、`aria-label="发送"`；④ 用户消息右对齐 + 气泡（`.message-user .message-body` 背景+圆角），助手消息左对齐无气泡包裹；⑤ 去 User/Assistant 前缀，改 `.message-time` HH:mm（`formatHHmm` 纯函数，流式期间以创建时刻占位、终稿以权威 timestamp 覆盖） | `src/panel/chatPanel.ts`（HTML）、`webview/styles/styles.css`、`webview/render/messages.ts`、`webview/render/format.ts`、`webview/main.ts` |
+| FR-FILE-02 修订（唯一文件引用入口） | 移除输入区 `btn-file` 按钮及其 DOM/事件接线；`@` 触发选择器保持既有行为（前一字符行首/空白 + 1s 防抖） | `src/panel/chatPanel.ts`（HTML 删 `btn-file`）、`webview/main.ts`（删 `fileBtn` 引用与监听） |
+| FR-CMD-03 `/` 命令补全菜单（P1 转正） | 桥侧：`RpcSlashCommand` 类型 + `getCommands` RPC 封装 + `listCommands`（失败返回空并记日志）；webview：纯逻辑 `CommandMenuState`（触发=文本以 `/` 开头、名称/描述子串不区分大小写过滤、↑/↓ 环绕导航、选中 `insertText`=`/`+命令名、无匹配/空全集隐藏），接线层负责 input 实时过滤、Enter 选中插入不发送、Esc 关闭、mousedown 选中（保持焦点）、首次 `/` 时拉取命令全集、会话切换（session_reset/history_loaded）缓存失效重取 | `src/bridge/protocol.ts`、`src/bridge/rpcClient.ts`、`src/bridge/piBridge.ts`、`src/panel/chatPanel.ts`、`src/panel/messages.ts`、`webview/render/commandMenu.ts`、`webview/main.ts` |
+| FR-MOD-01③/03 底部内联模型选择器 | `#model-selector` 常显当前模型（`model_info` 驱动，与状态栏/头部同源）；点击弹 `#model-menu`（`request_models`→`models_list`），选中项发 `set_model` 走既有 `bridge.setModel` 通道 → `refreshState` → `model_info` 事件 → 三入口同步；当前项 ✓ 标记；Esc/点击外部关闭；重启后 ready 回放 `model_info` 覆盖底部展示 | `src/panel/chatPanel.ts`、`src/panel/messages.ts`、`webview/main.ts` |
+| FR-MOD-04 上下文用量指示 | 桥侧捕获：`message_update.usage.totalTokens` 即时 + `message_end`（assistant）权威覆盖 + `refreshHistory` 会话重建取最后一条助手 usage（无则 null）+ `newSession` 重置；`refreshState` 读 `get_state` `model.contextWindow`；`usage_info` 事件变化即透出（同值去重，避免既有精确序列断言被噪音事件破坏）；webview `#usage-line` 用 `formatContextUsage`（k/M 缩写、百分比 `Math.round`）展示，无助手消息显示 —；compaction toast 未动 | `src/bridge/piBridge.ts`、`src/panel/chatPanel.ts`、`src/panel/messages.ts`、`webview/render/format.ts`、`webview/main.ts` |
+
+新增测试（均确定性、无定时器依赖）：`test/unit/commandMenu.test.ts`（16 用例：过滤/触发/导航/选中/晚到全集/空全集）；`test/unit/format.test.ts`（9 用例：HH.mm 补零与 24 小时制、k/M 缩写、百分比四舍五入、null/非法窗口兑底）；`test/unit/piBridge.test.ts`（+9 用例：usage 捕获/覆盖/去重/历史重建/重置/contextWindow 透出、listCommands 透传与失败容错）；`test/unit/rpcClient.test.ts`（+2 用例：get_commands 请求/解析与空数据）。DOM 层（FR-CHAT-10 视觉/底部选择器/菜单交互）无 jsdom 基建不硬造，UI 手工 checklist + 纯逻辑/桥侧自动兑底（同 §10.10 #D-04 口径）。
+
+实现口径说明：① ↑/↓ 导航采用首尾环绕（标准补全菜单惯例，FR 未规定边界行为）；② 选中插入为精确 `/`+命令名（不加尾随空格，后续 Enter 发送即透传）；③ `usage_info` 采用变化即发（同值去重）而非逐事件透出，属实现优化不影响验收口径（刷新时机仍满足④）。
 
 ---
 

@@ -170,6 +170,18 @@ export interface ModelInfo {
   maxTokens?: number;
 }
 
+/** get_commands 返回的命令项（扩展命令 / prompt 模板 / skills；名称不含前导 `/`，与 pi rpc-types RpcSlashCommand 对齐） */
+export interface RpcSlashCommand {
+  /** 命令名（不含前导 `/`） */
+  name: string;
+  /** 人类可读描述 */
+  description?: string;
+  /** 命令来源 */
+  source?: "extension" | "prompt" | "skill";
+  /** 来源元数据 */
+  sourceInfo?: unknown;
+}
+
 export interface RpcSessionState {
   model?: ModelInfo | null;
   thinkingLevel?: string;

@@ -15,8 +15,10 @@ import type {
   ModelInfo,
   RpcEvent,
   RpcSessionState,
+  RpcSlashCommand,
   ToolCallContent,
   ToolResultMessage,
+  Usage,
   UserMessage,
 } from "./protocol";
 
@@ -37,6 +39,7 @@ export type BridgeEvent = Extract<
       | "run_state"
       | "model_info"
       | "session_name"
+      | "usage_info"
       | "error"
       | "toast"
       | "external_change";
@@ -79,6 +82,7 @@ export interface PiRpcClient {
   getMessages(): Promise<AgentMessage[]>;
   setModel(provider: string, modelId: string): Promise<ModelInfo>;
   getAvailableModels(): Promise<ModelInfo[]>;
+  getCommands(): Promise<RpcSlashCommand[]>;
   setThinkingLevel(level: string): Promise<void>;
   cycleThinkingLevel(): Promise<{ level: string } | null>;
   getAvailableThinkingLevels(): Promise<string[]>;
@@ -166,6 +170,16 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
   private modelName = "";
   private thinkingLevel = "";
   private sessionFile: string | null = null;
+
+  /** FR-MOD-04：最近一条助手消息 usage.totalTokens（会话内权威取值；null = 尚无助手消息） */
+  private lastUsageTokens: number | null = null;
+  /** FR-MOD-04：get_state 返回的上下文窗口（state.model.contextWindow；null = 未知） */
+  private contextWindow: number | null = null;
+  /** usage_info 去重快照（值未变化不重发，减少 postMessage 噪音；初值 = 空快照，避免启动时噪音事件） */
+  private lastEmittedUsage: { totalTokens: number | null; contextWindow: number | null } = {
+    totalTokens: null,
+    contextWindow: null,
+  };
 
   private watcher: SessionWatcherLike;
 
@@ -486,6 +500,23 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     return { model: this.modelName, thinkingLevel: this.thinkingLevel, sessionName: this.sessionName };
   }
 
+  /** FR-MOD-04：上下文用量快照（webview ready 重放用）。 */
+  getUsageInfo(): { totalTokens: number | null; contextWindow: number | null } {
+    return { totalTokens: this.lastUsageTokens, contextWindow: this.contextWindow };
+  }
+
+  /** FR-CMD-03：命令全集。不可用（运行时未就绪 / RPC 失败）时返回空——菜单不显示，`/` 文本仍可直接发送透传（⑤）。 */
+  async listCommands(): Promise<RpcSlashCommand[]> {
+    const client = await this.requireClient();
+    if (!client) return [];
+    try {
+      return await client.getCommands();
+    } catch (err) {
+      this.options.logger.warn(`get_commands 失败：${err instanceof Error ? err.message : String(err)}`);
+      return [];
+    }
+  }
+
   // ---------- 内部 ----------
 
   private async requireClient(): Promise<PiRpcClient | null> {
@@ -529,11 +560,14 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
       this.modelName = state.model ? `${state.model.provider}/${state.model.id}` : "";
       this.thinkingLevel = state.thinkingLevel ?? "";
       this.sessionFile = state.sessionFile ?? null;
+      // FR-MOD-04 ②：上下文窗口 = get_state 的 model.contextWindow
+      this.contextWindow = typeof state.model?.contextWindow === "number" ? state.model.contextWindow : null;
       this.watcher.track(this.sessionFile);
       if (sessionChanged) {
         this.emit("session_reset", { sessionId: this.sessionId, name: this.sessionName });
       }
       this.emitModelInfo();
+      this.emitUsageInfo();
     } catch (err) {
       this.options.logger.warn(`get_state 失败：${err instanceof Error ? err.message : String(err)}`);
     }
@@ -545,6 +579,23 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
       thinkingLevel: this.thinkingLevel,
       sessionName: this.sessionName,
     });
+  }
+
+  /** FR-MOD-04：值变化时透出 usage_info（去重：重复相同 usage 不重发）。 */
+  private emitUsageInfo(): void {
+    const snapshot = { totalTokens: this.lastUsageTokens, contextWindow: this.contextWindow };
+    if (this.lastEmittedUsage.totalTokens === snapshot.totalTokens && this.lastEmittedUsage.contextWindow === snapshot.contextWindow) {
+      return;
+    }
+    this.lastEmittedUsage = snapshot;
+    this.emit("usage_info", snapshot);
+  }
+
+  /** FR-MOD-04 ①：捕获最近一条助手消息的 usage.totalTokens（message_update 携带的 Usage / message_end 权威终稿）。 */
+  private captureUsage(usage: Usage | undefined): void {
+    if (!usage || typeof usage.totalTokens !== "number") return;
+    this.lastUsageTokens = usage.totalTokens;
+    this.emitUsageInfo();
   }
 
   private async refreshHistory(): Promise<void> {
@@ -572,8 +623,18 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
           }
         }
       }
+      // FR-MOD-04 ④：会话载入/切换后按新会话最近一条助手消息的 usage.totalTokens 取值刷新
+      this.lastUsageTokens = null;
+      for (let i = messages.length - 1; i >= 0; i -= 1) {
+        const m = messages[i];
+        if (m.role === "assistant" && m.usage && typeof m.usage.totalTokens === "number") {
+          this.lastUsageTokens = m.usage.totalTokens;
+          break;
+        }
+      }
       this.watcher.markSynced();
       this.emit("history_loaded", { messages: this.uiMessages });
+      this.emitUsageInfo();
     } catch (err) {
       this.options.logger.warn(`get_messages 失败：${err instanceof Error ? err.message : String(err)}`);
     }
@@ -597,9 +658,13 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
         break;
       }
       case "message_update":
+        this.captureUsage(event.usage); // FR-MOD-04：流式期间收到用量即刷新
         this.handleMessageUpdate(event.assistantMessageEvent);
         break;
       case "message_end":
+        if (event.message && event.message.role === "assistant") {
+          this.captureUsage(event.message.usage); // 权威终稿用量
+        }
         this.handleMessageEnd(event.message);
         break;
       case "tool_execution_start": {

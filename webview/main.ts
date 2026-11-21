@@ -1,7 +1,16 @@
 // Webview 入口：消息流状态、输入区交互、宿主消息路由。
 
-import type { HostToWebview, RunState, UiMessage, WebviewToHost } from "../src/panel/messages";
+import type {
+  HostToWebview,
+  ModelSummary,
+  RunState,
+  SlashCommandInfo,
+  UiMessage,
+  WebviewToHost,
+} from "../src/panel/messages";
+import { CommandMenuState } from "./render/commandMenu";
 import { FollowState } from "./render/followState";
+import { formatContextUsage } from "./render/format";
 import { MessageView } from "./render/messages";
 import "./styles/styles.css";
 import "highlight.js/styles/github.css";
@@ -16,18 +25,25 @@ const vscode = acquireVsCodeApi();
 
 // ---------- DOM 引用 ----------
 
-const messagesEl = document.getElementById("messages") as HTMLElement;
-const errorsEl = document.getElementById("errors") as HTMLElement;
+/** 滚动容器（FR-CHAT-09 度量与滚动执行在此层） */
+const messagesScrollEl = document.getElementById("messages") as HTMLElement;
+/** 消息内容列（FR-CHAT-10 ①：与输入区共享同一 960px 居中列；消息追加在此层） */
+const messagesEl = document.getElementById("messages-col") as HTMLElement;
+const errorsEl = document.getElementById("errors-col") as HTMLElement;
 const inputEl = document.getElementById("input") as HTMLTextAreaElement;
 const sendBtn = document.getElementById("btn-send") as HTMLButtonElement;
 const stopBtn = document.getElementById("btn-stop") as HTMLButtonElement;
-const fileBtn = document.getElementById("btn-file") as HTMLButtonElement;
 const newBtn = document.getElementById("btn-new") as HTMLButtonElement;
 const historyBtn = document.getElementById("btn-history") as HTMLButtonElement;
 const settingsBtn = document.getElementById("btn-settings") as HTMLButtonElement;
 const statusLine = document.getElementById("status-line") as HTMLElement;
 const sessionNameEl = document.getElementById("session-name") as HTMLElement;
 const sendModeEl = document.getElementById("send-mode") as HTMLSelectElement;
+const cmdMenuEl = document.getElementById("cmd-menu") as HTMLElement;
+const modelBtn = document.getElementById("model-selector") as HTMLButtonElement;
+const modelNameEl = document.getElementById("model-selector-name") as HTMLElement;
+const modelMenuEl = document.getElementById("model-menu") as HTMLElement;
+const usageEl = document.getElementById("usage-line") as HTMLElement;
 
 // ---------- 状态 ----------
 
@@ -36,6 +52,8 @@ const streamingViews = new Map<string, MessageView>();
 let runState: RunState = "idle";
 let lastAtTrigger = 0;
 let userSeq = 0;
+/** 当前模型名（FR-MOD-01③ 底部选择器展示与当前项标记） */
+let currentModel = "";
 
 function isRunning(): boolean {
   return runState === "starting" || runState === "streaming";
@@ -62,15 +80,15 @@ let selfScrollPending = false;
 
 /** 视口底缘距滚动底端的像素距离（≥0）。 */
 function distanceFromBottom(): number {
-  return Math.max(0, messagesEl.scrollHeight - messagesEl.clientHeight - messagesEl.scrollTop);
+  return Math.max(0, messagesScrollEl.scrollHeight - messagesScrollEl.clientHeight - messagesScrollEl.scrollTop);
 }
 
 /** 滚到消息区底部（距底 0px）。已在底部时无位移不产生 scroll 事件，不自标记。 */
 function scrollMessagesToBottom(): void {
-  const target = messagesEl.scrollHeight - messagesEl.clientHeight;
-  if (messagesEl.scrollTop === target) return;
+  const target = messagesScrollEl.scrollHeight - messagesScrollEl.clientHeight;
+  if (messagesScrollEl.scrollTop === target) return;
   selfScrollPending = true;
-  messagesEl.scrollTop = target;
+  messagesScrollEl.scrollTop = target;
 }
 
 /** 消息追加/增量渲染后的统一滚动决策：跟随则保持“在底部”，
@@ -83,9 +101,9 @@ function applyFollowScroll(): void {
 // 在渲染点而非 delta 事件到达时做跟随决策：合批渲染真正改 DOM 后立刻回底，
 // 视口在两次渲染之间始终距底 0px（① “每次增量渲染后保持底部”）；打断时决策为 false，不动滚动位置（②）。
 const renderObserver = new MutationObserver(() => applyFollowScroll());
-renderObserver.observe(messagesEl, { childList: true, subtree: true, characterData: true });
+renderObserver.observe(messagesScrollEl, { childList: true, subtree: true, characterData: true });
 
-messagesEl.addEventListener("scroll", () => {
+messagesScrollEl.addEventListener("scroll", () => {
   if (selfScrollPending) {
     selfScrollPending = false; // 本次滚动由跟随逻辑发起，非用户操作
     return;
@@ -182,6 +200,9 @@ const STATE_TEXT: Record<RunState, string> = {
 function refreshHeader(model: string, thinkingLevel: string, sessionName: string): void {
   statusLine.textContent = `${model || "(未设置模型)"} · ${thinkingLevel || "—"} · ${STATE_TEXT[runState]}`;
   sessionNameEl.textContent = sessionName || "未命名会话";
+  // FR-MOD-01③/FR-MOD-03：底部内联选择器常显当前模型，与状态栏/命令面板入口同步
+  currentModel = model;
+  modelNameEl.textContent = model || "(未设置模型)";
 }
 
 function setRunState(state: RunState): void {
@@ -191,7 +212,7 @@ function setRunState(state: RunState): void {
   sendBtn.hidden = running;
   inputEl.placeholder = running
     ? `运行中：输入消息以 ${sendModeEl.value === "followUp" ? "follow-up" : "steer"} 方式插话…（Enter 发送）`
-    : "输入消息…（Enter 发送 / Shift+Enter 换行；输入 @ 引用文件）";
+    : "输入消息…（Enter 发送 / Shift+Enter 换行；@ 引用文件、/ 呼出命令）";
   statusLine.textContent = statusLine.textContent.replace(/· (空闲|启动中|运行中|已中止|错误)$/, `· ${STATE_TEXT[state]}`);
 }
 
@@ -207,7 +228,6 @@ function sendInput(): void {
 
 sendBtn.addEventListener("click", sendInput);
 stopBtn.addEventListener("click", () => post({ kind: "abort" }));
-fileBtn.addEventListener("click", () => post({ kind: "insert_file_ref" }));
 newBtn.addEventListener("click", () => post({ kind: "new_session" }));
 historyBtn.addEventListener("click", () => post({ kind: "open_history" }));
 settingsBtn.addEventListener("click", () => post({ kind: "open_settings" }));
@@ -217,6 +237,32 @@ statusLine.addEventListener("dblclick", () => post({ kind: "switch_thinking" }))
 sendModeEl.addEventListener("change", () => setRunState(runState));
 
 inputEl.addEventListener("keydown", (event) => {
+  // FR-CMD-03 ③：菜单打开时 ↑/↓ 导航、Enter 选中插入、Esc 关闭，均不触发发送
+  if (cmdMenu.isOpen) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      cmdMenu.moveDown();
+      renderCommandMenu();
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      cmdMenu.moveUp();
+      renderCommandMenu();
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cmdMenu.close();
+      renderCommandMenu();
+      return;
+    }
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      selectHighlightedCommand();
+      return;
+    }
+  }
   if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
     event.preventDefault();
     sendInput();
@@ -224,7 +270,9 @@ inputEl.addEventListener("keydown", (event) => {
 });
 
 inputEl.addEventListener("input", () => {
-  // @file 触发（FR-FILE-02）：输入 @ 且前一字符为行首/空白时弹出文件选择器
+  // `/` 命令补全菜单（FR-CMD-03 ②）：随输入实时过滤
+  updateCommandMenu(inputEl.value);
+  // @file 触发（FR-FILE-02，唯一文件引用入口）：输入 @ 且前一字符为行首/空白时弹出文件选择器
   const pos = inputEl.selectionStart;
   const value = inputEl.value;
   if (pos > 0 && value[pos - 1] === "@") {
@@ -252,7 +300,164 @@ function insertAtCursor(text: string, replaceAt = false): void {
   inputEl.focus();
 }
 
-// ---------- 宿主消息路由 ----------
+// ---------- `/` 命令补全菜单（FR-CMD-03） ----------
+// 纯逻辑在 render/commandMenu.ts；此处为接线：输入事件、键盘导航、菜单 DOM 渲染与选中插入。
+
+const cmdMenu = new CommandMenuState();
+/** 命令全集是否已请求（首次 `/` 触发时向宿主要求；会话切换后失效重取） */
+let slashCommandsRequested = false;
+
+/** 菜单 DOM 重渲染：按状态机快照重建（项数有限，全量重建确定性更高）。 */
+function renderCommandMenu(): void {
+  cmdMenuEl.innerHTML = "";
+  if (!cmdMenu.isOpen) {
+    cmdMenuEl.hidden = true;
+    return;
+  }
+  const items = cmdMenu.items;
+  items.forEach((item) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    const active = cmdMenu.highlightedItem === item;
+    option.className = active ? "cmd-item cmd-item-active" : "cmd-item";
+    option.setAttribute("role", "option");
+    if (active) option.setAttribute("aria-selected", "true");
+    const name = document.createElement("span");
+    name.className = "cmd-name";
+    name.textContent = `/${item.name}`;
+    option.appendChild(name);
+    if (item.description) {
+      const desc = document.createElement("span");
+      desc.className = "cmd-desc";
+      desc.textContent = item.description;
+      option.appendChild(desc);
+    }
+    // mousedown（先于 blur）+ preventDefault：保持焦点在输入框，等效键盘选中（③④）
+    option.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+      selectCommand(item);
+    });
+    cmdMenuEl.appendChild(option);
+  });
+  cmdMenuEl.hidden = false;
+}
+
+/** 输入变化 → 状态机更新；首次进入 `/` 前缀时向宿主请求命令全集。 */
+function updateCommandMenu(text: string): void {
+  if (text.startsWith("/") && !slashCommandsRequested) {
+    slashCommandsRequested = true;
+    post({ kind: "request_commands" }); // 响应前菜单不显示（无命令不显示，⑤）
+  }
+  cmdMenu.onInput(text);
+  renderCommandMenu();
+}
+
+/** 选中插入（④）：`/` + 命令名写入输入框（替换 `/` 起始的过滤文本），关闭菜单，焦点保持输入框。 */
+function selectCommand(item: SlashCommandInfo): void {
+  inputEl.value = `/${item.name}`;
+  inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length;
+  cmdMenu.close();
+  renderCommandMenu();
+  inputEl.focus();
+}
+
+/** 键盘 Enter 选中当前高亮项。 */
+function selectHighlightedCommand(): void {
+  const item = cmdMenu.highlightedItem;
+  if (item) selectCommand(item);
+}
+
+/** 会话切换：命令全集随会话（prompt 模板 / skills）失效，下次 `/` 触发重取。 */
+function invalidateSlashCommands(): void {
+  slashCommandsRequested = false;
+  cmdMenu.setCommands([]);
+}
+
+// ---------- 底部内联模型选择器（FR-MOD-01③/FR-MOD-03） ----------
+
+let modelsCache: ModelSummary[] | null = null;
+
+function closeModelMenu(): void {
+  modelMenuEl.hidden = true;
+  modelMenuEl.innerHTML = "";
+}
+
+function renderModelMenu(models: ModelSummary[] | null): void {
+  modelMenuEl.innerHTML = "";
+  const note = (text: string): void => {
+    const el = document.createElement("div");
+    el.className = "model-note";
+    el.textContent = text;
+    modelMenuEl.appendChild(el);
+  };
+  if (models === null) {
+    note("加载可用模型…");
+    return;
+  }
+  if (models.length === 0) {
+    note("没有可用模型（先运行 pi auth / pi config）");
+    return;
+  }
+  models.forEach((model) => {
+    const label = `${model.provider}/${model.id}`;
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = `model-item${label === currentModel ? " model-item-current" : ""}`;
+    option.setAttribute("role", "option");
+    if (label === currentModel) option.setAttribute("aria-selected", "true");
+    const name = document.createElement("span");
+    name.className = "model-item-name";
+    name.textContent = `${label === currentModel ? "✓ " : ""}${label}`;
+    option.appendChild(name);
+    const desc = document.createElement("span");
+    desc.className = "model-item-desc";
+    desc.textContent = [model.name, model.reasoning ? "reasoning" : ""].filter(Boolean).join(" · ");
+    option.appendChild(desc);
+    option.addEventListener("click", () => {
+      post({ kind: "set_model", provider: model.provider, modelId: model.id }); // 切换经既有 setModel 通道，model_info 同步三入口
+      closeModelMenu();
+    });
+    modelMenuEl.appendChild(option);
+  });
+}
+
+modelBtn.addEventListener("click", () => {
+  if (!modelMenuEl.hidden) {
+    closeModelMenu();
+    return;
+  }
+  modelMenuEl.hidden = false;
+  renderModelMenu(modelsCache);
+  post({ kind: "request_models" }); // 每次打开刷新列表（与状态栏/命令面板入口同源）
+});
+
+// 点击菜单外区域 / Esc 关闭模型列表
+function handleModelMenuDismiss(target: EventTarget | null, key?: string): void {
+  if (modelMenuEl.hidden) return;
+  if (key === "Escape") {
+    closeModelMenu();
+    return;
+  }
+  if (target instanceof Node && !modelMenuEl.contains(target) && !modelBtn.contains(target)) {
+    closeModelMenu();
+  }
+}
+
+document.addEventListener("click", (event) => handleModelMenuDismiss(event.target));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") handleModelMenuDismiss(null, "Escape");
+});
+
+// ---------- 底部上下文用量行（FR-MOD-04） ----------
+
+function refreshUsage(totalTokens: number | null, contextWindow: number | null): void {
+  usageEl.textContent = formatContextUsage(totalTokens, contextWindow);
+  const detail =
+    totalTokens === null
+      ? "当前会话尚无助手消息"
+      : `最近一条助手消息 ${totalTokens.toLocaleString()} tokens${contextWindow ? ` / 窗口 ${contextWindow.toLocaleString()}` : ""}`;
+  usageEl.title = `上下文用量：${detail}`;
+}
 
 function handleHostMessage(raw: unknown): void {
   const msg = raw as HostToWebview;
@@ -265,10 +470,12 @@ function handleHostMessage(raw: unknown): void {
     case "session_reset": {
       clearMessages();
       sessionNameEl.textContent = msg.name || "未命名会话";
+      invalidateSlashCommands(); // 会话切换后命令全集重取（prompt 模板/skills 随会话）
       break;
     }
     case "history_loaded": {
       loadHistory(msg.messages);
+      invalidateSlashCommands();
       break;
     }
     case "user_message": {
@@ -357,6 +564,21 @@ function handleHostMessage(raw: unknown): void {
     case "input_prefill": {
       inputEl.value = msg.text;
       inputEl.focus();
+      break;
+    }
+    case "commands": {
+      // FR-CMD-03 ①：命令全集（空/不可用 → 状态机判定菜单不显示，⑤）
+      cmdMenu.setCommands(msg.commands);
+      renderCommandMenu();
+      break;
+    }
+    case "models_list": {
+      modelsCache = msg.models;
+      if (!modelMenuEl.hidden) renderModelMenu(modelsCache);
+      break;
+    }
+    case "usage_info": {
+      refreshUsage(msg.totalTokens, msg.contextWindow);
       break;
     }
     default:

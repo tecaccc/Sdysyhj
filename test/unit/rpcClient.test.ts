@@ -196,4 +196,46 @@ describe("RpcClient", () => {
     expect(writes[0].endsWith("\n")).toBe(true);
     expect(() => JSON.parse(writes[0])).not.toThrow();
   });
+
+  it("get_commands：请求 get_commands，解析 data.commands（FR-CMD-03）", async () => {
+    const { client, harness, writes } = makeClient();
+    await client.start();
+    const child = harness.children[0];
+    captureWrites(child, writes);
+
+    const p = client.getCommands();
+    await flush();
+    const req = JSON.parse(writes[0]);
+    expect(req.type).toBe("get_commands");
+    expect(req.id).toBeTruthy();
+    child.sendLine({
+      type: "response",
+      id: req.id,
+      command: "get_commands",
+      success: true,
+      data: {
+        commands: [
+          { name: "init", description: "Initialize project", source: "extension" },
+          { name: "skill:summarize", description: "总结会话", source: "skill" },
+        ],
+      },
+    });
+    await expect(p).resolves.toEqual([
+      { name: "init", description: "Initialize project", source: "extension" },
+      { name: "skill:summarize", description: "总结会话", source: "skill" },
+    ]);
+  });
+
+  it("get_commands 空/缺 commands 字段返回空数组（菜单不显示，⑤）", async () => {
+    const { client, harness, writes } = makeClient();
+    await client.start();
+    const child = harness.children[0];
+    captureWrites(child, writes);
+
+    const p = client.getCommands();
+    await flush();
+    const req = JSON.parse(writes[0]);
+    child.sendLine({ type: "response", id: req.id, command: "get_commands", success: true, data: {} });
+    await expect(p).resolves.toEqual([]);
+  });
 });

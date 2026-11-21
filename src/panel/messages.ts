@@ -37,6 +37,21 @@ export interface UiMessage {
 /** 运行状态（FR-CHAT-08） */
 export type RunState = "idle" | "starting" | "streaming" | "aborted" | "error";
 
+/** `/` 命令菜单项（FR-CMD-03；名称不含前导 `/`，源自 pi get_commands） */
+export interface SlashCommandInfo {
+  name: string;
+  description?: string;
+  source?: string;
+}
+
+/** 底部模型选择器列表项（FR-MOD-01③；ModelInfo 的可序列化子集） */
+export interface ModelSummary {
+  id: string;
+  provider: string;
+  name?: string;
+  reasoning?: boolean;
+}
+
 /** 宿主 → Webview */
 export type HostToWebview =
   | { kind: "config"; tailLines: number; sendMode: "steer" | "followUp"; workspaceLabel: string }
@@ -57,7 +72,10 @@ export type HostToWebview =
   | { kind: "toast"; text: string }
   | { kind: "external_change"; detail: string }
   | { kind: "file_ref"; path: string }
-  | { kind: "input_prefill"; text: string };
+  | { kind: "input_prefill"; text: string }
+  | { kind: "commands"; commands: SlashCommandInfo[] }
+  | { kind: "models_list"; models: ModelSummary[] }
+  | { kind: "usage_info"; totalTokens: number | null; contextWindow: number | null };
 
 /** Webview → 宿主 */
 export type WebviewToHost =
@@ -73,7 +91,10 @@ export type WebviewToHost =
   | { kind: "open_settings" }
   | { kind: "open_external"; url: string }
   | { kind: "refresh_session" }
-  | { kind: "copy_output"; toolCallId: string };
+  | { kind: "copy_output"; toolCallId: string }
+  | { kind: "request_commands" }
+  | { kind: "request_models" }
+  | { kind: "set_model"; provider: string; modelId: string };
 
 export function isHostToWebview(msg: unknown): msg is HostToWebview {
   return typeof msg === "object" && msg !== null && typeof (msg as { kind?: unknown }).kind === "string";

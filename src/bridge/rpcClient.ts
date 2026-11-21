@@ -16,6 +16,7 @@ import {
   type RpcEvent,
   type RpcResponse,
   type RpcSessionState,
+  type RpcSlashCommand,
 } from "./protocol";
 
 export type SpawnFn = (
@@ -219,6 +220,13 @@ export class RpcClient {
     const res = await this.request({ type: "get_available_models" }, 15_000);
     const data = res.data as { models?: ModelInfo[] } | undefined;
     return data?.models ?? [];
+  }
+
+  /** FR-CMD-03：命令全集（扩展命令 / prompt 模板 / skills）。 */
+  async getCommands(): Promise<RpcSlashCommand[]> {
+    const res = await this.request({ type: "get_commands" }, 15_000);
+    const data = res.data as { commands?: RpcSlashCommand[] } | undefined;
+    return data?.commands ?? [];
   }
 
   async setThinkingLevel(level: string): Promise<void> {

@@ -1,7 +1,7 @@
 // 单测用 FakeRpcClient：实现 PiRpcClient 接口，脚本化响应 + 手动事件注入。
 
 import type { PiRpcClient, PromptAcceptance, QueueAcceptance } from "../../src/bridge/piBridge";
-import type { AgentMessage, ModelInfo, RpcEvent, RpcSessionState } from "../../src/bridge/protocol";
+import type { AgentMessage, ModelInfo, RpcEvent, RpcSessionState, RpcSlashCommand } from "../../src/bridge/protocol";
 
 export class FakeRpcClient implements PiRpcClient {
   isRunning = true;
@@ -40,6 +40,10 @@ export class FakeRpcClient implements PiRpcClient {
     { id: "mock-beta", provider: "mock" },
   ];
   availableThinkingLevels = ["off", "low", "medium", "high"];
+  /** get_commands 返回的命令全集（FR-CMD-03） */
+  commands: RpcSlashCommand[] = [];
+  /** 非空时 getCommands 抛出（模拟不可用，⑤） */
+  commandsError: Error | null = null;
 
   private eventListeners = new Set<(event: RpcEvent) => void>();
   private exitListeners = new Set<(info: { code: number | null; stderr: string; intentional: boolean }) => void>();
@@ -139,12 +143,18 @@ export class FakeRpcClient implements PiRpcClient {
 
   async setModel(provider: string, modelId: string): Promise<ModelInfo> {
     this.setModels.push({ provider, modelId });
-    this.state.model = { id: modelId, provider };
+    // 保留既有字段（如 contextWindow）：与真实 pi set_model 返回完整 ModelInfo 一致
+    this.state.model = { ...this.state.model, id: modelId, provider };
     return this.state.model;
   }
 
   async getAvailableModels(): Promise<ModelInfo[]> {
     return this.availableModels;
+  }
+
+  async getCommands(): Promise<RpcSlashCommand[]> {
+    if (this.commandsError) throw this.commandsError;
+    return this.commands;
   }
 
   async setThinkingLevel(level: string): Promise<void> {

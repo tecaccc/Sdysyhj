@@ -7,7 +7,7 @@ import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PiBridge, type BridgeEvent, type SessionWatcherLike } from "../../src/bridge/piBridge";
 import type { ResolvedRuntime } from "../../src/bridge/rpcTransport";
-import type { AgentMessage, RpcEvent } from "../../src/bridge/protocol";
+import type { AgentMessage, ModelInfo, RpcEvent } from "../../src/bridge/protocol";
 import { SessionFileWatcher } from "../../src/session/sessionStore";
 import { MemoryLogger, createRedactingLogger } from "../../src/util/log";
 import { FakeRpcClient } from "../helpers/fake-rpc-client";
@@ -36,6 +36,8 @@ function makeBridge(
     sendMode?: "steer" | "followUp";
     thinkingDefault?: string;
     promptResult?: { ok: boolean; disposition?: string; error?: string };
+    /** 启动前注入 fake.state.model（如 contextWindow，FR-MOD-04） */
+    initialModel?: ModelInfo;
     /** 注入真实 SessionFileWatcher（文件级回归）；sessionFile 同时作为 fake.state.sessionFile 初始值（null=无，#D-02 场景） */
     realWatcher?: { sessionFile: string | null; intervalMs: number };
   } = {}
@@ -51,6 +53,7 @@ function makeBridge(
     createClient: () => {
       const fake = new FakeRpcClient();
       if (options.promptResult) fake.promptResult = options.promptResult;
+      if (options.initialModel) fake.state.model = options.initialModel;
       if (options.realWatcher) fake.state.sessionFile = options.realWatcher.sessionFile ?? undefined;
       fakes.push(fake);
       return fake;
@@ -893,6 +896,118 @@ describe("Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径）", () => {
     expect(warn).toContain("event=timer");
     expect(warn).toContain("extensionPath=(无)");
     await bridge.dispose();
+  });
+});
+
+describe("FR-MOD-04 上下文用量捕获与透出", () => {
+  const usage = (totalTokens: number) => ({ input: 1, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens });
+
+  function usageSnapshots(events: BridgeEvent[]): Array<{ totalTokens: number | null; contextWindow: number | null }> {
+    return events
+      .filter((e) => e.kind === "usage_info")
+      .map((e) => ({ totalTokens: (e as { totalTokens: number | null }).totalTokens, contextWindow: (e as { contextWindow: number | null }).contextWindow }));
+  }
+
+  it("② get_state 的 model.contextWindow 透出；无助手消息 totalTokens=null（④占位 — 的数据源）", async () => {
+    const { bridge, events } = makeBridge({
+      initialModel: { id: "mock-alpha", provider: "mock", name: "Mock Alpha", reasoning: true, contextWindow: 200_000 },
+    });
+    await bridge.start();
+    expect(usageSnapshots(events)).toEqual([{ totalTokens: null, contextWindow: 200_000 }]);
+    expect(bridge.getUsageInfo()).toEqual({ totalTokens: null, contextWindow: 200_000 });
+  });
+
+  it("① message_update 携带 Usage 即刷新（流式期间实时更新，无需等终稿）", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    events.length = 0;
+    fakes[0].emit({ type: "message_update", usage: usage(5_000), assistantMessageEvent: { type: "text_start", contentIndex: 0 } });
+    expect(usageSnapshots(events)).toEqual([{ totalTokens: 5_000, contextWindow: null }]);
+    expect(bridge.getUsageInfo().totalTokens).toBe(5_000);
+  });
+
+  it("① message_end 权威终稿用量覆盖流式值", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+    events.length = 0;
+    fake.emit({ type: "message_update", usage: usage(5_000), assistantMessageEvent: { type: "text_start", contentIndex: 0 } });
+    fake.emit({
+      type: "message_end",
+      message: { role: "assistant", content: [{ type: "text", text: "ok" }], usage: usage(7_000), stopReason: "stop", timestamp: 1 },
+    });
+    expect(usageSnapshots(events).map((e) => e.totalTokens)).toEqual([5_000, 7_000]);
+    expect(bridge.getUsageInfo().totalTokens).toBe(7_000);
+  });
+
+  it("无 Usage 事件不改变取值；重复相同用量去重不重发", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+    events.length = 0;
+    fake.emit({ type: "message_update", usage: usage(5_000), assistantMessageEvent: { type: "text_start", contentIndex: 0 } });
+    fake.emit({ type: "message_update", assistantMessageEvent: { type: "text_delta", contentIndex: 0, delta: "x" } }); // 无 Usage
+    fake.emit({ type: "message_update", usage: usage(5_000), assistantMessageEvent: { type: "text_delta", contentIndex: 0, delta: "y" } }); // 同值
+    expect(usageSnapshots(events)).toEqual([{ totalTokens: 5_000, contextWindow: null }]);
+  });
+
+  it("④ 历史重建：取新会话最后一条助手消息 usage；无助手消息时重置为 null", async () => {
+    const { bridge, fakes } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+    fake.messages = [
+      { role: "user", content: "q1", timestamp: 1 },
+      { role: "assistant", content: [{ type: "text", text: "a1" }], usage: usage(111), stopReason: "stop", timestamp: 2 },
+      { role: "user", content: "q2", timestamp: 3 },
+      { role: "assistant", content: [{ type: "text", text: "a2" }], usage: usage(222), stopReason: "stop", timestamp: 4 },
+    ] as AgentMessage[];
+    await bridge.reloadHistory();
+    expect(bridge.getUsageInfo().totalTokens).toBe(222);
+
+    fake.messages = [{ role: "user", content: "only-user", timestamp: 5 }] as AgentMessage[];
+    await bridge.reloadHistory();
+    expect(bridge.getUsageInfo().totalTokens).toBeNull();
+  });
+
+  it("④ 新建会话后重置（当前会话尚无助手消息 → —）", async () => {
+    const { bridge, fakes } = makeBridge();
+    await bridge.start();
+    fakes[0].emit({ type: "message_update", usage: usage(5_000), assistantMessageEvent: { type: "text_start", contentIndex: 0 } });
+    expect(bridge.getUsageInfo().totalTokens).toBe(5_000);
+    await bridge.newSession();
+    expect(bridge.getUsageInfo().totalTokens).toBeNull();
+  });
+
+  it("② 切换模型后 contextWindow 随 get_state 更新并透出", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    events.length = 0;
+    fakes[0].state.model = { id: "mock-alpha", provider: "mock", name: "Mock Alpha", reasoning: true, contextWindow: 128_000 };
+    await bridge.setModel("mock", "mock-beta"); // fake setModel 合并保留 contextWindow 后 refreshState 读取
+    expect(usageSnapshots(events).pop()).toEqual({ totalTokens: null, contextWindow: 128_000 });
+    expect(bridge.getUsageInfo().contextWindow).toBe(128_000);
+  });
+});
+
+describe("FR-CMD-03 命令全集（get_commands 桥侧封装）", () => {
+  it("listCommands 透传客户端 get_commands 结果（扩展命令/prompt 模板/skills）", async () => {
+    const { bridge, fakes } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+    fake.commands = [
+      { name: "init", description: "Initialize project", source: "extension" },
+      { name: "review", description: "Review code", source: "prompt" },
+      { name: "skill:summarize", description: "总结", source: "skill" },
+    ];
+    await expect(bridge.listCommands()).resolves.toEqual(fake.commands);
+  });
+
+  it("⑤ get_commands 不可用（RPC 失败）→ 返回空并记日志：菜单不显示，`/` 文本仍可直接发送透传", async () => {
+    const { bridge, fakes, logger } = makeBridge();
+    await bridge.start();
+    fakes[0].commandsError = new Error("rpc unavailable");
+    await expect(bridge.listCommands()).resolves.toEqual([]);
+    expect(logger.lines.some((l) => l.startsWith("[warn] get_commands 失败"))).toBe(true);
   });
 });
 

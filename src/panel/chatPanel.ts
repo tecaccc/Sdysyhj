@@ -184,6 +184,7 @@ export class ChatPanel implements vscode.WebviewViewProvider {
         }
         const info = this.bridge.getModelInfo();
         this.post({ kind: "model_info", model: info.model, thinkingLevel: info.thinkingLevel, sessionName: info.sessionName });
+        this.post({ kind: "usage_info", ...this.bridge.getUsageInfo() });
         this.post({ kind: "run_state", state: this.bridge.getRunState() });
         this.post({ kind: "history_loaded", messages: this.bridge.getUiMessages() });
         break;
@@ -213,6 +214,24 @@ export class ChatPanel implements vscode.WebviewViewProvider {
         break;
       case "insert_file_ref":
         await this.showFilePicker();
+        break;
+      case "request_commands": {
+        // FR-CMD-03 ⑤：不可用/空 → 空列表回发，webview 不显示菜单
+        const commands = await this.bridge.listCommands();
+        this.post({ kind: "commands", commands });
+        break;
+      }
+      case "request_models": {
+        // FR-MOD-01③：底部内联选择器的列表数据（与状态栏/命令面板入口同一通道 listModels）
+        const models = await this.bridge.listModels();
+        this.post({
+          kind: "models_list",
+          models: models.map((m) => ({ id: m.id, provider: m.provider, name: m.name, reasoning: m.reasoning })),
+        });
+        break;
+      }
+      case "set_model":
+        await this.guard(() => this.bridge.setModel(msg.provider, msg.modelId), "切换模型失败");
         break;
       case "open_settings":
         void vscode.commands.executeCommand("workbench.action.openSettings", "sdysyhj");
@@ -306,23 +325,36 @@ export class ChatPanel implements vscode.WebviewViewProvider {
       <span id="status-line" class="status-line" title="点击切换模型">—</span>
     </div>
   </header>
-  <main id="messages" aria-live="polite"></main>
-  <div id="errors"></div>
+  <main id="messages" aria-live="polite"><div id="messages-col" class="content-col"></div></main>
+  <div id="errors"><div id="errors-col" class="content-col"></div></div>
   <footer id="input-area">
-    <div class="input-toolbar">
-      <button id="btn-file" title="插入文件引用（@file）">@文件</button>
-      <label class="mode-label">插话模式
-        <select id="send-mode" title="运行中插话模式（FR-CHAT-06）">
-          <option value="steer">steer（运行中插话）</option>
-          <option value="followUp">follow-up（本轮后处理）</option>
-        </select>
-      </label>
-    </div>
-    <textarea id="input" rows="3" placeholder="输入消息…（Enter 发送 / Shift+Enter 换行；输入 @ 引用文件）"></textarea>
-    <div class="input-actions">
-      <span id="stream-cursor" hidden>▍</span>
-      <button id="btn-send">发送</button>
-      <button id="btn-stop" hidden>■ Stop</button>
+    <div class="content-col" id="input-col">
+      <div class="input-toolbar">
+        <label class="mode-label">插话模式
+          <select id="send-mode" title="运行中插话模式（FR-CHAT-06）">
+            <option value="steer">steer（运行中插话）</option>
+            <option value="followUp">follow-up（本轮后处理）</option>
+          </select>
+        </label>
+      </div>
+      <div class="input-shell" id="input-shell">
+        <div id="cmd-menu" class="cmd-menu" role="listbox" aria-label="命令补全" hidden></div>
+        <textarea id="input" rows="3" placeholder="输入消息…（Enter 发送 / Shift+Enter 换行；输入 @ 引用文件、/ 呼出命令）"></textarea>
+        <button id="btn-send" aria-label="发送" title="发送">
+          <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
+            <path d="M8 13.2V3.6M8 3.6 4.3 7.3M8 3.6l3.7 3.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="input-bottom" id="input-bottom">
+        <button id="model-selector" class="model-selector" title="切换模型（底部内联选择器）">
+          <span id="model-selector-name">—</span><span class="model-caret" aria-hidden="true">▾</span>
+        </button>
+        <span id="usage-line" class="usage-line" title="上下文用量：最近一条助手消息 token / 上下文窗口">—</span>
+        <span class="input-bottom-spacer"></span>
+        <button id="btn-stop" hidden>■ Stop</button>
+        <div id="model-menu" class="model-menu" role="listbox" aria-label="可用模型" hidden></div>
+      </div>
     </div>
   </footer>
   <script nonce="${nonce}" src="${scriptUri}"></script>

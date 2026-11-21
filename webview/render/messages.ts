@@ -3,6 +3,7 @@
 // message_final 整体替换该消息 DOM（权威终稿）；大输出仅保留尾部（outputTruncated 标记）。
 
 import type { UiBlock, UiMessage } from "../../src/panel/messages";
+import { formatHHmm } from "./format";
 import { escapeText, renderMarkdown } from "./markdown";
 
 const STATUS_ICONS: Record<string, string> = {
@@ -219,6 +220,7 @@ function compact(text: string, max = 80): string {
 /** 单条消息视图：负责流式增量与权威终稿渲染。 */
 export class MessageView {
   readonly root: HTMLElement;
+  private readonly timeEl: HTMLElement;
   private readonly bodyEl: HTMLElement;
   private readonly blocks = new Map<number, BlockView>();
   private cursorEl: HTMLElement | null = null;
@@ -231,7 +233,10 @@ export class MessageView {
   ) {
     this.root = el("div", `message message-${role}`);
     this.root.dataset.messageId = id;
-    this.root.appendChild(el("div", "message-role", role === "user" ? "User" : "Assistant"));
+    // FR-CHAT-10 ⑤：无 User/Assistant 角色前缀，改为 HH:mm 时间戳；
+    // 流式期间先以创建时刻占位，终稿（message.finalize）以权威 timestamp 覆盖。
+    this.timeEl = el("div", "message-time", formatHHmm(Date.now()));
+    this.root.appendChild(this.timeEl);
     this.bodyEl = el("div", "message-body");
     this.root.appendChild(this.bodyEl);
     if (role === "assistant") {
@@ -297,6 +302,7 @@ export class MessageView {
   finalize(message: UiMessage): void {
     this.finalized = true;
     if (this.cursorEl) this.cursorEl.remove();
+    this.timeEl.textContent = formatHHmm(message.timestamp);
     this.blocks.clear();
     this.bodyEl.innerHTML = "";
     message.blocks.forEach((block, index) => {
