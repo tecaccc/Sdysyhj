@@ -53,6 +53,7 @@ agent_start → turn_start → message_start(user) → message_end(user)
 - 裁决：通过，设计基线（含 §11 契约清单）即刻冻结；测试 Agent 盲写以冻结快照为依据
 - 并行启动：研发 Agent（fresh，按 D1–D10 实现）∥ 测试 Agent（fresh，盲写 TC-062+）；双方过程产物互不可见（规范第二部分 §4）
 - 2026-11-21 16:0x 总调度（瞬态故障处置，规范 §7.2）：研发 Agent golden 录制 spike 的 bash 调用挂死于 `wait $SERVER_PID`（mock server 永不退出 + PORT 提取为空命令）；总调度外部清理挂起进程使调用返回，steer 提示改自终止结构（内嵌 server + spawn pi + 有界超时）。属工具面瞬态，不占失败回路额度（N=2），研发继续
+- 2026-11-21 16:1x 总调度（超时处置，规范 §7.2）：两子代理均触 30 分钟默认超时。① 研发（run `fcdef946`）：仓库零改动，spike 已验证真实 pi 1.5.2 + loopback mock 可行（确认 user 回声位于 turn_start 后、timestamp/durationMs/机器相关 system 消息需归一化）——resume 续做实现，超时预算放宽至 90 分钟；② 测试（run `802fe380`）：docs/test-cases.md v0.5 已实质完成（TC-062~075），打断于末尾锚点抽查——resume 补自检与交付汇报。均属基础设施瞬态，不占失败额度
 
 ## 4. 范围裁决说明：条目②另立 TASK-009
 
