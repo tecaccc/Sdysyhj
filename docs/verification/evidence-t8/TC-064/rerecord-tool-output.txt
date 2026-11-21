@@ -1,0 +1,4 @@
+pi 运行时：PATH pi（1.5.2；探测全量：PATH pi=1.5.2, bundled cli.js=1.5.2）
+✅ golden-prompt-basic.jsonl：31 行（双录逐字节一致）  SUMMARY {"scenario":"prompt-basic","piVersion":"1.5.2","fixtureLines":23,"llmCalls":1,"userEchoCount":1,"userEchoOrder":["GOLDEN-PROMP"]}
+✅ golden-steer-followup.jsonl：70 行（双录逐字节一致）  SUMMARY {"scenario":"steer-followup","piVersion":"1.5.2","fixtureLines":62,"llmCalls":3,"userEchoCount":3,"userEchoOrder":["GOLDEN-STEER","GOLDEN-ST se","GOLDEN-FU se"]}
+golden fixture 录制完成（test/fixtures/golden/）。

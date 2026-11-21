@@ -1,0 +1,16 @@
+
+> sdysyhj@0.1.5 verify:unit
+> vitest run test/unit
+
+
+ RUN  v5.1.0 /tmp/verify-task008
+
+
+ Test Files  13 passed (13)
+      Tests  166 passed (166)
+   Start at  17:34:44
+   Duration  5.24s (tests 85%, transform 9%, import 5%, worker 1%)
+
+    Isolate  13 workers spawned · ~135ms startup each (spawn + environment, per file)
+             at least ~450ms faster with isolate: false — reuses workers across files instead of one per file
+

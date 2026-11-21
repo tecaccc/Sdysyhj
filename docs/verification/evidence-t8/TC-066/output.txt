@@ -1,0 +1,9 @@
+PASS  066-a  F1 即时=1
+PASS  066-b  S1 即时=1
+PASS  066-echo-order  回声到达序=P1,S1,F1（期望 P1,S1,F1 乱序实证）
+PASS  066-c  S1 回声处理后：S1=1 F1=1，F1 文本未错换=true
+PASS  066-d  F1 回声处理后 F1=1
+PASS  066-e  总数=3 文本=["MYPI_MIX:main","fu-check","steer-check"]
+PASS  066-queue_update  mock 协议侧 queue_update=4 次（应 ≥4：入队×2+出队×2）
+
+== tc066: 7/7 断言通过 ==

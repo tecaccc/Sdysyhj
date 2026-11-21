@@ -1,0 +1,5 @@
+PASS  073-a  H1 条目=1 原文、idle=idle、无回声=true（无 settled 等待残留）
+PASS  073-b  自 H1 发送起直至 P2 settled 恒 1 条（发送前空快照不计）
+PASS  073-c  P2 三时点=1；H1 未被错绑
+
+== tc073: 3/3 断言通过 ==

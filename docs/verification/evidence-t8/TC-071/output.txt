@@ -1,0 +1,8 @@
+PASS  071-a  T0：条目=[{"role":"user","id":"u1","text":"/review src/a.ts"}]
+PASS  071-b  T1：[{"role":"user","id":"u1","text":"EXPANDED-AUTHORITATIVE full text"}]
+PASS  071-b-id  T1 条目 id=u1 与 T0=u1 同一逻辑条目
+PASS  071-c  T2：[{"role":"user","id":"u1","text":"EXPANDED-AUTHORITATIVE full text"}]
+PASS  071-d  变迁序列=["","/review src/a.ts","EXPANDED-AUTHORITATIVE full text"]（X→Y 恰一次，无并存）
+PASS  071-e  发送后至 T2 条数恒 1（发送前空快照不计，首快照索引=4）
+
+== tc071: 6/6 断言通过 ==

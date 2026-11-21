@@ -1,0 +1,8 @@
+PASS  074-a  assistant 终稿数=2（1 次发送 → 2 条轮终稿：工具轮 + 总结轮，TC-001 口径每轮一条）
+PASS  074-b1  text_delta 按序=["Checking.","tool done summary"]
+PASS  074-b2  thinking_delta 在场=true
+PASS  074-b3  toolcall_status 序列=["running","running","running","success","success"]
+PASS  074-c  assistant 终稿=["Checking.","tool done summary"]（message_end 权威文本）
+PASS  074-d  user 侧单条=[{"role":"user","id":"u1","text":"MYPI_TOOL:run tools"}]
+
+== tc074: 6/6 断言通过 ==

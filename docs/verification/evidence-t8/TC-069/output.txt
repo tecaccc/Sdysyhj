@@ -1,0 +1,6 @@
+PASS  069-a  重放 user=["replay-check-1","replay-check-2","replay-check-3"]
+PASS  069-b  重建 user 文本=[{"role":"user","text":"replay-check-1"},{"role":"user","text":"replay-check-2"},{"role":"user","text":"replay-check-3"}]
+PASS  069-c  assistant=3 合计=6（应 3/6）
+PASS  069-d  JSONL 序列=["user:replay-check-1","assistant:ack: replay-ch","user:replay-check-2","assistant:ack: replay-ch","user:replay-check-3","assistant:ack: replay-ch"] vs 重建=["user:replay-check-1","assistant:ack: replay-ch","user:replay-check-2","assistant:ack: replay-ch","user:replay-check-3","assistant:ack: replay-ch"]（澄清 #5）
+
+== tc069: 4/4 断言通过 ==

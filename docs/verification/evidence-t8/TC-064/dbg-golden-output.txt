@@ -1,0 +1,11 @@
+== after start: kinds == model_info,usage_info,history_loaded
+== logger after start ==
+[info] PiBridge 已启动（dbg，cwd=/tmp/vt008-dbg-P34fzS）
+== after prompt: kinds == model_info,usage_info,history_loaded,user_message,run_state,run_state,message_final,stream_start,usage_info,text_delta,text_delta,text_delta,text_delta,usage_info,message_final,run_state
+== logger FULL ==
+[info] PiBridge 已启动（dbg，cwd=/tmp/vt008-dbg-P34fzS）
+[info] prompt 发送：GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assistant + settled)
+[debug] 未处理 RPC 事件：turn_start
+[debug] 未处理 RPC 事件：turn_end
+[debug] 未处理 RPC 事件：agent_end
+== uiMessages == [{"role":"user","id":"u1"},{"role":"assistant","id":"m2"}]

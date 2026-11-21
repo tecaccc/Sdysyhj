@@ -1,0 +1,45 @@
+
+ RUN  v5.1.0 /tmp/verify-task008
+
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 启动 → prompt → 工具调用链 → settled（含 thinking/tool 卡片事件） 94ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > prompt → 事件流 → agent_settled 全链路 85ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 响应 id 关联与命令覆盖（get_state/set_model/thinking/session_name） 71ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 帧解析：delta 内 U+2028/U+2029 不破坏记录 57ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 错误运行（ERROR）：错误展示 + 状态恢复 83ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > abort：LONG 运行中中止 → agent_settled(aborted) 65ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 运行中 prompt 无 streamingBehavior 被拒；steer/followUp 排队 44ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#1（FR-CMD-05）打包布局内置运行时 > 复现脚本形态：激活 → ready → source=bundled 可用（vsix 布局） 271ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > MOCK-STDERR：stderr 原文与协议异常写入日志（含脱敏） 71ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 子进程崩溃 → 自动重启一次；再崩溃 → error 态 + 可行动指引（NFR-02/FR-CHAT-07） 129ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 会话切换：历史恢复（session_reset + history_loaded） 64ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > switch_session 恢复消息（FR-SESS-03 数据面） 53ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > 未识别命令返回 success:false（错误处理） 58ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > 新建会话清空历史（FR-SESS-01） 71ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#2（FR-CMD-02）stderr / 协议异常入日志 > stderr 无换行尾部在子进程退出时也会冲刷 111ms
+ ✓ test/integration/rpc-client.test.ts > RpcClient ↔ mock 子进程集成 > stop() 后进程退出、后续请求拒绝 152ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > steer 插话排队（FR-CHAT-06） 104ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > auto：PATH 上的假 pi 可用 → source=path，含版本 9ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > auto：PATH pi 启动失败（exit≠0）→ 回退内置运行时 5ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > auto：PATH 无 pi → 内置运行时（真实 node_modules 中的 cli.js） 3ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > 显式 piPath 指向假 pi → source=explicit 3ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > 显式 piPath 启动失败 → 含详情的可行动错误 4ms
+ ✓ test/integration/runtime-resolve.test.ts > resolvePiRuntime（真实探测） > defaultProbe：不存在的命令 → ok=false 2ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > dispose 强制停止子进程（无僵尸） 238ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > NFR-01 代理：≥600 delta 零丢失 + 全量渲染 ≤30s 77ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#4（FR-SESS-07）外部修改拦截（口径 C） > 检测外部修改后 prompt 被拦截并引导刷新；刷新后恢复 350ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > FR-SESS-03：切换会话重放历史与会话 JSONL 一致（含压缩状态条目） 57ms
+ ✓ test/integration/defects-regression.test.ts > 缺陷#6（NFR-05）关键路径日志 > 会话创建 / prompt / abort / 子进程退出 4 类齐全 158ms
+ ✓ test/integration/runtime-resolve.test.ts > 内置运行时冒烟（离线） > bundled cli.js --version 可执行 371ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > Issue #2 / #D-03 回归：extension_error 走 toast（非阻断）+ 同键去重 + 日志全字段（FR-CHAT-07 澄清 #14） 68ms
+ ✓ test/integration/user-echo.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D9 集成） > I1 ① fake-pi 全链路（补发回声后）：prompt → user 回声 → assistant → settled；user_message.id == message_final(user).id 且 uiMessages 恰一条 user 72ms
+ ✓ test/integration/golden-replay.test.ts > FR-CHAT-11 golden fixture 回放（TASK-008 §10.12 D8/D9 I3/I4） > I3 ① golden-prompt-basic：真实 pi 录制序列回放——user 回声单条、id 贯通、回声先于助手消息 75ms
+ ✓ test/integration/user-echo.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D9 集成） > I2 ②④ steer + follow_up 混合运行（QUEUEMIX 队列剧本）：各恰一条、乱序投递不错换 98ms
+ ✓ test/integration/user-echo.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D9 集成） > I5 ③ 面板重开链路：settled 后 getUiMessages()/history_loaded 的 user 条目数 = 发送数；刷新重建无重复 83ms
+ ✓ test/integration/golden-replay.test.ts > FR-CHAT-11 golden fixture 回放（TASK-008 §10.12 D8/D9 I3/I4） > I4 ②④ golden-steer-followup：注入时序与回声关联——乱序投递各恰一条、不错换 83ms
+ ✓ test/integration/pi-bridge.test.ts > PiBridge + mock 子进程集成 > Issue #1 / #D-01/#D-02 回归重放：第二条消息全程无 external_change，随后外部写入检出（FR-SESS-07） 1056ms
+
+ Test Files  6 passed (6)
+      Tests  36 passed (36)
+   Start at  18:12:07
+   Duration  2.29s (tests 94%, import 4%, transform 1%, worker 1%)
+

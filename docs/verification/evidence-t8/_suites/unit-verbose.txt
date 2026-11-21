@@ -1,0 +1,178 @@
+
+ RUN  v5.1.0 /tmp/verify-task008
+
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 启动后加载状态与历史 5ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt → 流式 → settled 全链路；run_state 转移 starting→streaming→idle 2ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > message_end 为权威终稿，覆盖流式增量 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > abort：agent_settled(aborted) → 状态流 streaming→aborted→idle，历史保留（缺陷#3 回归，口径 A） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 运行中发送 → steer 排队（FR-CHAT-06） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 运行中发送 follow-up 模式 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 工具卡片：执行状态 + 输出截断保留尾部 + 复制全部取全量（FR-CHAT-04） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > #D-04 时序契约：工具执行结果晚于含工具卡的 message_final 到达时，toolcall_status 仍随后发出且可按 messageId/toolCallId 路由（FR-CHAT-04，直播路径） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 工具失败状态（isError） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 子进程崩溃自动重启一次并提示（NFR-02）；再次崩溃进入 error 2ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > prompt 被拒：错误展示 + 恢复可输入（FR-CHAT-05/07） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > provider 报错（stopReason=error）展示可读信息与指引 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 外部修改检测：watcher 回调 → external_change（FR-SESS-07） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 历史重建：工具结果绑定到卡片（FR-SESS-03） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 模型切换后 model_info 更新（FR-MOD-01） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinking 等级切换/循环（FR-MOD-02） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 会话命名（FR-SESS-04） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 新建/切换会话：session_reset + 历史重建（FR-SESS-01/03） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinkingDefault 在新建会话时透传（FR-MOD-02：枚举不固化） 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > thinkingDefault 为空时不干预 pi 自身设置 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#6 回归：关键路径日志 4 类齐全（会话创建/prompt/abort/子进程退出） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#4 回归：外部修改后 prompt 被拦截并引导刷新；刷新后恢复（FR-SESS-07 口径 C） 1ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#4 回归：切换/新建会话同样解除陈旧拦截 0ms
+ ✓ test/unit/piBridge.test.ts > PiBridge 状态机与事件翻译 > 缺陷#2 回归：stderr/协议异常写入日志并脱敏（FR-CMD-02） 1ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > 运行态门控接线：starting 挂起，idle/aborted 恢复并同步基线（#D-01 R2） 1ms
+ ✓ test/unit/sessionStore.test.ts > encodeSessionDirName > 与 pi 一致：去首分隔符、[/\\:] → '-'，外裹 --…-- 3ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 解析标题（session_info 名称优先）、消息数、时间 2ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 无命名时标题取首条用户消息摘要 1ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 按修改时间倒序；mostRecentSession 返回最新 2ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 目录不存在返回空数组 1ms
+ ✓ test/unit/sessionStore.test.ts > listSessions > 损坏行跳过不致命 1ms
+ ✓ test/unit/sessionStore.test.ts > defaultSessionsRoot > 环境变量优先 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > 外部修改/删除可检测；无变化不误报 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > markSynced 同步基线（本端写入不误报） 1ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > start/stop 定时检查触发回调 82ms
+ ✓ test/unit/sessionStore.test.ts > SessionFileWatcher（FR-SESS-07） > setSuspended（#D-01）：挂起期间变化只吸收不报警；恢复先同步基线再正常检测 243ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > (a) starting/streaming 期间会话文件变化只吸收不报警；settled 后恢复正常检测（#D-01） 257ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > (b) idle 下迟到 entry_appended：先落盘后事件不误报（#D-01 R1） 121ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > (c) idle 下真实外部写入在一个轮询周期内检出（≤5s 检测语义保持，#D-01） 87ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 启动 spawn 正确的命令与参数 4ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 请求带 id，乱序响应正确关联 14ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 事件分发到 onEvent 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 无法解析的行进入 onAnomaly（协议异常日志，FR-CMD-02） 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > U+2028/U+2029 不破坏帧（严格 LF 切分） 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 子进程退出时挂起请求被拒绝，错误含 stderr 23ms
+ ✓ test/unit/piBridge.test.ts > Issue #1 回归（#D-01/#D-02，FR-SESS-07） > #D-02 全新会话：settled 后补学 sessionFile 并进入跟踪，外部写入可检出（R3） 102ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 通道选择：extension_error 走 toast（非阻断）——无 error 事件、无误导 hint，文案含路径/错误首行/Output 指引 2ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 日志全字段：logger.warn 含 extensionPath/event/error 全文（多行不截断） 1ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 同键去重：相同 error+extensionPath 60s 窗口内只 toast 一次，日志仍全量 1ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 不同键不去重：extensionPath 或 error 任一不同即各自 toast 1ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 60s 窗口外同键重复事件再次 toast（fake timers，确定性无等待） 4ms
+ ✓ test/unit/piBridge.test.ts > Issue #2 回归（#D-03，FR-CHAT-07 展示通道口径） > 缺字段容错：无 extensionPath/error 仍 toast 与记日志（占位文案，不抛错） 1ms
+ ✓ test/unit/piBridge.test.ts > FR-MOD-04 上下文用量捕获与透出 > ② get_state 的 model.contextWindow 透出；无助手消息 totalTokens=null（④占位 — 的数据源） 1ms
+ ✓ test/unit/piBridge.test.ts > FR-MOD-04 上下文用量捕获与透出 > ① message_update 携带 Usage 即刷新（流式期间实时更新，无需等终稿） 1ms
+ ✓ test/unit/piBridge.test.ts > FR-MOD-04 上下文用量捕获与透出 > ① message_end 权威终稿用量覆盖流式值 1ms
+ ✓ test/unit/piBridge.test.ts > FR-MOD-04 上下文用量捕获与透出 > 无 Usage 事件不改变取值；重复相同用量去重不重发 1ms
+ ✓ test/unit/piBridge.test.ts > FR-MOD-04 上下文用量捕获与透出 > ④ 历史重建：取新会话最后一条助手消息 usage；无助手消息时重置为 null 1ms
+ ✓ test/unit/piBridge.test.ts > FR-MOD-04 上下文用量捕获与透出 > ④ 新建会话后重置（当前会话尚无助手消息 → —） 0ms
+ ✓ test/unit/piBridge.test.ts > FR-MOD-04 上下文用量捕获与透出 > ② 切换模型后 contextWindow 随 get_state 更新并透出 0ms
+ ✓ test/unit/piBridge.test.ts > FR-CMD-03 命令全集（get_commands 桥侧封装） > listCommands 透传客户端 get_commands 结果（扩展命令/prompt 模板/skills） 2ms
+ ✓ test/unit/piBridge.test.ts > FR-CMD-03 命令全集（get_commands 桥侧封装） > ⑤ get_commands 不可用（RPC 失败）→ 返回空并记日志：菜单不显示，`/` 文本仍可直接发送透传 1ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U1 ① prompt → user 回声：uiMessages 恰一条 user；message_final.id = user_message 下发的乐观条目 id 3ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U2 ④ 澄清 #16：回声文本 ≠ 发送原文 → 同 id 同条目文本更新为权威文本，更新前后条数均 1 1ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U3 ② 运行中 steer：注入回声后恰一条；queue_update 绑定展开文本（slash 展开）命中 3ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U4 ② follow_up：agent 停后注入回声恰一条 2ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U5 ②④ 乱序：followUp 先发、steer 后发，steer 回声先到 → 各自命中不错换 2ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U6 ① 同文本两次独立发送 → 逐条消费不跨发送合并（run-head 优先 → FIFO） 2ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U7 ①④ disposition handled：单条、即刻出账；后续无关回声不错绑（D3） 2ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U8 ①④ success:false：单条、即刻出账；下一条消息回声正确关联（D3） 1ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U9 ②④ abort 后队列保留（settled + queue_update 仍含该文本）→ 单条保留；后续 prompt 继续投递时迟到回声正确命中 2ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U10 ③④ refreshHistory 权威重建无重复；仍入队条目按发送序回填尾部，且后续回声仍命中（D5） 2ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U11 ③ getUiMessages() 回放快照：每次发送恰一条 user 条目（面板重开数据源） 1ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > U12 ⑤ 回归边界：回声在场的助手流式/工具卡事件序列与现状一致（D7 零改动） 1ms
+ ✓ test/unit/piBridge.test.ts > FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元） > D2.2 兑底：多通道不可判定时不重绑不追加，保留原文并 warn 留痕（宁保留不错换） 1ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > 请求超时拒绝 30ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > stop() 关闭 stdin 触发有序退出 2ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > prompt 成功返回 disposition；失败返回 error 24ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > onStderr：行缓冲转发 stderr 原文，退出时冲刷无换行尾部（FR-CMD-02） 22ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > stdin 每个命令一行 JSON（JSONL） 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > get_commands：请求 get_commands，解析 data.commands（FR-CMD-03） 11ms
+ ✓ test/unit/rpcClient.test.ts > RpcClient > get_commands 空/缺 commands 字段返回空数组（菜单不显示，⑤） 11ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 有可用 pi → 优先 PATH 3ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 无 pi → 回退内置运行时（node + cli.js） 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > bundled 模式：直接内置 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH 与内置均不可用 → PiRuntimeError 含可行动指引 2ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > piPath 显式指定 → 按该路径启动 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径不存在 → 含错误详情的可行动指引 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径启动失败（探测不过）→ 错误含详情 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > path 模式未配置 piPath → 提示配置 0ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > auto：PATH pi 版本低于最低支持 → 回退内置运行时（FR-CMD-05 判据） 1ms
+ ✓ test/unit/runtime.test.ts > resolvePiRuntime > 显式路径版本低于最低支持 → 含详情的可行动错误 1ms
+ ✓ test/unit/runtime.test.ts > isVersionAtLeast > 点分版本比较（缺省段按 0） 0ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > <ext>/dist + <ext>/node_modules 布局（vsix 形态）可解析 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > <pkg>/dist/cli.js 旧式入口可解析 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > bundle 位于更深层目录时向上走 node_modules 仍可解析 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > 布局内无内置运行时 → null（由上层报可行动错误） 1ms
+ ✓ test/unit/runtime.test.ts > defaultResolveBundledCli 打包布局（缺陷#1 回归） > resolvePiRuntime 在打包布局下自动回退内置运行时 1ms
+ ✓ test/unit/redact.test.ts > redactSecrets > api_key 键值对脱敏 3ms
+ ✓ test/unit/redact.test.ts > redactSecrets > Authorization / Bearer 脱敏 0ms
+ ✓ test/unit/redact.test.ts > redactSecrets > sk- 前缀 token 脱敏 0ms
+ ✓ test/unit/redact.test.ts > redactSecrets > JWT 脱敏 0ms
+ ✓ test/unit/redact.test.ts > redactSecrets > 普通文本不动 1ms
+ ✓ test/unit/redact.test.ts > redactSecrets > 空串安全 0ms
+ ✓ test/unit/redact.test.ts > createRedactingLogger > 所有级别写入前脱敏 1ms
+ ✓ test/unit/commandMenu.test.ts > filterCommands（FR-CMD-03 ② 过滤） > 空过滤词匹配全部 3ms
+ ✓ test/unit/commandMenu.test.ts > filterCommands（FR-CMD-03 ② 过滤） > 名称子串过滤，不区分大小写 0ms
+ ✓ test/unit/commandMenu.test.ts > filterCommands（FR-CMD-03 ② 过滤） > 描述子串过滤，不区分大小写（含中文） 1ms
+ ✓ test/unit/commandMenu.test.ts > filterCommands（FR-CMD-03 ② 过滤） > 无匹配返回空 0ms
+ ✓ test/unit/commandMenu.test.ts > filterCommands（FR-CMD-03 ② 过滤） > 空名命令防御性剔除 0ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ② 非 `/` 开头不显示菜单（即使已有命令全集） 1ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ② `/` 开头显示菜单，`/` 后为空匹配全部 1ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ② 随 `/` 之后文本实时过滤；过滤后无匹配则隐藏 0ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ⑤ 命令全集为空时不显示菜单 0ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ⑤ 命令全集晚到（空 → 就绪）按当前输入重求值 1ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ③ ↑/↓ 移动高亮项，末端环绕 0ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ③ 过滤变化后高亮重置首项 0ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ③ 菜单未打开时 ↑/↓ 无操作、无高亮项 0ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ③ close() 关闭（Esc）；输入 `/` 文本可重新触发 0ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ④ 选中插入文本 = `/` + 命令名；关闭后为 null 0ms
+ ✓ test/unit/commandMenu.test.ts > CommandMenuState（FR-CMD-03 ②③④） > ④ 过滤后无匹配项时插入文本为 null 0ms
+ ✓ test/unit/format.test.ts > formatHHmm（FR-CHAT-10 ⑤） > 格式为 HH:mm（24 小时制、本地时区），可断言 ^\d{2}:\d{2}$ 2ms
+ ✓ test/unit/format.test.ts > formatHHmm（FR-CHAT-10 ⑤） > 个位数时/分补零 1ms
+ ✓ test/unit/format.test.ts > formatHHmm（FR-CHAT-10 ⑤） > 24 小时制（不出现 AM/PM 或 24+ 小时） 0ms
+ ✓ test/unit/format.test.ts > formatContextUsage（FR-MOD-04 ③） > 无助手消息（totalTokens=null）显示占位 — 0ms
+ ✓ test/unit/format.test.ts > formatContextUsage（FR-MOD-04 ③） > 展示 token 数 + 占窗口百分比（四舍五入取整）：12.3k / 200k (6%) 0ms
+ ✓ test/unit/format.test.ts > formatContextUsage（FR-MOD-04 ③） > 百分比四舍五入：156k / 200k = 78%；157.6k → 79% 0ms
+ ✓ test/unit/format.test.ts > formatContextUsage（FR-MOD-04 ③） > 小数值不缩写，千位以下原样展示 0ms
+ ✓ test/unit/format.test.ts > formatContextUsage（FR-MOD-04 ③） > k 缩写去尾 0：1000 → 1k；M 缩写：≥1M 0ms
+ ✓ test/unit/format.test.ts > formatContextUsage（FR-MOD-04 ③） > 窗口未知（null）或非法（≤0）时仅展示 token 数 0ms
+ ✓ test/unit/config.test.ts > readConfig > 默认值 4ms
+ ✓ test/unit/config.test.ts > readConfig > 合法值解析 1ms
+ ✓ test/unit/config.test.ts > readConfig > thinkingDefault 透传不固化（枚举以 pi 侧为准） 1ms
+ ✓ test/unit/config.test.ts > readConfig > 非法值回退默认 0ms
+ ✓ test/unit/config.test.ts > readConfig > outputTailLines 默认 200（FR-CHAT-04），并钳制范围 1ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > 阈值口径 = 40px（≤40 在底部，>40 离开底部） 2ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > 初始默认不跟随：未开始流式输出前不自动滚动 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > 运行中但本轮 stream_start 未到：仍不跟随（默认跟随自本轮流式输出开始计） 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > ① 默认跟随：本轮首个 stream_start 置跟随态，增量后应自动滚动 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > ④ idle 不自动滚动：运行结束（idle/aborted/error）后即使跟随态残留也不滚动 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > ② 打断：用户滚动离开底部（>40px）停止跟随 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > ② 边界：距底恰好 40px 不打断（≤40 为在底部） 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > ③ 恢复：打断后用户滚回底部（≤40px）恢复跟随，后续增量继续自动滚动 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > ③ 恢复边界：打断后滚到距底 41px 仍不恢复 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > 每轮重置：上一轮被打断，下一轮流式开始默认恢复跟随 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > 轮内后续 stream_start 不覆盖用户打断（agent 循环一轮含多条助手消息，② 尊重用户意图） 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > idle 期间的用户滚动不产生滚动决策（跟随决策仅运行态生效） 0ms
+ ✓ test/unit/followState.test.ts > FollowState（FR-CHAT-09） > 运行态来回切换（starting→streaming）不重置本轮标记 0ms
+ ✓ test/unit/text.test.ts > truncateToTail > 超过行数时仅保留尾部 3ms
+ ✓ test/unit/text.test.ts > truncateToTail > 未超限不动 1ms
+ ✓ test/unit/text.test.ts > truncateToTail > 空文本安全 1ms
+ ✓ test/unit/text.test.ts > summarizeToolArgs > bash → 命令 1ms
+ ✓ test/unit/text.test.ts > summarizeToolArgs > 文件类工具 → 路径 1ms
+ ✓ test/unit/text.test.ts > summarizeToolArgs > 通用 → 紧凑 JSON 1ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 按 LF 切分多行 3ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > U+2028/U+2029 在行内不触发切分（readline 的坑） 1ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 容忍 CRLF 行尾（剥掉 \r） 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 跨 chunk 的行正确拼接 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 多字节 UTF-8 字符跨 chunk 不撕裂 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > end() 冲刷未换行的尾部 0ms
+ ✓ test/unit/jsonl.test.ts > JsonlLineReader > 空行被忽略 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 解析 response 记录 2ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 解析事件记录 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 非法 JSON 返回 parseError 0ms
+ ✓ test/unit/protocol.test.ts > parseRecord > 无 type 字段返回 parseError 0ms
+ ✓ test/unit/stderr-ordering.test.ts > stderr 排空屏障（agent_settled 派发顺序保证） > settled 派发前，本次运行已写入的 stderr 必定已进入日志转发 2079ms
+ ✓ test/unit/stderr-ordering.test.ts > stderr 排空屏障（agent_settled 派发顺序保证） > 屏障不打乱事件 FIFO 顺序（settled 前后的事件保序） 2076ms
+
+ Test Files  13 passed (13)
+      Tests  166 passed (166)
+   Start at  18:12:02
+   Duration  4.37s (tests 94%, import 4%, worker 1%, transform 1%)
+
+    Isolate  13 workers spawned · ~133ms startup each (spawn + environment, per file)
+             at least ~443ms faster with isolate: false — reuses workers across files instead of one per file
+

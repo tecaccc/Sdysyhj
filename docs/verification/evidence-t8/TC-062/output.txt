@@ -1,0 +1,7 @@
+PASS  062-a-T0-先于回声  T0 索引=5 首个 user 终稿索引=7
+PASS  062-a  T0 条目=[{"role":"user","id":"u1","text":"single-echo-check"}]
+PASS  062-b-T1  T1 快照=[{"role":"user","id":"u1","text":"single-echo-check"}]
+PASS  062-c-T2  T2 user=[{"role":"user","id":"u1","text":"single-echo-check"}]
+PASS  062-d  T2 全量=user,assistant（澄清 #12 合计应 2）
+
+== tc062: 5/5 断言通过 ==

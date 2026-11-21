@@ -1,0 +1,7 @@
+PASS  076-echo-seen  不可关联回声已到达并处理（终稿事件在场，澄清 #17 场景成立）
+PASS  076-a  回声处理后 S1/F1 各恒 1 条且保留发送原文（澄清 #17 保守分支）
+PASS  076-b  全程 user 总数恒 3（P1/S1/F1，不新增）
+PASS  076-d  全程无第二条气泡（快照序列逐份核验）
+PASS  076-c  重建后 S1 收敛为 JSONL 权威文本（不再保留发送原文）、F1 各 1 条、序列与 JSONL 逐条一致：users=["MYPI_MIX_UNASSOC:main","UNASSOC-TRANSFORMED(unassoc-","unassoc-fu-orig"]
+
+== tc076: 5/5 断言通过 ==

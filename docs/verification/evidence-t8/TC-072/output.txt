@@ -1,0 +1,6 @@
+PASS  072-a  R1 条目=[{"role":"user","id":"u1","text":"MYPI_REJECT:reject-check"}]
+PASS  072-b  自 R1 发送起全程恒 1 条（响应事件点出账，无第二条；发送前空快照不计）
+OBSERVE  072-c  拒绝错误经 error 通道展示=true（观察项，不计判定）
+PASS  072-d  P2 三时点=1/1/1；R1 未被 P2 回声污染
+
+== tc072: 3/3 断言通过 ==

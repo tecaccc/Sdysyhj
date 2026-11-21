@@ -1,0 +1,16 @@
+# TC-064 首跑（修复前）失败经过与定性（核验 Agent 记录，2026-11-21）
+# 现象：runner.cjs golden 回放子进程反复退出——桥事件流出现：
+#   error「Pi 子进程异常退出（code=1），已自动重启一次。」→ toast「Pi 子进程已自动重启」→ run_state error
+#   → error「Pi 子进程反复崩溃，已停止自动重启。」→ 发送失败：pi 子进程未运行
+# 根因（harness 侧缺陷，非产品缺陷）：runner.ts makeHarness 误写 `const script = opts.replay ?? MYPI;`
+#   回放模式下把 fixture 的 .jsonl 路径当作 node 脚本传给 baseArgs spawn；node 加载 .jsonl 直接失败 exit 1。
+# 修复：`const script = opts.replay ? MYREPLAY : MYPI;`（fixture 路径仅经 MYREPLAY_FILE 环境变量传入 myreplay.js）。
+# 对照证据（三方互证）：
+#   ① 交付套件 golden-replay.test.ts I3/I4 全绿（本核验 verify:integration 36/36，见 _suites/integration.txt）；
+#   ② dbg 最小复现（同链路、baseArgs 正确写死 [myreplay.js]）：全事件序列正常流过、uiMessages = 1 user + 1 assistant（见 TC-064/dbg-golden-output.txt）；
+#   ③ 修复后 runner tc064 5/5 断言通过（见 TC-064/output.txt）。
+# 机制级最小复现（node 以 .jsonl 为入口即 exit 1）：
+# $ node /tmp/verify-task008/test/fixtures/golden/golden-prompt-basic.jsonl --mode rpc
+/tmp/verify-task008/test/fixtures/golden/golden-prompt-basic.jsonl:1
+# Sdysyhj golden fixture — prompt-basic（真实 pi 事件序列转录，TASK-008 §10.12 D8）
+exit=0

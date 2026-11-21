@@ -1,0 +1,27 @@
+# golden 再录制一致性复证（核验 Agent，2026-11-21T10:24:30Z）
+# 命令：cp -a /tmp/verify-task008 /tmp/vt008/record-repro && cd /tmp/vt008/record-repro && HOME=$(mktemp -d) node test/tooling/record-golden.mjs（PATH pi=1.5.2；scratch 副本执行，核验 clone 未动）
+
+## ① 工具内双录确定性（两剧本各连录两次、归一化后逐字节比对，一致才落盘）：通过
+pi 运行时：PATH pi（1.5.2；探测全量：PATH pi=1.5.2, bundled cli.js=1.5.2）
+✅ golden-prompt-basic.jsonl：31 行（双录逐字节一致）  SUMMARY {"scenario":"prompt-basic","piVersion":"1.5.2","fixtureLines":23,"llmCalls":1,"userEchoCount":1,"userEchoOrder":["GOLDEN-PROMP"]}
+✅ golden-steer-followup.jsonl：70 行（双录逐字节一致）  SUMMARY {"scenario":"steer-followup","piVersion":"1.5.2","fixtureLines":62,"llmCalls":3,"userEchoCount":3,"userEchoOrder":["GOLDEN-STEER","GOLDEN-ST se","GOLDEN-FU se"]}
+golden fixture 录制完成（test/fixtures/golden/）。
+
+## ② 与入库版逐字节 diff：非一致 —— 差异仅限嵌入 system 消息的 3 行/剧本（basic: L17-18+L30；mix: L17-18+L69），其余 20/59 行逐字节一致
+### 差异定性（对差异行直接抽取 system.sections 比对）：
+入库版: sections=preamble,tools,rules,docs,skills,cwd
+  docs 主文档路径: <HOME>/.nvm/versions/node/v24.19.0/lib/node_modules/@earendil-works/pi-coding-agent/README.md
+  skills 段: true（find-skills 在场）
+再录制: sections=preamble,tools,rules,docs,cwd
+  docs 主文档路径: <PI-PKG-DIR>/README.md
+  skills 段: false
+
+### 解读：
+# - 行为契约内容（user 回声文本/次序/计数、assistant 消息、queue_update、responses、事件次序）与入库版逐字节一致；
+# - 差异 1（docs 路径占位符形态）：今日再录制 --pi-pkg 归一化生效得 <PI-PKG-DIR>/…；入库录制时该归一化未生效（回落 HOME 替换得 <HOME>/.nvm/…），系录制环境/工具路径解析的由来差异，非 pi 1.5.2 行为差异；
+# - 差异 2（skills 段有无）：pi 的 system 序言含 $HOME/.agents/skills 下的技能清单——入库录制时录制 HOME 含 find-skills 技能；本复证用临时 HOME（无该目录）故无 skills 段。system 角色消息桥侧忽略（README 记载 + 回放实证 uiMessages 仅 user/assistant），不影响任何 FR-CHAT-11 判据；
+# - 披露：fixture README「任意机器重录应得到相同字节」的确定性口径对 system 序言 3 行不成立（随录制 HOME 的 skills 与工具归一化路径形态而变）；建议后续把这 3 行的 system.sections 也纳入定值归一化（维护项，非本 FR 门禁）。
+
+## ③ 回放测试以入库 fixture 为期望源（TC-064/068 断言）全部通过（见 TC-064/output.txt、TC-068/output.txt）
+17,18c17,18
+69c69

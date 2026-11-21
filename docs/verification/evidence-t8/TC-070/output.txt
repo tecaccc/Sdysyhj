@@ -1,0 +1,6 @@
+PASS  070-a  重建 user 数=3（应 3，各恰一条）
+PASS  070-b  第 2 条文本="AUTHORITATIVE-REWRITTEN-2"（澄清 #16：应 Y 非 X）
+PASS  070-c  JSONL vs 重建一致（澄清 #5）：jsonl=["user:A-one","assistant:ack: A-one","user:AUTHORITATIVE-REWR","assistant:ack: AUTHORITATIVE","user:A-three","assistant:ack: A-three"]
+PASS  070-d  总条目=6（3 user + 3 assistant，无丢失/拼接/错换）
+
+== tc070: 4/4 断言通过 ==

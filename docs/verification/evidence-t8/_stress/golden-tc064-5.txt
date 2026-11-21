@@ -1,0 +1,7 @@
+PASS  064-fixture-echo  录制序列含 user 回声（start=7 end=8）先于 assistant（9；json.md L38–40）
+PASS  064-fixture-order  录制序列形态：agent_start→turn_start…→agent_settled=true
+PASS  064-a-b-c  回放链路 user 恰 1 条=[{"role":"user","id":"u1","text":"GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assistant + settled)"}]（TC-062 (a)-(c) 同款）
+PASS  064-d  合计=2（应 2，澄清 #12）
+PASS  064-order-in-bridge  回声先于助手流式（时间线索引 6 < 7）
+
+== tc064: 5/5 断言通过 ==

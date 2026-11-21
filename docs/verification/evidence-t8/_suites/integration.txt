@@ -1,0 +1,13 @@
+
+> sdysyhj@0.1.5 verify:integration
+> vitest run test/integration
+
+
+ RUN  v5.1.0 /tmp/verify-task008
+
+
+ Test Files  6 passed (6)
+      Tests  36 passed (36)
+   Start at  17:34:50
+   Duration  2.33s (tests 90%, transform 5%, import 5%, worker 1%)
+

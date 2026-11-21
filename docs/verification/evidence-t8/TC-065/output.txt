@@ -1,0 +1,6 @@
+PASS  065-a  T0 S1 条目=1
+PASS  065-b  T1 S1=1
+PASS  065-c  T2 S1=1
+PASS  065-d  会话 user 总数=2（P1+S1 应 2）
+
+== tc065: 4/4 断言通过 ==

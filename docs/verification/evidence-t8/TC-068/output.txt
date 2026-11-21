@@ -1,0 +1,7 @@
+PASS  068-fixture-order  录制回声序=GOLDEN-STEER → GOLDEN-ST se → GOLDEN-FU se（主→ST→FU，乱序投递实证）
+PASS  068-fixture-queue  录制含 queue_update=4 次（入队×2 + 出队×2，json.md L121–122）
+PASS  068-e  回放 user=3 按发送序=["GOLDEN-STEER-FOL","GOLDEN-FU sentin","GOLDEN-ST sentin"]，与录制权威文本集合一致=true
+PASS  068-echo-order  回放链路回声到达序=P,ST,FU（≠发送序 FU,ST）
+PASS  068-assistants  assistant 轮=3（主+ST+FU 注入轮）
+
+== tc068: 5/5 断言通过 ==

@@ -1,0 +1,15 @@
+# golden fixture 来源核证（核验 Agent 独立检查，2026-11-21T10:16:56Z）
+## 头注释逐行（录制命令/日期/pi 版本/provider 配置/脱敏与归一化声明/格式说明）：
+# Sdysyhj golden fixture — steer-followup（真实 pi 事件序列转录，TASK-008 §10.12 D8）
+# 录制命令：npm run record:golden -- --scenario=steer-followup（node test/tooling/record-golden.mjs；双录一致后落盘）
+# 录制日期：2026-11-21
+# pi 版本：1.5.2（PATH pi）
+# provider 配置：models.json → golden/golden-mock，api=openai-completions，baseUrl=http://127.0.0.1:0/v1（录制时为 loopback mock server 内嵌于 record-golden），apiKey=dummy（哨兵）
+# pi 启动参数：--mode rpc --model golden/golden-mock --no-skills --no-extensions --no-mcp --no-context-files --no-prompt-templates --no-themes（隔离机器差异）
+# 脱敏与归一化：无真实凭证/无外网（仅 loopback）；timestamp/durationMs→0、sessionId/sessionFile→定值、127.0.0.1 端口→:0、临时目录/pi 包路径/HOME→占位符；prompt 文本为哨兵值；再录制归一化后逐字节一致
+# 格式：每行 {"dir":"in"|"out","record":{…}}（in=stdin 命令，out=stdout 响应/事件，按到达序）；行首 # 为注释（回放器剥离，rpcClient 永不接触本文件）
+
+## 结构核验（in/out 逐行交错、user 回声次序与计数）：
+记录总数=62（in=5 out=57）；非注释行全部为 in/out 交错=true；
+user 回声（message_end/user）条数=3，到达序=["GOLDEN-STEER-FOLLOWU","GOLDEN-ST sentinel s","GOLDEN-FU sentinel f"]
+user 回声先于 assistant message_start=true（索引 9 < 10；json.md L38–40）

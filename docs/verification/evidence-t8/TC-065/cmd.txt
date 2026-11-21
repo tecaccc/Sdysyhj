@@ -1,0 +1,4 @@
+cd /tmp/verify-task008
+# 独立断言脚本（核验 Agent 自建，非交付物）：/tmp/vt008/harness/runner.cjs（源 runner.ts，已复制至 _harness/）
+# mock：/tmp/vt008/mypi.js（自建 mock pi）；golden 回放器：/tmp/vt008/myreplay.js（自建）
+timeout 120 node /tmp/vt008/harness/runner.cjs tc065
