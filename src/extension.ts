@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { PiBridge } from "./bridge/piBridge";
 import { RpcClient } from "./bridge/rpcClient";
 import { PiRuntimeError, resolvePiRuntime, type ResolvedRuntime } from "./bridge/rpcTransport";
+import { LabViewProvider } from "./lab/labViewProvider";
 import { ChatPanel, type StartupError } from "./panel/chatPanel";
 import { mostRecentSession } from "./session/sessionStore";
 import { DEFAULT_CONFIG, readConfig, type SdysyhjConfig } from "./util/config";
@@ -98,6 +99,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     () => startupError
   );
   context.subscriptions.push(panel);
+
+  // 实验面板（TASK-009 阶段①，FR-AUI-01）：独立 viewType + 惰性激活，与默认面板共存且共享同一
+  // PiBridge（同源数据零副本）；retainContextWhenHidden = true 显式声明（FR-AUI-05④，与默认面板同值）
+  const labPanel = new LabViewProvider(context, bridge, logger);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(LabViewProvider.viewType, labPanel, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
+    vscode.commands.registerCommand("sdysyhj.openChatLab", () => labPanel.reveal()),
+    labPanel
+  );
 
   // 状态栏（FR-CHAT-08）
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);

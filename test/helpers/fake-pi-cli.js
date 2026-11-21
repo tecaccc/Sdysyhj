@@ -12,6 +12,9 @@
 //     「Queue and state events」L121–122（queue_update 两字段含完整当前队列）。
 //   - 回放模式 FAKE_PI_REPLAY：按 golden fixture（test/fixtures/golden/*.jsonl，真实 pi 录制）
 //     逐命令回放响应与其后事件行，并对输入命令序列与录制一致性断言（无脚本分支、无时钟）。
+//   - LAB-XSS 探针剧本（TASK-009 §10.13 D5，FR-AUI-02⑤）：user 回声与 assistant 回复均携带
+//     <script>/<img onerror> 探针文本，事件形状与 runSimpleText 同构（对照 json.md「Event
+//     sequence」L30–46）；断言面 = 两切片通道解码文本与探针原文逐字节一致（文本保真）。
 //
 // 环境变量：
 //   FAKE_PI_LOG     追加记录 spawn/命令的 JSONL 日志文件（测试断言用）
@@ -31,6 +34,7 @@
 //   "STDERR"     → stderr 输出 E2E-STDERR-MARKER 行 + stdout 输出非法 JSONL 行（FR-CMD-02）
 //   "STDERRKEY"  → stderr 输出含凭证样文本（验证日志脱敏）
 //   "UNICODE"    → text delta 内含 U+2028/U+2029（帧解析边界）
+//   "LAB-XSS"    → XSS 探针剧本（user 回声 + assistant 回复均含 <script>/<img onerror> 探针）
 //   其他         → 简单文本流式回复 "Hello world"
 
 "use strict";
@@ -306,6 +310,28 @@ function runUnicode() {
   send({ type: "agent_settled", aborted: false });
 }
 
+/**
+ * LAB-XSS 探针剧本（TASK-009 §10.13 D5，FR-AUI-02⑤/NFR-03）：user 回声与 assistant 回复均携带
+ * <script>alert(1)</script> 与 <img src=x onerror=…> 探针文本。事件形状与 runSimpleText 同构
+ * （json.md L30–46）。用法：prompt "LAB-XSS"（探针仅出现在回声与回复文本，不注入任何标记语义）。
+ */
+const LAB_XSS_PROBE = '<script>alert(1)</script><img src=x onerror=alert(2)>';
+
+function runLabXss() {
+  const userText = `LAB-XSS probe ${LAB_XSS_PROBE}`;
+  const replyText = `probe reply ${LAB_XSS_PROBE}`;
+  send({ type: "agent_start" });
+  echoUser(userText);
+  send({ type: "message_start", message: assistantMessage([], "pending") });
+  send({ type: "message_update", usage: USAGE, assistantMessageEvent: { type: "text_start", contentIndex: 0 } });
+  send({ type: "message_update", usage: USAGE, assistantMessageEvent: { type: "text_delta", contentIndex: 0, delta: replyText.slice(0, 11) } });
+  send({ type: "message_update", usage: USAGE, assistantMessageEvent: { type: "text_delta", contentIndex: 0, delta: replyText.slice(11) } });
+  const final = assistantMessage([{ type: "text", text: replyText }], "stop");
+  send({ type: "message_end", message: final });
+  state.messages.push({ role: "user", content: userText, timestamp: Date.now() }, final);
+  send({ type: "agent_settled", aborted: false });
+}
+
 function runError() {
   send({ type: "agent_start" });
   echoUser(state.lastPrompt);
@@ -531,6 +557,7 @@ function handleCommand(cmd) {
       else if (message === "STDERRKEY") runStderr(true);
       else if (message === "EXTERR") runExtensionError();
       else if (message === "UNICODE") runUnicode();
+      else if (message === "LAB-XSS") runLabXss();
       else if (message === "QUEUEMIX") runQueueMix();
       else runSimpleText();
       return;
