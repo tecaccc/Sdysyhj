@@ -4,6 +4,7 @@
 > 现象：`release.yml` v0.1.4 tag 推送 → `publish-marketplace` job 失败：
 > `Error: The category 'Chatbots' is not available in language 'en-us'.`（exit 1）
 > 流水线：发布缺陷单 → 元数据修复 → 一致性门禁 → 发版 0.1.5 → CI 双通道自动发布
+> 状态：**已闭环**（双通道发布 PASS，见 §4）
 
 ## 1. 缺陷单
 
@@ -39,3 +40,9 @@
   - Actions：https://github.com/tecaccc/Sdysyhj/actions/workflows/release.yml
 - 佐证事实：v0.1.3 确已上架成功（Marketplace 现存版本 0.1.3，类目 Other）——与 §1 根因分析一致
 - （复查处补记见下）
+
+### 补记（2026-11-21 12:53 +0800，复查定时器）
+
+- **通道① Marketplace：✅ 成功** —— gallery API 实测最新版本 **0.1.5**（04:51:11Z 更新，即发布后约 16 分钟传播到位，此前 04:46Z 不可见属正常延迟）；类目已更新为 `['AI', 'Chat']`（`Chat` 合法生效，`Chatbots` 报错消除；展示层未显示 `Other`，如实记录）；0.1.4 因发布失败不在上架序列，最新版直接由 0.1.3 → 0.1.5
+- 扩展页：https://marketplace.visualstudio.com/items?itemName=tecacc.sdysyhj
+- **#D-05 闭环结论：双通道发布全绿，修复验证完成；无需任何后续发版动作**
