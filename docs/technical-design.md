@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**已实现（MVP）** ｜ 版本：v0.1-draft ｜ 对应需求：docs/requirements.md v0.3
+> 状态：**已实现（MVP）**；TASK-008（FR-CHAT-11 用户消息单次展示）设计修订已落档、实现待交付（§10.12） ｜ 版本：v0.5 ｜ 对应需求：docs/requirements.md v0.5（2026-11-21 冻结）｜ 修订日期：2026-11-21
 
 ---
 
@@ -47,11 +47,13 @@
 | 实现成本 | 中（需协议层，但官方 `RpcClient` 已封装） | 低 |
 | 交互丰富度 | RPC 命令全集可用（prompt/steer/abort/set_model…） | 直接 API |
 
-RPC 协议要点（依据官方 `rpc.md` / `rpc-commands.md` / `json.md`）：
+RPC 协议要点（依据官方 `rpc.md` / `rpc-commands.md` / `json.md`，版本锚定 **pi 1.5.2**；逐条锚点见 §11 外部契约依赖清单）：
 
 - 严格 JSONL 帧：每行一个 JSON 对象，**只能按 LF 切分**（禁用 Node `readline`，其会把 `U+2028/U+2029` 当行界）
 - stdin 写命令（可带 `id` 关联），stdout 收 `response` + 会话事件流
-- 事件流：`message_update`（text/thinking/toolcall delta）→ `message_end`（权威终稿）→ `agent_settled`（本次运行真正结束）
+- 事件流（`json.md`「Event sequence」L30–46）：`agent_start` → `turn_start` → **user 回声**（`message_start`(user) → `message_end`(user)——pi 对每条到达模型的用户消息（初始 prompt 与 steer / follow-up 注入）必回发，先于该轮助手消息；`extensions.md` L752–770：`message_start`/`message_end` 对 user/assistant/toolResult/custom 每类消息均触发）→ `message_start`(assistant) → `message_update`*（text/thinking/toolcall delta）→ `message_end`（权威终稿，`json.md`「Message events」L68）→ `turn_end` → `agent_end` → `agent_settled`
+- steer / follow-up 注入时序（`rpc-commands.md` L46–92）：`steer` 在 run 中排队、当前助手轮工具执行完后下一次 LLM 调用前注入；`follow_up` 仅在 agent 停下（无更多工具调用与 steer）后注入——**混合使用时回声到达顺序可与发送顺序不同**（follow-up 先发后投、steer 后发先投），关联设计见 §10.12 D2；队列变化经 `queue_update` 事件透出完整 steering/followUp 队列（`json.md`「Queue and state events」L121–122）
+- `agent_end` ≠ `agent_settled`：重试/压缩恢复/steer/follow-up 仍可在 `agent_end` 后继续；完成判定以 `agent_settled` 为准（本次运行真正结束）
 - 关机：关闭 stdin 即有序退出
 
 ## 2. 技术选型
@@ -144,7 +146,7 @@ resolvePiRuntime():
 type HostToWebview =
   | { kind: "session_reset"; sessionId: string; name: string }
   | { kind: "history_loaded"; messages: UiMessage[] }
-  | { kind: "user_message"; text: string }
+  | { kind: "user_message"; id: string; text: string }   // id 由宿主生成并贯通（TASK-008 §10.12 D1）
   | { kind: "stream_start"; messageId: string }
   | { kind: "text_delta"; messageId: string; index: number; delta: string }
   | { kind: "thinking_delta"; messageId: string; index: number; delta: string }
@@ -199,13 +201,20 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 
 ```
 用户 Enter → webview.post({prompt}) → PiBridge
+  → 乐观回声：emit("user_message", { id, text })
+     （宿主生成 id 并随事件下发；发送后即时展示，不等待 pi 确认；关联设计见 §10.12 D1）
   → RpcClient.prompt(text, images?, streamingBehavior?)   // 运行中自动 steer/followUp
-  → response.disposition = started|queued|handled
-  → 事件流: agent_start → turn_start → message_update* → message_end → … → agent_settled
+  → response.disposition = started|queued|handled；success:false = 受理前拒绝（无后续事件）
+  → 事件流（json.md「Event sequence」L30–46）:
+       agent_start → turn_start
+       → message_start(user) → message_end(user)      ← pi 回发 user 回声（权威文本；
+                                                        桥侧匹配乐观条目后就地更新，澄清 #16）
+       → message_start(assistant) → message_update* → message_end(assistant)
+       → turn_end → agent_end → agent_settled
   → run_state = idle
 ```
 
-注意：`prompt` 的响应只代表"已受理"，完成以 `agent_settled` 为准；`disposition: "handled"` 时（扩展命令消费）不等 settled。
+注意：`prompt` 的响应只代表"已受理"，完成以 `agent_settled` 为准；`disposition: "handled"` 时（扩展命令 / input handler 消费）不启动 run、无 user 回声、不等 settled（`rpc-commands.md` L40–42、`rpc.md`「Run lifecycle」）。运行中 `steer` / `follow_up` 注入同样各回发一次 user 回声，注入时机见 §1「RPC 协议要点」；发送后用户消息恰好展示一条（FR-CHAT-11）的事件关联设计见 §10.12。
 
 ### 4.2 中止
 
@@ -230,8 +239,9 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 
 | 层 | 工具 | 覆盖 |
 |---|---|---|
-| 单元 | Vitest | 事件→UI 消息翻译状态机、运行状态机（含 aborted/error/重试）、配置解析、运行时来源解析（mock spawn） |
-| 集成 | Vitest + 真实 `--mode rpc` 子进程（`--no-session`） | 帧解析、prompt→settled 全链路、abort、崩溃重启 |
+| 单元 | Vitest | 事件→UI 消息翻译状态机、运行状态机（含 aborted/error/重试）、配置解析、运行时来源解析（mock spawn）；TASK-008 增：user 回声关联/匹配账本（§10.12 D2）|
+| 集成 | Vitest + 真实 `--mode rpc` 子进程（`--no-session`） | 帧解析、prompt→settled 全链路、abort、崩溃重启；fake-pi 剧本已对照 json.md 补发 user 回声（§10.12 D8）|
+| **Golden fixture 回放** | Vitest + 静态 JSONL（`test/fixtures/golden/`，真实 pi 事件序列转录） | **防"自建 mock 自证"兑底（规范 §4.3）**：按真实 pi 录制的事件序列回放断言 user 回声关联、steer/follow-up 注入时序、settled 边界（FR-CHAT-11）；录制与回放方案见 §10.12 D8 |
 | E2E 冒烟 | `@vscode/test-e2e` | 激活、开面板、发一条 prompt（mock provider 或录制回放）、切会话 |
 | 手工 | 三平台 checklist | 第 8 节验收标准 |
 
@@ -265,7 +275,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 - 输入框 slash command / skill 自动补全、MCP 管理 UI
 - VS Code Chat API 可选适配层
 
-## 10. FR 追溯表（实现映射，依据需求基线 v0.4）
+## 10. FR 追溯表（实现映射，依据需求基线 v0.4；v0.5 新增 FR-CHAT-11 的映射行随 TASK-008 实现交付补齐，设计见 §10.12）
 
 实现文件位置以本仓库为准；未实现项标注原因。P0 全部实现，P1 全部实现，P2 标“二期”（不计 MVP 门禁）。验收口径按基线 v0.4 对齐（大输出默认尾部 200 行；“可用 pi”含最低版本判据；历史重放与会话 JSONL 一致；FR-CHAT-08 仅状态展示；thinking 枚举透传不固化；运行状态 settled 后回 idle、『已中止』为消息级标记；FR-SESS-07 外部修改后拦截交互直至刷新；消息数=消息总数 user+assistant；`extension_error` 展示通道=非阻断 toast + 全字段 Output 日志 + 同错误去重，FR-CHAT-07 错误卡片范围不变；FR-CHAT-09 跟随判定阈值 40px、每轮流式开始默认跟随、跟随为会话内瞬时 UI 状态不持久化；FR-CHAT-10 内容列 max-width 960px 居中/输入框圆角 8px/发送图标化/用户右侧气泡、助手左侧无气泡/HH:mm 时间戳替代角色前缀；FR-FILE-02 `@` 选择器为唯一文件引用入口；FR-CMD-03 P1 转正（get_commands 命令全集、实时过滤、键盘导航、选中插入）；FR-MOD-01③ 底部内联选择器与状态栏/命令面板三入口等价；FR-MOD-04 token 权威取值=最近一条助手消息 usage.totalTokens、窗口=get_state contextWindow、百分比四舍五入取整、无助手消息显示 —）。
 
@@ -397,6 +407,137 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 新增测试（均确定性、无定时器依赖）：`test/unit/commandMenu.test.ts`（16 用例：过滤/触发/导航/选中/晚到全集/空全集）；`test/unit/format.test.ts`（9 用例：HH.mm 补零与 24 小时制、k/M 缩写、百分比四舍五入、null/非法窗口兑底）；`test/unit/piBridge.test.ts`（+9 用例：usage 捕获/覆盖/去重/历史重建/重置/contextWindow 透出、listCommands 透传与失败容错）；`test/unit/rpcClient.test.ts`（+2 用例：get_commands 请求/解析与空数据）。DOM 层（FR-CHAT-10 视觉/底部选择器/菜单交互）无 jsdom 基建不硬造，UI 手工 checklist + 纯逻辑/桥侧自动兑底（同 §10.10 #D-04 口径）。
 
 实现口径说明：① ↑/↓ 导航采用首尾环绕（标准补全菜单惯例，FR 未规定边界行为）；② 选中插入为精确 `/`+命令名（不加尾随空格，后续 Enter 发送即透传）；③ `usage_info` 采用变化即发（同值去重）而非逐事件透出，属实现优化不影响验收口径（刷新时机仍满足④）。
+
+---
+
+### 10.12 TASK-008 设计与修复记录（TODO 批次三：用户消息单次展示 + 协议 golden fixture，需求基线 v0.5）
+
+> 来源：docs/tasks/TASK-008-todolist3-echo-dedup.md（通道 A 批次三）；FR-CHAT-11（P0，①–⑤）+ 澄清 #5/#16。
+> 状态：**设计阶段（审批点 1b 待裁决）**——实现、自测与 FR 追溯表 FR-CHAT-11 行随实现交付补齐（D10）；本节每个设计问题给出唯一决策、理由与锚点。
+
+**根因确认（研发侧独立复核，与任务单 §2 一致）**：
+
+1. 协议层：pi 对每条用户 prompt 必回发 user `message_start`/`message_end` 回声，先于助手消息（§11 #1 锚点；`handleMessageEnd` 现不区分角色）。
+2. 缺陷链：`sendPrompt` 乐观回声双 id 域（宿主 `pushUserMessage` 生成 `u{n}`，webview 另建 `webview-user-N`）→ pi user `message_end` 回声经 `buildUiMessage(user)` 再生成新 id `u{n+1}` → `upsertUiMessage` 按 id 查不到 → push 第二条 → `emit("message_final", { messageId: u{n+1} })` 在 webview 无视图 → 兜底 append 第二气泡；`getUiMessages()` 面板重开回放携带双条（chatPanel ready → `history_loaded`）。
+3. mock 失真：`test/helpers/fake-pi-cli.js` 所有 `run*` 剧本从 `agent_start` 开始，从未模拟 user 回声（规范 §4.3 实战教训的制度化修复本批落地）。
+
+#### D1 关联策略：宿主单源 id 贯通（消除双 id 域）
+
+- **决策**：消息 id 只在宿主生成一个域：`sendPrompt`（含 steer / followUp 分支）以既有 `u{++messageIdSeq}` 生成 id，`user_message` 事件负载增发该 id（`{ kind: "user_message"; id: string; text: string }`，§3.4 已同步）；webview 建视图直接用宿主 id（删除 `webview-user-N` 序列与 `userSeq`）。pi user `message_end` 回声到达时，桥侧匹配到乐观条目并**复用其 id** 组装 `message_final` → webview `messageViews.get(id)` 命中 → 既有 `view.finalize()` 就地更新（D6）。
+- **理由**：双气泡的直接根因是两个不可对账的编号域；pi 回声不携带任何客户端关联键（json.md L38–39：回声仅含 content/timestamp），关联只能由我方在发送侧建立。宿主单源 id 使"乐观条目 ↔ 回声终稿 ↔ 历史回放"三点同键，`message_final` 既有就地 finalize 路径无需新增消息种类；webview 改动最小（一行 id 接线）。
+- **锚点**：json.md L30–46（回声无关联键）；FR-CHAT-11 ①④；澄清 #16（回声到达前展示发送原文、到达后原条目更新）。
+
+#### D2 匹配策略：pending 账本 + 文本精确匹配优先 + 确定性兜底（禁止时间阈值）
+
+- **决策**：桥侧维护待回声账本 `pendingUserEcho: Array<{ id, channel: "prompt"|"steer"|"followUp", sentText, queuedText?, consumed }>`（全局发送序），全部状态迁移由协议事件触发：
+  - **入账**：每次发送（prompt/steer/followUp）即入账；`steer`/`followUp` 获 `disposition:"queued"` 后，以随后 `queue_update` 快照 diff 将新增队列文本绑定为 `queuedText`（多条新增按序对应；同文本重复按出现次序一一对应）——skill/template 展开发生在入队前（rpc-commands.md L48/L72），故队列文本即回声将携带的展开后文本；`prompt` 获 `disposition:"started"` 时将该条目标记为 **run-head**（其回声是下一 run 的首条 user 回声，json.md L36–39 序列）。
+  - **消账（user `message_end` 回声文本 T 到达）**：
+    1. **精确匹配**：按「run-head 条目优先 → 全局发送序」找首个未消费且 `sentText===T || queuedText===T` 的条目 → 消费，`message_final` 以该条 id 就地更新；
+    2. **确定性兜底**（无精确命中，即存在快照未覆盖的发送后变换）：若未消费条目唯一 → 绑定之；若全部未消费条目同通道 → 通道内 FIFO（队列投递序 = 入队序：rpc-commands.md L46–92 + set_steering_mode/set_follow_up_mode one-at-a-time 语义）；否则（多通道不可判定）**不重绑、不追加**：保留乐观条目原文，`logger.warn` 留痕，待权威重建（refreshHistory / get_messages）收敛；
+    3. **账本空**：该回声属本端从未发送的 user 消息（如扩展 `custom_message`，extensions.md L754）→ 以宿主新 id 建条目并 `message_final`（D4 合法追加）。
+  - **残留清理**（确定性事件点）：`agent_settled` 时取最近 `queue_update` 快照：未消费且 `queuedText` 仍在队列 → 保留（abort 后队列保留、后续 prompt 继续投递，rpc-commands.md L126）；未消费、已不在队列且从未收到回声 → 终结（保留单条乐观展示，出账不再参与匹配）。会话切换/刷新重建后，未消费且仍入队的条目按发送序回填到重建列表尾部。
+- **不错换论证（④）**：同文本多次发送——精确匹配按序消费、每条回声恰消费一条，不跨发送合并（①）；steer/followUp 乱序投递（follow-up 先发后投、steer 后发先投）——未变换文本直接精确命中各自条目，变换文本经 `queuedText`（入队即绑定，与投递顺序无关）命中；文档明示的全部变换时机（发送/入队前展开）均被 `queuedText` 覆盖，超出者走 D2.2 保守分支——**宁保留原文待权威重建，不错换**。
+- **锚点**：rpc-commands.md L7–92（展开时机/disposition/注入时序）、L107–128（clear_queue 与 abort 后队列语义）、json.md L121–122（queue_update）、extensions.md L752–770；FR-CHAT-11 ①②④。
+
+#### D3 无回声 / 拒绝路径：响应事件点出账，零时间阈值
+
+- **决策**：`disposition:"handled"`（扩展命令 / input handler 消费：无 run、无回声）与 `success:false`（受理前拒绝：无任何后续事件）均在**命令响应到达时即刻出账**，乐观条目保留为单条展示（拒绝路径已有错误卡片提示，handled 路径已有 toast/后续扩展自身事件）；不等待任何超时。`clear_queue` 本插件不发送；pi 内扩展若清空队列，经 `queue_update` 快照 + D2 残留清理兼容（条目仍单条、不污染后续匹配——已出账/已终结条目不再参与精确匹配）。
+- **理由**：三条路径的"无回声"均由**响应本身**或**队列快照**确定性判定（rpc.md L60–71：response 即受理结论；rpc-commands.md L40–42：handled 无 run；L107–128：清空队列即从快照消失），无一处需要 wall-clock 推测，满足"禁止依赖时间阈值（非确定性）"。
+- **锚点**：rpc.md「Run lifecycle」；rpc-commands.md L40–42 / L107–128；FR-CHAT-11 ①④（残留待确认项不得污染下一条消息的关联）。
+
+#### D4 webview `message_final` 兜底追加：受控且幂等
+
+- **决策**：append 分支保留但收敛为两条合法场景：① **账本空时的全新 user 回声**（扩展 `custom_message` 等本端从未发送的 user 消息）；② **视图缺失的迟到终稿**（webview 运行中重载后流内消息尚不在 `uiMessages`、或崩溃重启后迟到 `message_end`——消息本体合法但对应视图不存在）。控制规则：user 终稿的 `message.id` 一律由宿主提供（匹配条目 id 或宿主新 id，D1/D2）；append 以 `message.id` 注册进 `messageViews`，**同 id 重复 `message_final` → 第二次就地 finalize，不再追加**（幂等）；查视图顺序保持 `streamingViews` → `messageViews`。双气泡的旧根因（id 域不一致导致必 append）随 D1 消除，append 不再可能命中"已有乐观条目对应的消息"。
+- **理由**：append 本身是重载/恢复链路的必要兑底，缺陷在于它与乐观条目各持异 id；幂等键 = 消息 id，与宿主单源 id（D1）配套后重复不可能。
+- **锚点**：extensions.md L752–770（custom 消息也走 message_start/end）；FR-CHAT-11 ①③④；NFR-01（面板切换/重开不丢运行状态）。
+
+#### D5 `uiMessages`（历史回放源）单条：回声合并而非新增
+
+- **决策**：user 回声终稿走 **upsert 合并**（按匹配条目 id 原位覆盖 blocks/timestamp，绝不 push 第二条）；`refreshHistory` / 会话切换（`get_messages`）仍以 pi 为唯一权威全量重建（现行逻辑不变），重建后按 D2 回填仍入队的待回声条目；面板重开回放（chatPanel ready → `history_loaded` ← `getUiMessages()`）因源数组已单条而单条。
+- **理由**：`uiMessages` 是回放的唯一源，双条一旦入数组就会在每次重开复制；合并发生在入数组之前（D2 匹配 + D1 同 id），回放路径无需任何去重逻辑；权威重建边界（切换/刷新）自然纠正任何残余不一致。
+- **锚点**：FR-CHAT-11 ①③；澄清 #5（历史重放与会话 JSONL 一致）；#16（重放文本以 JSONL 为准，与实时就地更新同源）。
+
+#### D6 就地更新渲染：既有 `MessageView.finalize` 满足 #16，无需新渲染路径
+
+- **决策**：user 条目复用既有 `finalize()`：清空 bodyEl → 按权威 blocks 重建（单个 text 块）+ `timeEl` 以权威 timestamp 覆盖；role=user 无流式光标；生命周期内一视图一 DOM 根节点，更新前后均为一条、不会闪现两版。重复 `finalize`（幂等）为再次原位替换，无累积 DOM。渲染层无必需改动（用户文本渲染路径不变）。
+- **理由**：`finalize` 本就是"整体替换该消息 DOM"的权威终稿路径（§3.4 渲染策略），#16 要求的"单条就地更新"恰是其语义；缺陷从不在渲染层，在 id 关联层（D1）。
+- **锚点**：FR-CHAT-11 ④；澄清 #16；#D-04 先例（finalize 后块视图回填已验证该路径可原位更新）。
+
+#### D7 回归边界：助手流式与工具卡零改动
+
+- **决策**：改动面严格限定于 user 角色 `message_start`/`message_end` 的处理与关联账本；assistant `stream_start`/`*_delta`/`message_final`、toolResult `message_end`、`toolcall_status`（含 #D-04 终稿后状态更新）路径零改动。既有 verify:unit / verify:integration 全绿（断言未动）+ D9 边界组新断言共同证明。
+- **锚点**：FR-CHAT-11 ⑤；§10.10 #D-04。
+
+#### D8 golden fixture 方案（规范 §4.3 强制）
+
+- **位置与格式**：`test/fixtures/golden/*.jsonl`（静态提交入库）+ 同目录 `README.md`；文件头为 `#` 引导的注释行（回放器剥离，rpcClient 永不接触文件本身）：录制命令、日期、pi 版本（1.5.2）、provider 配置摘要、脱敏声明（哨兵 prompt 文本、无真实凭证、timestamp/session id 已在录制时归一化：`"timestamp":<num>` → `0`、session id → 定值，保证再录制可 diff）。
+- **确定性录制**：`node test/tooling/record-golden.mjs`（实现阶段新增，含内嵌 OpenAI 兼容 mock server）：临时 `PI_CODING_AGENT_DIR` 写 `models.json` 定义 provider `baseUrl=http://127.0.0.1:<port>/v1`、`api="openai-completions"`、dummy `apiKey`（§11 #10 锚点）→ 启动真实 pi（内置 1.5.2）`--mode rpc` → 驱动固定剧本：prompt → 等 settled；运行中 steer + follow_up 混合注入（覆盖乱序投递）→ stdout 全量归一化落盘。全程仅 loopback、无真实 key、无外网；录制不进 CI（仅回放进 CI），端口冲突不影响确定性。
+- **剧本文件**：`golden-prompt-basic.jsonl`（prompt → user 回声 → assistant 流式 → agent_settled）；`golden-steer-followup.jsonl`（运行中 steer + follow_up 混合注入，含 queue_update 与乱序投递序列）。
+- **fake-pi-cli.js 对齐**：① 所有 `run*` 剧本在 `agent_start` 后、assistant `message_start` 前补发 user `message_start`/`message_end` 回声，文件头注释标注锚点（json.md L30–46；规范 §4.3）；② steer/followUp 剧本按 rpc-commands.md L46–92 语义模拟队列（queue_update + 轮间/停后注入回声）；③ 新增回放模式 `FAKE_PI_REPLAY=<fixture>`：维护录制游标，stdin 每收到命令即回放对应 response 行及其后至下一命令 response 前的全部事件行，并对输入命令序列与录制一致性断言（确定性最强：无脚本分支、无时钟）。
+- **再生成命令**：npm script `record:golden`（实现阶段加入 package.json，仅人工/维护触发）。
+- **锚点**：规范 §4.3（mock 对齐 + golden 兜底）；§11 #1/#4/#5/#8/#10。
+
+#### D9 回归测试清单（设计级；逐条对应 FR-CHAT-11 子条）
+
+**单元（`test/unit/piBridge.test.ts` 增补，fake RpcClient 注入事件）**
+
+| # | 用例 | 子条 |
+|---|---|---|
+| U1 | prompt → user 回声：`uiMessages` 恰一条 user；`message_final` 的 id = `user_message` 下发的乐观条目 id | ① |
+| U2 | #16 文本更新：回声文本 ≠ 发送原文 → 同 id 同条目文本更新为权威文本，更新前后条数均 1 | ④ |
+| U3 | 运行中 steer：注入回声后恰一条；queue_update 绑定展开文本（slash 展开）命中 | ② |
+| U4 | follow_up：agent 停后注入回声恰一条 | ② |
+| U5 | 乱序：followUp 先发、steer 后发，steer 回声先到 → 各自命中不错换 | ②④ |
+| U6 | 同文本两次独立发送 → 两条各一次回声逐条消费，不跨发送合并 | ① |
+| U7 | `disposition:"handled"`：单条、即时出账；后续无关回声不错绑 | ①④ |
+| U8 | `success:false`：单条、即时出账；下一条消息回声正确关联 | ①④ |
+| U9 | abort 后队列保留（settled + queue_update 仍含该文本）→ 条目单条保留；后续 prompt 继续投递时迟到回声正确命中 | ②④ |
+| U10 | `refreshHistory` 权威重建无重复；仍入队条目按发送序回填尾部 | ③④ |
+| U11 | `getUiMessages()` 回放快照：每次发送恰一条 user 条目（面板重开数据源） | ③ |
+| U12 | 回归边界：assistant stream_start/delta/message_final 与 toolcall_status 事件序列与现状一致 | ⑤ |
+
+**集成（fake-pi 子进程 / golden 回放）**
+
+| # | 用例 | 子条 |
+|---|---|---|
+| I1 | fake-pi（补发回声后）全链路：prompt → user 回声 → assistant → settled 事件序列断言；bridge 事件流中 `user_message.id == message_final(user).id` 且无重复 append 语义 | ① |
+| I2 | steer + follow_up 混合运行（fake-pi 队列剧本）：两条插话各恰一条、乱序不错换 | ②④ |
+| I3 | golden-prompt-basic 回放：同 I1 断言（以真实 pi 录制序列为期望源） | ① |
+| I4 | golden-steer-followup 回放：注入时序与回声关联断言 | ②④ |
+| I5 | 面板重开链路：settled 后重放 `history_loaded(getUiMessages())` → user 条目数 = 发送数 | ③ |
+
+**webview 侧**：无 DOM 测试基建（§10.10/§10.11 先例：不硬造 jsdom）——自动兑底 = U1/I1 断言 `user_message` 携带宿主 id 且与 `message_final` 同键（webview 改动仅为该 id 接线，一行）；视觉层（右对齐气泡单条、无两版闪现）入 UI 手工 checklist（证据类型：截图/录屏）。
+
+#### D10 交付期预告
+
+FR 追溯表（§10.1）将在实现交付时新增 FR-CHAT-11 行（状态、实现位置、回归测试索引）；本阶段不写"已实现"。§10 头部已加注记。
+
+#### 遗留问题与受控假设（上报总调度，无需求歧义）
+
+未发现需裁决的需求歧义（FR-CHAT-11 ①–⑤与澄清 #5/#16 口径均可判定）。以下为实现期受控假设（均已规避依赖、不阻塞设计）：
+
+1. **queue_update 与 user 回声的相对顺序未在文档明示**（投递移除事件与回声谁先到）。设计不依赖其顺序：主判据 `queuedText` 在入队时绑定，回声与移除的先后不影响命中；兜底分支仅用快照集合语义。
+2. **queue_update 队列文本 = 回声文本**依据：skill/template "expanded before sending/queueing"（rpc-commands.md L24/L48/L72）。若实现期发现 input handler 在投递时点再变换（文档未明示），走 D2.2 保守分支（保留原文待权威重建），不会错换；golden fixture 会实证此假设。
+3. **扩展 `custom_message` 是否产生实时 user 回声**（extensions.md L754 述其为 user 角色 model 消息）：设计两向兼容——有回声则走 D4 合法追加（单条），无回声则仅历史重建可见；均不产生重复。
+
+---
+
+## 11. 外部契约依赖清单（规范 §6 必填项，2026-11-21 新建）
+
+> 本节登记本设计依赖的全部外部系统行为：外部系统 → 权威文档路径 + 版本锚定 → 关键行为章节/行号 → 我方依赖的行为 → 对应设计章节。供测试 Agent 用例锚点引用与审批点 1b 审查；设计中的事件流/接口契约须与本清单一致。**版本锚定：pi 1.5.2**（`pi --version`；依赖包随附文档，路径 = `node_modules/@earendil-works/pi-coding-agent/docs/`，绝对路径示例 `/home/connor/.nvm/versions/node/v24.19.0/lib/node_modules/@earendil-works/pi-coding-agent/docs/`）。
+
+| # | 外部系统 / 行为 | 权威文档（pi 1.5.2 随附） | 关键章节 / 行号 | 我方依赖的行为（一句话） | 对应设计章节 |
+|---|---|---|---|---|---|
+| 1 | RPC 事件序列（user 回声） | `docs/json.md` | 「Event sequence」L30–46；「Message events」L66–68 | pi 对每条到达模型的用户消息必回发 user `message_start`/`message_end`（先于该轮助手消息）；`message_end.message` 为权威终稿 | §1 RPC 协议要点、§4.1、§10.12 D1/D2 |
+| 2 | RPC 生命周期与 disposition | `docs/rpc.md` | 「Run lifecycle」L60–71；L33（stdout 事件以 json.md 为准）；Reference L139 | prompt 响应只代表受理（started/queued/handled）；`handled` 无 run 不等 settled；完成判定以 `agent_settled` 为准（`agent_end` 后 steer/follow-up/重试仍可继续） | §3.2、§4.1、§10.12 D3 |
+| 3 | `prompt` 命令 | `docs/rpc-commands.md` | 「Prompting › prompt」L7–42 | disposition = started/queued/handled；`success:false` 为受理前拒绝（无后续事件）；skill/prompt-template 在发送/入队前展开；扩展命令流式中也立即执行 | §4.1、§10.12 D2/D3 |
+| 4 | `steer` 命令 | `docs/rpc-commands.md` | L46–68 | run 中排队，当前助手轮工具执行完后、下一次 LLM 调用前注入；可被 input handler 消费为 `handled`（无回声）；skill/template 入队前展开 | §1、§10.12 D2/D3 |
+| 5 | `follow_up` 命令 | `docs/rpc-commands.md` | L70–92 | 仅 agent 停下后注入（与 steer 注入时序不同→回声可能乱序）；`handled`/展开语义同 steer | §1、§10.12 D2 |
+| 6 | `clear_queue` / `set_steering_mode` / `set_follow_up_mode` | `docs/rpc-commands.md` | clear_queue L107–128；set_steering_mode L331–345；set_follow_up_mode L348–360 | 清空队列并返回文本；abort 后队列保留、后续 prompt 会继续投递（L126）；投递模式 all/one-at-a-time（默认逐条）。本插件未调用这三命令，但队列快照与残留清理须兼容其效果 | §10.12 D2/D3 |
+| 7 | 消息生命周期事件覆盖面 | `docs/extensions.md` | L752–770（message_start / message_update / message_end） | `message_start`/`message_end` 对 user/assistant/toolResult/custom 每类消息均触发；扩展可经 `custom_message` 注入 user 角色消息（不经本插件发送） | §10.12 D2（回声覆盖面）、D4（合法追加场景） |
+| 8 | 队列事件 | `docs/json.md` | 「Queue and state events」L121–122 | `queue_update` 携带完整当前 steering/followUp 队列（含展开后文本），入队/投递/清除均触发 | §10.12 D2（快照绑定与残留清理） |
+| 9 | JSONL 帧约定 | `docs/json.md` + `docs/rpc.md` | json.md「Framing and process I/O」L12–20；rpc.md「Framing」 | 严格 LF 切分（U+2028/29 非行界）、stdout 持续消费、stdout 仅 JSONL、诊断走 stderr | §1、§3.3 |
+| 10 | 离线 provider 配置（仅 golden fixture 录制用） | `docs/models.md` + `docs/environment-variables.md` | models.md「Configure a compatible endpoint」L49–66；environment-variables.md L81–82 | `models.json` 可定义 OpenAI 兼容 provider（`baseUrl`+`api`+dummy `apiKey`）指向本地 mock；`PI_CODING_AGENT_DIR`/`PI_CODING_AGENT_SESSION_DIR` 可隔离配置与会话目录 | §6、§10.12 D8 |
 
 ---
 
