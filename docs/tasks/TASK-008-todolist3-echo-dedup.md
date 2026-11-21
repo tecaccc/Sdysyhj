@@ -44,6 +44,14 @@ agent_start → turn_start → message_start(user) → message_end(user)
 - 裁决：**权威文本单条就地更新**（澄清 #16）；回声到达前展示发送原文，到达后原条目更新，前后均为一条；历史重放以 JSONL 为准（#5）
 - 影响面：新增 FR-CHAT-11（P0）——**有 FR 范围与优先级变化**；已向人类通报；无既有 FR 验收标准变更
 - 通知：研发 Agent / 测试 Agent（随派发任务书引用 v0.5 冻结版）
+- 2026-11-21 15:1x 研发 Agent：设计落档——technical-design.md §1/§4.1 修正（补 user 回声与 steer/follow-up 注入时序）、§3.4 协议增 id、§6 增 golden 回放层、新建 §11 外部契约依赖清单（10 条，锚定 pi 1.5.2）、§10.12 设计决策 D1–D10；run `173a785a`
+- 2026-11-21 15:1x 总调度 **审批点 1b 裁决：通过**。写权限核验：仅 ` M docs/technical-design.md`。亲读全文 diff 并抽检 8 个外部锚点（json.md L12–20/L30–46/L121–122、rpc.md L60–71/L139、rpc-commands.md L7–92、extensions.md L752–770、models.md L45–68、environment-variables.md L79–82）均与权威文档一致；三项受控假设（queue_update 与回声顺序、队列文本=回声文本、custom_message 回声两向兼容）均有保守兑底分支且由 golden fixture 实证，接受。设计基线冻结于 commit `<见下一条 commit>`。下一步：研发实现 ∥ 测试盲写并行。
+
+### 审批点 1b 裁决记录（2026-11-21，总调度）
+
+- 审查内容：①外部契约依赖清单完备（10 条，版本锚定 pi 1.5.2）②事件流/接口契约与权威文档一致（抽检 8 锚点通过）③可测性（D8 golden 录制/回放 + D9 U1–U12/I1–I5 映射 FR-CHAT-11①–⑤）
+- 裁决：通过，设计基线（含 §11 契约清单）即刻冻结；测试 Agent 盲写以冻结快照为依据
+- 并行启动：研发 Agent（fresh，按 D1–D10 实现）∥ 测试 Agent（fresh，盲写 TC-062+）；双方过程产物互不可见（规范第二部分 §4）
 
 ## 4. 范围裁决说明：条目②另立 TASK-009
 
