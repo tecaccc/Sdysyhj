@@ -1,73 +1,112 @@
-# Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
+# Sdysyhj — Pi Agent for VS Code
 
-将 Pi 编程智能体带入 VS Code 的聊天式编程插件：在编辑器内以自然语言完成代码阅读、编写、重构与命令执行，与 pi 共享同一套会话、配置与凭证（`~/.pi/agent/`）。
+[![CI](https://github.com/tecaccc/Sdysyhj/actions/workflows/ci.yml/badge.svg)](https://github.com/tecaccc/Sdysyhj/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/tag/tecaccc/Sdysyhj?sort=semver&label=version)](https://github.com/tecaccc/Sdysyhj/tags)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## 功能
+**A full coding agent in a sidebar chat — powered by [pi](https://github.com/tecaccc/Sdysyhj#runtime), driven by your own models, keys, and config.**
 
-- **流式对话**：text delta 级实时渲染，Markdown（标题/列表/表格/代码高亮/链接），渲染内容经 DOMPurify 消毒
-- **thinking 折叠**：思考过程默认折叠，展开后流式显示
-- **工具调用卡片**：工具名、关键参数摘要、执行状态（进行中/成功/失败/已中止），可展开输入/输出；大输出截断保留尾部，一键"复制全部"
-- **运行控制**：Stop 中止（RPC `abort`）、运行中 steer / follow-up 插话切换
-- **会话管理**：新建 / 历史列表（标题、时间、消息数）/ 切换恢复（含压缩状态，pi 侧权威管理）/ 重命名；外部修改检测提示刷新
-- **模型控制**：切换模型与 thinking 等级，随会话持久，重启后状态栏反映
-- **@file 引用**：输入框输入 `@` 触发工作区文件选择器；资源管理器/编辑器右键"发送到 Pi"
-- **运行时来源**：PATH 有 pi 优先使用；否则自动回退插件内置运行时（免安装、开箱即用）；可显式指定 pi 路径
-- **排障**：Output Channel「Sdysyhj」记录子进程 stderr 与协议异常（日志自动脱敏，不落凭证）
+Sdysyhj (山巅一石一壶酒) embeds the pi coding agent into VS Code: read code, edit files, run commands, and iterate — all through natural conversation, without leaving the editor. It is a thin, honest client over the agent runtime you already trust: providers, credentials, sessions, MCP servers, and skills are shared with your existing pi setup (`~/.pi/agent/`). Nothing is duplicated, proxied, or re-uploaded.
 
-## 命令
+## Why Sdysyhj
 
-| 命令 | 说明 |
-|---|---|
-| Sdysyhj: Open Chat | 打开聊天面板 |
-| Sdysyhj: New Session | 新建会话（旧会话落盘保留） |
-| Sdysyhj: Abort | 中止当前运行 |
-| Sdysyhj: Show Session History | 会话历史列表（点击切换） |
-| Sdysyhj: Rename Session | 会话命名 |
-| Sdysyhj: Switch Model / Switch Thinking Level | 切换模型 / thinking 等级 |
-| Sdysyhj: Send to Pi | 右键发送文件路径或选区作为 prompt 素材 |
-| Sdysyhj: Report Issue | 反馈问题 |
+- **Your agent, your keys.** No bundled account, no telemetry, no server in the middle. The extension talks to a local pi process; models and credentials come from your pi configuration.
+- **Real agent capabilities, real transparency.** Tool calls render as live cards — arguments, status, and output — with thinking folded in and full streaming Markdown. You always see what the agent is doing.
+- **Zero-config start, full control later.** A bundled pi runtime works out of the box; point `sdysyhj.piPath` at your own CLI whenever you want to.
+- **Engineering-grade isolation.** The agent runs in a monitored subprocess with strict JSONL RPC. If it ever crashes, it restarts once and tells you what to do — it can never take your editor down.
 
-## 设置
+## Features
 
-| 设置项 | 默认 | 说明 |
-|---|---|---|
-| `sdysyhj.piRuntime` | `auto` | `auto` / `path` / `bundled`，见上"运行时来源" |
-| `sdysyhj.piPath` | `""` | 显式指定 pi 可执行文件路径 |
-| `sdysyhj.thinkingDefault` | `""` | 新会话默认 thinking 等级（空=继承 pi 设置） |
-| `sdysyhj.outputTailLines` | `200` | 工具输出卡片保留尾部行数 |
-| `sdysyhj.sendMode` | `steer` | 运行中默认插话模式（steer / followUp） |
+**Chat experience**
+- Token-level streaming with rich Markdown (headings, tables, syntax-highlighted code, links), sanitized via DOMPurify under a strict CSP
+- Reasoning ("thinking") sections collapsed by default, streaming when expanded
+- Tool-call cards: name, argument summary, live status (`running / success / failed / aborted`), expandable input & output; long output keeps a tail with one-click *copy full output*
+- Inline errors with actionable hints (provider issues, crashes, credential problems)
 
-provider / 模型 / api-key / MCP / skills 一律复用 pi 自身配置（`~/.pi/agent/`、`pi auth`、`pi config`）。
+**Agent control**
+- Stop any run mid-flight (`abort`)
+- Interject while the agent is working — `steer` (redirect) or `follow-up` (queue), switchable per message
+- Status bar with model, thinking level, and run state at a glance
 
-## 开发
+**Sessions**
+- Create, rename, browse, and switch sessions; history shows title, time, and message count
+- Resume conversations exactly where you left them (including compacted context) — sessions live in pi's native storage, managed by pi
+- Detects when a session file changes outside the extension and prompts a clean refresh instead of silently continuing on stale state
+
+**Editor integration**
+- `@file` mentions with workspace file picker
+- Right-click a file or selection → **Send to Pi** to reference it in your next prompt
+- Command-palette surface for everything (see below)
+
+**Models & runtime**
+- Switch model and thinking level per session; choices persist across restarts
+- Runtime resolution: pi on `PATH` → bundled runtime fallback → explicit path (`sdysyhj.piPath`)
+
+## Quick Start
+
+1. Install the extension (or open this repo in VS Code and press `F5`).
+2. Run **Sdysyhj: Open Chat** from the command palette.
+3. Start asking. If you use your own pi CLI, make sure it's authenticated (`pi auth`) and configured (`pi config`); otherwise the bundled runtime gets you going immediately.
+
+> Requirements: VS Code ≥ 1.85. Windows / macOS / Linux.
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `Sdysyhj: Open Chat` | Open the chat panel |
+| `Sdysyhj: New Session` | Start a new session (previous sessions are kept on disk) |
+| `Sdysyhj: Abort` | Abort the current run |
+| `Sdysyhj: Show Session History` | Browse and switch past sessions |
+| `Sdysyhj: Rename Session` | Name the current session |
+| `Sdysyhj: Switch Model` / `Switch Thinking Level` | Change model / reasoning level for this session |
+| `Sdysyhj: Send to Pi` | Send a file path or selection as prompt material (context menu) |
+| `Sdysyhj: Report Issue` | Open the issue tracker |
+
+## Settings
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `sdysyhj.piRuntime` | `auto` | Runtime source: `auto` (PATH pi, then bundled), `path`, or `bundled` |
+| `sdysyhj.piPath` | `""` | Explicit path to the pi executable |
+| `sdysyhj.thinkingDefault` | `""` | Default thinking level for new sessions (empty = inherit pi settings) |
+| `sdysyhj.sendMode` | `steer` | How messages sent mid-run are queued: `steer` or `followUp` |
+| `sdysyhj.outputTailLines` | `200` | Tail lines kept in tool-output cards (*copy full output* always copies everything) |
+
+Providers, models, API keys, MCP servers, and skills are **not** configured here — they come from your existing pi configuration (`~/.pi/agent/`, `pi auth`, `pi config`).
+
+## Privacy & Security
+
+- Sessions and state live only in pi's native locations (`~/.pi/agent/`); the extension keeps no copies and adds no telemetry
+- Webview hardened with CSP `default-src 'none'`, per-load nonces, and DOMPurify sanitization
+- Logs are redacted before leaving the process — credentials and API keys are filtered by pattern
+
+## Architecture
+
+```
+Webview (chat UI) ⇄ ChatPanel ⇄ PiBridge (state machine, event translation)
+                                   ⇄ RpcClient (strict JSONL RPC)
+                                       ⇄ pi --mode rpc (subprocess)
+```
+
+- The agent is a monitored child process; a crash triggers exactly one automatic restart with an actionable error — the host editor is never affected
+- Event flow: `message_update` → `message_end` (authoritative transcript) → `agent_settled`
+
+## Development & Release
 
 ```bash
 npm install
-npm run build            # esbuild 打包（dist/extension.js + media/main.js）
-npm run typecheck        # tsc --noEmit
-npm run verify:unit      # 单元测试（Vitest）
-npm run verify:integration  # 集成测试（mock 子进程，离线可重跑）
+npm run typecheck           # tsc --noEmit
+npm run build               # esbuild (host bundle + webview bundle)
+npm run verify:unit         # unit tests (Vitest)
+npm run verify:integration  # integration tests against a fake pi subprocess — offline, deterministic
 ```
 
-集成测试使用 `test/helpers/fake-pi-cli.js` 模拟 `pi --mode rpc` 子进程，不依赖真实 API key 或网络。
+- CI runs the full suite on every push/PR to `main`
+- Releases are tagged `v<version>` and published automatically to the Marketplace and GitHub Releases by [GitHub Actions](.github/workflows/release.yml); see [`docs/release.md`](docs/release.md)
 
-## 架构
+Detailed specs live in [`docs/requirements.md`](docs/requirements.md) and [`docs/technical-design.md`](docs/technical-design.md).
 
-```
-Webview（聊天 UI）⇄ ChatPanel ⇄ PiBridge（状态机/事件翻译）⇄ RpcClient（JSONL RPC）⇄ pi --mode rpc（子进程）
-```
+## License
 
-- RPC 协议严格 JSONL（LF 切分，禁用 readline）；事件流 `message_update` → `message_end`（权威终稿）→ `agent_settled`
-- pi 运行时来源：PATH pi（须 ≥ 最低支持版本 0.84.0）→ 内置 `@earendil-works/pi-coding-agent`（`dist/bundle/cli.js`）
-- 会话数据只存 pi 原生位置（`~/.pi/agent/sessions/`），插件不另建副本
-
-详见 `docs/requirements.md`（需求基线）与 `docs/technical-design.md`（技术基线 + FR 追溯表）。
-
-## 兼容性
-
-VS Code ≥ 1.85；Windows / macOS / Linux（Node 运行时随 VS Code）。
-
-## 开发与发布
-
-- 自测：`npm run typecheck` / `npm run build` / `npm run verify:unit` / `npm run verify:integration`；push/PR 到 main 自动跑 CI
-- 发版：推送 annotated tag `v<version>` 后由 GitHub Actions 自动打包发布到 [Marketplace](https://marketplace.visualstudio.com/) 与 GitHub Release，流程见 [`docs/release.md`](docs/release.md)
+[MIT](LICENSE)

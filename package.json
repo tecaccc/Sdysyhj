@@ -1,7 +1,7 @@
 {
   "name": "sdysyhj",
   "displayName": "Sdysyhj",
-  "description": "Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code: chat-based coding agent inside the editor",
+  "description": "Chat with the pi coding agent inside VS Code — real tools, your own models & keys, sessions in native pi storage",
   "version": "0.1.3",
   "publisher": "tecacc",
   "license": "MIT",
@@ -13,6 +13,8 @@
     "vscode": "^1.85.0"
   },
   "categories": [
+    "AI",
+    "Chatbots",
     "Other"
   ],
   "main": "./dist/extension.js",
@@ -168,5 +170,14 @@
     "typescript": "7.0.2",
     "vitest": "5.1.0"
   },
-  "icon": "media/icon.png"
+  "icon": "media/icon.png",
+  "keywords": [
+    "pi",
+    "agent",
+    "coding agent",
+    "ai",
+    "chat",
+    "assistant",
+    "copilot"
+  ]
 }
