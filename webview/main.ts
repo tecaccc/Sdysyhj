@@ -51,7 +51,6 @@ const messageViews = new Map<string, MessageView>();
 const streamingViews = new Map<string, MessageView>();
 let runState: RunState = "idle";
 let lastAtTrigger = 0;
-let userSeq = 0;
 /** 当前模型名（FR-MOD-01③ 底部选择器展示与当前项标记） */
 let currentModel = "";
 
@@ -479,9 +478,11 @@ function handleHostMessage(raw: unknown): void {
       break;
     }
     case "user_message": {
-      const view = new MessageView(`webview-user-${++userSeq}`, "user", requestCopy);
+      // §10.12 D1：视图 id 直接取宿主单源 id——回声终稿 message_final 以同一 id 命中既有视图，
+      // 走 finalize 就地更新（澄清 #16），不再产生第二个编号域
+      const view = new MessageView(msg.id, "user", requestCopy);
       view.finalize({
-        id: view.id,
+        id: msg.id,
         role: "user",
         blocks: [{ type: "text", text: msg.text }],
         timestamp: Date.now(),
@@ -519,6 +520,9 @@ function handleHostMessage(raw: unknown): void {
       break; // 工具输出增量同属流式增量，渲染点统一走跟随决策（②：打断时不得推动滚动位置）
     }
     case "message_final": {
+      // §10.12 D4：查视图顺序 streamingViews → messageViews；append 兑底收敛为两条合法场景
+      // （①账本空的全新 user 回声，如扩展 custom_message；②重载/恢复后视图缺失的迟到终稿），
+      // 幂等键 = 消息 id（appendMessageView 以 message.id 注册，同 id 重复 final → 就地 finalize 不再追加）
       const view = streamingViews.get(msg.messageId) ?? messageViews.get(msg.messageId);
       if (view) {
         view.finalize(msg.message);

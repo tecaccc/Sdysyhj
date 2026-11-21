@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**已实现（MVP）**；TASK-008（FR-CHAT-11 用户消息单次展示）设计修订已落档、实现待交付（§10.12） ｜ 版本：v0.5 ｜ 对应需求：docs/requirements.md v0.5（2026-11-21 冻结）｜ 修订日期：2026-11-21
+> 状态：**已实现（MVP）**；TASK-008（FR-CHAT-11 用户消息单次展示）**已实现（待交付验收）**（§10.12） ｜ 版本：v0.5 ｜ 对应需求：docs/requirements.md v0.5（2026-11-21 冻结）｜ 修订日期：2026-11-21
 
 ---
 
@@ -293,6 +293,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | FR-CHAT-08 | P0 | ✅ 已实现 | `webview/main.ts`（头部 `status-line`）；`src/extension.ts`（VS Code 状态栏 `refreshStatusBar`）；`src/panel/messages.ts`（`run_state`/`model_info`/`session_name`） | 仅负责四字段（模型/thinking/运行状态/会话名）展示与状态流转（idle→starting→streaming→aborted/idle/error，settled 后回 idle，v0.2.2 口径 A）；点击切换交互归属 FR-MOD-01/02 |
 | FR-CHAT-09 | P1 | ✅ 已实现 | `webview/render/followState.ts`（纯逻辑状态机：跟随决策，无 DOM 依赖，40px 阈值/每轮默认跟随/打断/恢复/idle 门控）；`webview/main.ts`（接线薄层：`stream_start`→`onStreamStart` 默认置跟随态；`run_state`→`onRunState`；`#messages` 滚动容器 scroll 监听→`onUserScroll(距底 px)`（程序滚动自标记区分）；消息追加/增量（text/thinking/toolcall delta、toolcall_status、message_final）后滚动决策统一走 `applyFollowScroll`；`loadHistory` 尾部一次性初始定位，不走向量决策） | 流式期间默认跟随（每轮流式开始重置为跟随态）；用户上滚距底 >40px 停止跟随且增量渲染不推动滚动位置；滚回 ≤40px 恢复；idle 不自动滚动；不持久化、无消息级标记（④）；“每轮”=一次 agent 运行，轮内多条助手消息的后续 stream_start 不覆盖用户打断（实现口径见 §10.10；v0.4 消息区拆分滚动容器/内容列后度量仍取自 `#messages` 滚动容器） |
 | FR-CHAT-10 | P1 | ✅ 已实现 | `webview/styles/styles.css`（① `.content-col` 内容列 `max-width: 960px` + 左右 `margin: auto`，消息区/错误区/输入区共用于同一列；② `.input-shell` 输入框容器 `border-radius: 8px`；④ `.message-user` 右对齐 + `.message-body` 气泡包裹（背景色+圆角）、`.message-assistant` 左对齐无气泡；`.message-time`）；`src/panel/chatPanel.ts`（HTML：`#messages-col`/`#errors-col`/`#input-col` 内容列容器、`#input-shell`、③ 图标发送按钮 `#btn-send`（内联 SVG 上箭头，无文字标签，`aria-label="发送"`/`title="发送"`）、底部行 `#model-selector`/`#usage-line`）；`webview/render/messages.ts`（⑤ 去 User/Assistant 角色前缀，改 `.message-time` HH:mm 时间戳，终稿以权威 timestamp 覆盖）；`webview/render/format.ts`（`formatHHmm` 纯函数） | ① 内容列最大宽度定值 960px（面板更宽时左右留白相等）；② 输入框容器圆角 8px；③ 发送图标化，可访问性名称="发送"；④ 用户右侧气泡/助手左侧无气泡；⑤ 每条用户/助手消息展示 HH:mm（本地时区，可断言 `^\d{2}:\d{2}$`）；thinking 折叠块与工具卡片功能标签不受影响 |
+| FR-CHAT-11 | P0 | ✅ 已实现（TASK-008） | `src/bridge/piBridge.ts`（D1 宿主单源 id：`openPendingEcho` 入账 + `user_message` 事件携带 id；D2 待回声账本：`matchPendingEcho`（精确匹配 run-head 优先→发送序 + 确定性兑底）/`handleUserEcho`（回声复用乐观条目 id 合并更新 + message_final 就地 finalize）/`bindQueuedTexts`（queue_update 快照 diff 绑定展开文本，run-head prompt 不入候选）/`settlePendingEchoes`（settled 残留清理，队列保留者留存）；D3 `disposition:"handled"` 与 `success:false` 响应即到即出账，零时间阈值；D5 `refreshHistory` 权威重建后仍入队条目按发送序回填尾部）；`src/panel/messages.ts`（协议 `user_message` 增 `id`，与 §3.4 一致）；`webview/main.ts`（D1 视图直接用宿主 id，删 `webview-user-N`/`userSeq`；D4 append 兑底收敛两合法场景且按消息 id 幂等）；`test/helpers/fake-pi-cli.js`（所有 `run*` 剧本按 json.md L30–46 补发 user 回声、queue_update 全量快照、QUEUEMIX 混合注入剧本、`FAKE_PI_REPLAY` 回放模式）；`test/fixtures/golden/`（D8：真实 pi 1.5.2 录制，`npm run record:golden` 双录一致落盘，回放进 verify:integration 零网络） | 回归索引（D9）：U1–U12 + D2.2 兑底 = `test/unit/piBridge.test.ts`；I1/I2/I5 = `test/integration/user-echo.test.ts`；I3/I4 = `test/integration/golden-replay.test.ts`；①–⑤ 逐条映射见 §10.12 D9；视觉层入 UI 手工 checklist（webview 无 DOM 测试基建，兑底 = U1/I1/I3 的 id 贯通断言） |
 
 ### 10.2 会话管理（FR-SESS）
 
@@ -413,7 +414,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 ### 10.12 TASK-008 设计与修复记录（TODO 批次三：用户消息单次展示 + 协议 golden fixture，需求基线 v0.5）
 
 > 来源：docs/tasks/TASK-008-todolist3-echo-dedup.md（通道 A 批次三）；FR-CHAT-11（P0，①–⑤）+ 澄清 #5/#16。
-> 状态：**设计阶段（审批点 1b 待裁决）**——实现、自测与 FR 追溯表 FR-CHAT-11 行随实现交付补齐（D10）；本节每个设计问题给出唯一决策、理由与锚点。
+> 状态：**已实现（待交付验收）**——D1–D10 已落地：实现见 §10.1 FR-CHAT-11 行（实现位置与回归索引），golden fixture 已录制入库（test/fixtures/golden/，双录一致实证）；三项受控假设经 golden 录制实证（见下）；自测全绿。
 
 **根因确认（研发侧独立复核，与任务单 §2 一致）**：
 
@@ -435,7 +436,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
     1. **精确匹配**：按「run-head 条目优先 → 全局发送序」找首个未消费且 `sentText===T || queuedText===T` 的条目 → 消费，`message_final` 以该条 id 就地更新；
     2. **确定性兜底**（无精确命中，即存在快照未覆盖的发送后变换）：若未消费条目唯一 → 绑定之；若全部未消费条目同通道 → 通道内 FIFO（队列投递序 = 入队序：rpc-commands.md L46–92 + set_steering_mode/set_follow_up_mode one-at-a-time 语义）；否则（多通道不可判定）**不重绑、不追加**：保留乐观条目原文，`logger.warn` 留痕，待权威重建（refreshHistory / get_messages）收敛；
     3. **账本空**：该回声属本端从未发送的 user 消息（如扩展 `custom_message`，extensions.md L754）→ 以宿主新 id 建条目并 `message_final`（D4 合法追加）。
-  - **残留清理**（确定性事件点）：`agent_settled` 时取最近 `queue_update` 快照：未消费且 `queuedText` 仍在队列 → 保留（abort 后队列保留、后续 prompt 继续投递，rpc-commands.md L126）；未消费、已不在队列且从未收到回声 → 终结（保留单条乐观展示，出账不再参与匹配）。会话切换/刷新重建后，未消费且仍入队的条目按发送序回填到重建列表尾部。
+  - **残留清理**（确定性事件点）：`agent_settled` 时取最近 `queue_update` 快照：未消费且 `queuedText` 仍在队列 → 保留（abort 后队列保留、后续 prompt 继续投递，rpc-commands.md L128）；未消费、已不在队列且从未收到回声 → 终结（保留单条乐观展示，出账不再参与匹配）。会话切换/刷新重建后，未消费且仍入队的条目按发送序回填到重建列表尾部。
 - **不错换论证（④）**：同文本多次发送——精确匹配按序消费、每条回声恰消费一条，不跨发送合并（①）；steer/followUp 乱序投递（follow-up 先发后投、steer 后发先投）——未变换文本直接精确命中各自条目，变换文本经 `queuedText`（入队即绑定，与投递顺序无关）命中；文档明示的全部变换时机（发送/入队前展开）均被 `queuedText` 覆盖，超出者走 D2.2 保守分支——**宁保留原文待权威重建，不错换**。
 - **锚点**：rpc-commands.md L7–92（展开时机/disposition/注入时序）、L107–128（clear_queue 与 abort 后队列语义）、json.md L121–122（queue_update）、extensions.md L752–770；FR-CHAT-11 ①②④。
 
@@ -533,7 +534,7 @@ FR 追溯表（§10.1）将在实现交付时新增 FR-CHAT-11 行（状态、�
 | 3 | `prompt` 命令 | `docs/rpc-commands.md` | 「Prompting › prompt」L7–42 | disposition = started/queued/handled；`success:false` 为受理前拒绝（无后续事件）；skill/prompt-template 在发送/入队前展开；扩展命令流式中也立即执行 | §4.1、§10.12 D2/D3 |
 | 4 | `steer` 命令 | `docs/rpc-commands.md` | L46–68 | run 中排队，当前助手轮工具执行完后、下一次 LLM 调用前注入；可被 input handler 消费为 `handled`（无回声）；skill/template 入队前展开 | §1、§10.12 D2/D3 |
 | 5 | `follow_up` 命令 | `docs/rpc-commands.md` | L70–92 | 仅 agent 停下后注入（与 steer 注入时序不同→回声可能乱序）；`handled`/展开语义同 steer | §1、§10.12 D2 |
-| 6 | `clear_queue` / `set_steering_mode` / `set_follow_up_mode` | `docs/rpc-commands.md` | clear_queue L107–128；set_steering_mode L331–345；set_follow_up_mode L348–360 | 清空队列并返回文本；abort 后队列保留、后续 prompt 会继续投递（L126）；投递模式 all/one-at-a-time（默认逐条）。本插件未调用这三命令，但队列快照与残留清理须兼容其效果 | §10.12 D2/D3 |
+| 6 | `clear_queue` / `set_steering_mode` / `set_follow_up_mode` | `docs/rpc-commands.md` | clear_queue L107–128；set_steering_mode L331–345；set_follow_up_mode L348–360 | 清空队列并返回文本；abort 后队列保留、后续 prompt 会继续投递（L128）；投递模式 all/one-at-a-time（默认逐条）。本插件未调用这三命令，但队列快照与残留清理须兼容其效果 | §10.12 D2/D3 |
 | 7 | 消息生命周期事件覆盖面 | `docs/extensions.md` | L752–770（message_start / message_update / message_end） | `message_start`/`message_end` 对 user/assistant/toolResult/custom 每类消息均触发；扩展可经 `custom_message` 注入 user 角色消息（不经本插件发送） | §10.12 D2（回声覆盖面）、D4（合法追加场景） |
 | 8 | 队列事件 | `docs/json.md` | 「Queue and state events」L121–122 | `queue_update` 携带完整当前 steering/followUp 队列（含展开后文本），入队/投递/清除均触发 | §10.12 D2（快照绑定与残留清理） |
 | 9 | JSONL 帧约定 | `docs/json.md` + `docs/rpc.md` | json.md「Framing and process I/O」L12–20；rpc.md「Framing」 | 严格 LF 切分（U+2028/29 非行界）、stdout 持续消费、stdout 仅 JSONL、诊断走 stderr | §1、§3.3 |

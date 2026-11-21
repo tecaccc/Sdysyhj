@@ -57,7 +57,7 @@ export type HostToWebview =
   | { kind: "config"; tailLines: number; sendMode: "steer" | "followUp"; workspaceLabel: string }
   | { kind: "session_reset"; sessionId: string; name: string }
   | { kind: "history_loaded"; messages: UiMessage[] }
-  | { kind: "user_message"; text: string }
+  | { kind: "user_message"; id: string; text: string }
   | { kind: "stream_start"; messageId: string }
   | { kind: "text_delta"; messageId: string; index: number; delta: string }
   | { kind: "thinking_delta"; messageId: string; index: number; delta: string }

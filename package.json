@@ -155,7 +155,8 @@
     "build": "node esbuild.mjs",
     "typecheck": "tsc --noEmit",
     "verify:unit": "vitest run test/unit",
-    "verify:integration": "vitest run test/integration"
+    "verify:integration": "vitest run test/integration",
+    "record:golden": "node test/tooling/record-golden.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "1.5.2",

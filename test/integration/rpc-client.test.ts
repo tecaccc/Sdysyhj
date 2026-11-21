@@ -120,7 +120,11 @@ describe("RpcClient ↔ mock 子进程集成", () => {
 
     const settled = events.find((e) => e.type === "agent_settled") as { aborted?: boolean };
     expect(settled.aborted).toBe(true);
-    const end = events.find((e) => e.type === "message_end") as { message: { stopReason?: string } };
+    // fake-pi 已按 json.md L30–46 补发 user 回声（TASK-008）：断言仍锁定 assistant 终稿的
+    // stopReason=aborted，选择器限定 role=assistant（语义不变，非放宽）
+    const end = events.find(
+      (e) => e.type === "message_end" && (e as { message?: { role?: string } }).message?.role === "assistant"
+    ) as { message: { stopReason?: string } };
     expect(end.message.stopReason).toBe("aborted");
 
     await client.stop();

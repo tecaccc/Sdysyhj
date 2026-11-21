@@ -122,8 +122,46 @@ export interface PiBridgeOptions {
 /** #D-03（Issue #2）：extension_error 同键（extensionPath+error）toast 去重窗口 */
 const EXTENSION_ERROR_TOAST_DEDUP_MS = 60_000;
 
+/** queue_update 快照 diff：返回 next 相对 prev 新增的文本（保留 next 顺序；同文本重复按出现次序一一对应）。 */
+function addedTexts(prev: string[], next: string[]): string[] {
+  const counts = new Map<string, number>();
+  for (const text of prev) counts.set(text, (counts.get(text) ?? 0) + 1);
+  const added: string[] = [];
+  for (const text of next) {
+    const remaining = counts.get(text) ?? 0;
+    if (remaining > 0) counts.set(text, remaining - 1);
+    else added.push(text);
+  }
+  return added;
+}
+
 interface ToolLocation {
   messageId: string;
+}
+
+/** 待回声发送通道（§10.12 D2） */
+type PendingEchoChannel = "prompt" | "steer" | "followUp";
+
+/**
+ * 待回声账本条目（§10.12 D2，FR-CHAT-11）：一次用户发送 → 期待一条 pi user 回声。
+ * pi 回声不携带客户端关联键（json.md L30–46），关联只能由我方在发送侧建立；
+ * 全部状态迁移由协议事件驱动（入账/queue_update 绑定/回声消账/settled 残留清理），零时间阈值。
+ * 数组成员资格 = 在账（可参与匹配）；消费/拒绝/handled/settled 终结后即移除。
+ */
+interface PendingUserEcho {
+  /** 全局发送序（入账顺序） */
+  seq: number;
+  /** 宿主单源消息 id（D1；回声终稿 message_final 复用该 id） */
+  id: string;
+  channel: PendingEchoChannel;
+  /** 发送原文（乐观展示文本，澄清 #16：回声到达前展示） */
+  sentText: string;
+  /** 发送时刻（权威重建回填时的时间戳） */
+  sentAt: number;
+  /** 入队快照绑定的展开后文本（rpc-commands.md L24/L48/L72：skill/template 在发送/入队前展开，队列文本即回声将携带的文本） */
+  queuedText?: string;
+  /** disposition:"started" 的 prompt 条目：其回声是下一 run 的首条 user 回声（json.md L36–39 序列），精确匹配时优先 */
+  runHead: boolean;
 }
 
 export class PiBridge extends TypedEmitter<BridgeEventMap> {
@@ -170,6 +208,12 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
   private modelName = "";
   private thinkingLevel = "";
   private sessionFile: string | null = null;
+
+  /** 待回声账本（§10.12 D2）：未消费/未出账的用户发送 */
+  private pendingUserEchoes: PendingUserEcho[] = [];
+  private pendingEchoSeq = 0;
+  /** 最近一次 queue_update 快照（json.md「Queue and state events」L121–122：两字段含完整当前队列） */
+  private lastQueueSnapshot: { steering: string[]; followUp: string[] } | null = null;
 
   /** FR-MOD-04：最近一条助手消息 usage.totalTokens（会话内权威取值；null = 尚无助手消息） */
   private lastUsageTokens: number | null = null;
@@ -332,29 +376,38 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     const running = this.runState === "starting" || this.runState === "streaming";
     if (running) {
       const effective = mode === "auto" ? this.options.sendMode : mode;
+      // D1：宿主单源 id；D2：发送即入账（回声关联键在发送侧建立）
+      const entry = this.openPendingEcho(effective === "steer" ? "steer" : "followUp", trimmed);
       this.options.logger.info(`prompt 发送（${effective} 插话排队）：${firstLine(trimmed, 80)}`);
-      this.emit("user_message", { text });
-      this.pushUserMessage(text);
+      this.emit("user_message", { id: entry.id, text });
+      this.pushUserMessage(entry.id, text);
       try {
         const result = effective === "steer" ? await client.steer(trimmed) : await client.followUp(trimmed);
         if (!result.ok) {
+          this.closePendingEcho(entry); // D3：受理前拒绝即刻出账，不污染后续匹配
           this.emit("error", { message: `插话失败：${result.error ?? "未知错误"}`, hint: "可点击 Stop 中止本轮后重新发送。" });
+        } else if (result.disposition === "handled") {
+          this.closePendingEcho(entry); // D3：input handler 消费，无 run 无回声（rpc-commands.md L46–92）
         } else {
           this.emit("toast", { text: effective === "steer" ? "steer 消息已排队" : "follow-up 消息已排队" });
         }
       } catch (err) {
+        this.closePendingEcho(entry);
         this.emit("error", { message: `插话失败：${err instanceof Error ? err.message : String(err)}` });
       }
       return;
     }
 
+    // D1/D2：idle 发送同样入账；回声终稿将复用该 id 就地更新（澄清 #16）
+    const entry = this.openPendingEcho("prompt", trimmed);
     this.options.logger.info(`prompt 发送：${firstLine(trimmed, 80)}`);
-    this.emit("user_message", { text });
-    this.pushUserMessage(text);
+    this.emit("user_message", { id: entry.id, text });
+    this.pushUserMessage(entry.id, text);
     this.setRunState("starting");
     try {
       const result = await client.prompt(trimmed);
       if (!result.ok) {
+        this.closePendingEcho(entry); // D3：success:false 受理前拒绝，无后续事件（rpc-commands.md L34–42）
         this.setRunState("idle");
         this.emit("error", {
           message: `prompt 被拒绝：${result.error ?? "未知错误"}`,
@@ -363,9 +416,14 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
         return;
       }
       if (result.disposition === "handled") {
+        this.closePendingEcho(entry); // D3：扩展命令消费，无 run 不等 settled（rpc.md「Run lifecycle」）
         this.setRunState("idle");
+      } else if (result.disposition === "started") {
+        entry.runHead = true; // D2：其回声是下一 run 的首条 user 回声（json.md L36–39）
       }
+      // disposition:"queued"（或未知）：留账，等待 queue_update 快照绑定 queuedText
     } catch (err) {
+      this.closePendingEcho(entry);
       this.setRunState("idle");
       this.emit("error", {
         message: `发送失败：${err instanceof Error ? err.message : String(err)}`,
@@ -403,6 +461,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
       }
     }
     this.uiMessages = [];
+    this.lastQueueSnapshot = null; // 新会话队列为空：旧快照不作数
     await this.refreshState(true);
     await this.refreshHistory();
     this.setRunState("idle");
@@ -417,6 +476,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     await client.switchSession(sessionPath);
     this.sessionStale = false;
     this.uiMessages = [];
+    this.lastQueueSnapshot = null; // 切换后会话队列状态未知且与旧快照无关
     await this.refreshState(true);
     await this.refreshHistory();
     this.setRunState("idle");
@@ -623,6 +683,18 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
           }
         }
       }
+      // §10.12 D5：权威重建后回填仍入队的待回声条目（按发送序追加尾部，乐观条目不丢、不重复）；
+      // 已不在队列的未回声条目出账（JSONL 已权威或已失效，不再参与匹配）
+      for (const entry of this.pendingUserEchoes.filter((e) => this.entryStillQueued(e))) {
+        if (this.uiMessages.some((m) => m.id === entry.id)) continue;
+        this.uiMessages.push({
+          id: entry.id,
+          role: "user",
+          blocks: [{ type: "text", text: entry.sentText }],
+          timestamp: entry.sentAt,
+        });
+      }
+      this.pendingUserEchoes = this.pendingUserEchoes.filter((e) => this.entryStillQueued(e));
       // FR-MOD-04 ④：会话载入/切换后按新会话最近一条助手消息的 usage.totalTokens 取值刷新
       this.lastUsageTokens = null;
       for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -721,6 +793,9 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
         this.streamingMessage = null;
         this.streamingBlocks = new Map();
         this.crashStreak = 0; // 正常跑完一轮，清零崩溃连击
+        // §10.12 D2 残留清理（确定性事件点，零时间阈值）：未消费且 queuedText 仍在队列 → 保留
+        // （abort 后队列保留、后续 prompt 继续投递，rpc-commands.md L126）；否则终结出账（保留单条乐观展示）
+        this.settlePendingEchoes();
         // 运行状态口径（v0.2.2 口径 A）：settled 后必须回 idle；
         // “已中止”为消息级标记（message.aborted），aborted 仅为瞬态状态事件。
         if (aborted) {
@@ -739,6 +814,16 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
         // 使轮询不会把 turn_start 边界的 user 条目写入误判为外部修改
         this.watcher.markSynced();
         break;
+      case "queue_update": {
+        // §10.12 D2：队列快照（steering/followUp 完整当前队列），diff 绑定新增文本为 queuedText
+        const prev = this.lastQueueSnapshot;
+        this.lastQueueSnapshot = {
+          steering: Array.isArray(event.steering) ? [...event.steering] : [],
+          followUp: Array.isArray(event.followUp) ? [...event.followUp] : [],
+        };
+        this.bindQueuedTexts(prev);
+        break;
+      }
       case "session_info_changed":
         this.sessionName = event.name ?? "";
         this.emit("session_name", { name: this.sessionName });
@@ -768,7 +853,7 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
       default: {
         // 未知/未处理事件：记录协议异常供排障（FR-CMD-02）
         const type = (event as { type: string }).type;
-        if (type === "bash_execution_update" || type === "queue_update") {
+        if (type === "bash_execution_update") {
           this.options.logger.debug(`RPC 事件：${type}`);
         } else {
           this.options.logger.debug(`未处理 RPC 事件：${type}`);
@@ -897,6 +982,11 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
       this.handleToolResult(message);
       return;
     }
+    if (message.role === "user") {
+      // pi user 回声（json.md L30–46）：匹配账本 → 复用乐观条目 id 就地更新（D1/D2/澄清 #16）
+      this.handleUserEcho(message);
+      return;
+    }
     const ui = this.buildUiMessage(message);
     if (!ui) return;
     if (message.role === "assistant") {
@@ -920,6 +1010,118 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     if (message.role === "assistant") {
       this.watcher.markSynced();
     }
+  }
+
+  // ---------- 待回声账本（§10.12 D2/D3，FR-CHAT-11） ----------
+
+  /** 入账：一次用户发送（prompt/steer/followUp）即建立回声关联候选。 */
+  private openPendingEcho(channel: PendingEchoChannel, sentText: string): PendingUserEcho {
+    const entry: PendingUserEcho = {
+      seq: ++this.pendingEchoSeq,
+      id: `u${++this.messageIdSeq}`,
+      channel,
+      sentText,
+      sentAt: Date.now(),
+      runHead: false,
+    };
+    this.pendingUserEchoes.push(entry);
+    return entry;
+  }
+
+  /** 出账：已消费回声 / 拒绝 / handled / settled 终结——不再参与后续匹配。 */
+  private closePendingEcho(entry: PendingUserEcho): void {
+    const index = this.pendingUserEchoes.indexOf(entry);
+    if (index >= 0) this.pendingUserEchoes.splice(index, 1);
+  }
+
+  /**
+   * 回声消账匹配（D2）：① 精确匹配（sentText/queuedText === 回声文本；run-head 优先 → 全局发送序）；
+   * ② 确定性兑底（快照未覆盖的发送后变换）：唯一未消费条目 → 绑定；全部同通道 → 通道内 FIFO；
+   * ③ 多通道不可判定 → null（不重绑不追加，保留原文待权威重建）。
+   */
+  private matchPendingEcho(text: string): PendingUserEcho | null {
+    const pending = this.pendingUserEchoes;
+    if (pending.length === 0) return null;
+    const exact = pending
+      .filter((e) => e.sentText === text || e.queuedText === text)
+      .sort((a, b) => (Number(b.runHead) - Number(a.runHead)) || a.seq - b.seq);
+    if (exact.length > 0) return exact[0];
+    if (pending.length === 1) return pending[0];
+    const channels = new Set(pending.map((e) => e.channel));
+    if (channels.size === 1) return [...pending].sort((a, b) => a.seq - b.seq)[0];
+    return null;
+  }
+
+  /** user 回声终稿：匹配则复用乐观条目 id 合并更新（D5 绝不 push 第二条）并 message_final 就地 finalize（D6）。 */
+  private handleUserEcho(message: UserMessage): void {
+    const text = this.userContentToText(message.content);
+    const timestamp = typeof message.timestamp === "number" ? message.timestamp : Date.now();
+    const match = this.matchPendingEcho(text);
+    if (match) {
+      this.closePendingEcho(match);
+      const ui: UiMessage = { id: match.id, role: "user", blocks: [{ type: "text", text }], timestamp };
+      this.upsertUiMessage(ui);
+      this.emit("message_final", { messageId: ui.id, message: ui });
+      return;
+    }
+    if (this.pendingUserEchoes.length === 0) {
+      // 账本空：本端从未发送的 user 消息（扩展 custom_message 等，extensions.md L752–770）
+      // → 宿主新 id 建条目（D4 合法追加场景①）
+      const ui: UiMessage = { id: `u${++this.messageIdSeq}`, role: "user", blocks: [{ type: "text", text }], timestamp };
+      this.upsertUiMessage(ui);
+      this.emit("message_final", { messageId: ui.id, message: ui });
+      return;
+    }
+    // 多通道不可判定（D2.2 兑底）：不重绑、不追加；保留乐观条目原文，待权威重建收敛（宁保留不错换）
+    this.options.logger.warn(
+      `user 回声无法唯一关联（文本不匹配且未消费条目跨通道），保留乐观条目待权威重建：${firstLine(text, 80)}`
+    );
+  }
+
+  /** queue_update 快照 diff：新增队列文本绑定为候选条目的 queuedText（多条按序对应；同文本重复按出现次序一一对应）。 */
+  private bindQueuedTexts(prev: { steering: string[]; followUp: string[] } | null): void {
+    const current = this.lastQueueSnapshot;
+    if (!current) return;
+    const queues: Array<["steering" | "followUp", PendingEchoChannel[]]> = [
+      ["steering", ["steer", "prompt"]],
+      ["followUp", ["followUp", "prompt"]],
+    ];
+    for (const [queue, channels] of queues) {
+      const added = addedTexts(prev ? prev[queue] : [], current[queue]);
+      if (added.length === 0) continue;
+      // 候选 = 该队列通道的未绑定条目；prompt 通道仅 disposition:"queued"（非 run-head）
+      // 的条目可入候选——run-head prompt（started）已进入运行流，不在任何队列，不得被快照 diff 绑定
+      const candidates = (): PendingUserEcho[] =>
+        this.pendingUserEchoes
+          .filter((e) => channels.includes(e.channel) && (e.channel !== "prompt" || !e.runHead) && e.queuedText === undefined)
+          .sort((a, b) => a.seq - b.seq);
+      // ① 优先精确：队列文本 === 发送原文
+      for (const text of added) {
+        const hit = candidates().find((e) => e.sentText === text);
+        if (hit) hit.queuedText = text;
+      }
+      // ② 变换文本（skill/template 入队前展开）：剩余新增按序对应剩余候选（发送序）
+      const bound = new Set(this.pendingUserEchoes.filter((e) => e.queuedText !== undefined).map((e) => e.queuedText));
+      const rest = added.filter((t) => !bound.has(t));
+      const remaining = candidates();
+      rest.forEach((text, i) => {
+        if (remaining[i]) remaining[i].queuedText = text;
+      });
+    }
+  }
+
+  /** agent_settled 残留清理（D2）：仍入队 → 保留；已不在队列且从未回声 → 终结出账。 */
+  private settlePendingEchoes(): void {
+    this.pendingUserEchoes = this.pendingUserEchoes.filter((e) => this.entryStillQueued(e));
+  }
+
+  private entryStillQueued(entry: PendingUserEcho): boolean {
+    const snapshot = this.lastQueueSnapshot;
+    return (
+      snapshot !== null &&
+      entry.queuedText !== undefined &&
+      (snapshot.steering.includes(entry.queuedText) || snapshot.followUp.includes(entry.queuedText))
+    );
   }
 
   private handleToolResult(message: ToolResultMessage): void {
@@ -959,9 +1161,9 @@ export class PiBridge extends TypedEmitter<BridgeEventMap> {
     else this.uiMessages.push(ui);
   }
 
-  private pushUserMessage(text: string): void {
+  private pushUserMessage(id: string, text: string): void {
     const ui: UiMessage = {
-      id: `u${++this.messageIdSeq}`,
+      id,
       role: "user",
       blocks: [{ type: "text", text }],
       timestamp: Date.now(),

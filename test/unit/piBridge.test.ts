@@ -1011,6 +1011,386 @@ describe("FR-CMD-03 命令全集（get_commands 桥侧封装）", () => {
   });
 });
 
+describe("FR-CHAT-11 用户消息单次展示（TASK-008 §10.12 D2/D3/D9 单元）", () => {
+  const asUserMessage = (e: BridgeEvent): { id: string; text: string } => e as unknown as { id: string; text: string };
+  const userFinals = (events: BridgeEvent[]) =>
+    events.filter(
+      (e) => e.kind === "message_final" && (e as { message: { role: string } }).message.role === "user"
+    ) as unknown as Array<{ messageId: string; message: { blocks: Array<{ type: string; text?: string }> } }>;
+  const userEntries = (bridge: PiBridge) => bridge.getUiMessages().filter((m) => m.role === "user");
+  const textOf = (blocks: Array<{ type: string; text?: string }>): string => blocks.find((b) => b.type === "text")?.text ?? "";
+
+  /** user 回声（json.md L30–46：message_start/user → message_end/user，content 为文本块数组）。 */
+  function emitUserEcho(fake: FakeRpcClient, text: string): void {
+    fake.emit({ type: "message_start", message: { role: "user", content: [{ type: "text", text }], timestamp: 1 } });
+    fake.emit({ type: "message_end", message: { role: "user", content: [{ type: "text", text }], timestamp: 1 } });
+  }
+
+  it("U1 ① prompt → user 回声：uiMessages 恰一条 user；message_final.id = user_message 下发的乐观条目 id", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("hello");
+    expect(userEntries(bridge)).toHaveLength(1); // 发送后即时展示（乐观条目，不等回声）
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "hello");
+    fake.emit({ type: "message_start", message: { role: "assistant", content: [], stopReason: "pending" } });
+    fake.emit({ type: "message_update", assistantMessageEvent: { type: "text_delta", contentIndex: 0, delta: "Hello" } });
+    fake.emit({
+      type: "message_end",
+      message: { role: "assistant", content: [{ type: "text", text: "Hello" }], stopReason: "stop", timestamp: 2 },
+    });
+    fake.emit({ type: "agent_settled", aborted: false });
+
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    expect(sent).toHaveLength(1);
+    expect(sent[0].text).toBe("hello");
+    const finals = userFinals(events);
+    expect(finals).toHaveLength(1); // 回声给稿仅一次
+    expect(finals[0].messageId).toBe(sent[0].id); // 同键：回声复用乐观条目 id（D1）
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(1); // 助手终稿渲染完成后仍仅一条（① 两个判定时点）
+    expect(ui[0].id).toBe(sent[0].id);
+    expect(textOf(ui[0].blocks)).toBe("hello");
+    await bridge.dispose();
+  });
+
+  it("U2 ④ 澄清 #16：回声文本 ≠ 发送原文 → 同 id 同条目文本更新为权威文本，更新前后条数均 1", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("raw text");
+    expect(userEntries(bridge)).toHaveLength(1);
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "expanded authoritative text"); // 唯一未消费条目 → 兑底绑定
+    expect(userEntries(bridge)).toHaveLength(1); // 更新前后均为一条
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    expect(userFinals(events)[0].messageId).toBe(sent[0].id);
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(1);
+    expect(textOf(ui[0].blocks)).toBe("expanded authoritative text"); // 以 pi 权威文本为准就地更新
+    await bridge.dispose();
+  });
+
+  it("U3 ② 运行中 steer：注入回声后恰一条；queue_update 绑定展开文本（slash 展开）命中", async () => {
+    const { bridge, fakes, events } = makeBridge({ sendMode: "steer" });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("main run");
+    fake.emit({ type: "agent_start" });
+    await bridge.sendPrompt("/skill:summarize", "auto"); // 运行中 → steer
+    expect(fake.steers).toEqual(["/skill:summarize"]);
+    // 入队快照携带展开后文本（rpc-commands.md L48：入队前展开）
+    fake.emit({ type: "queue_update", steering: ["expanded: summarize please"], followUp: [] });
+    // 轮间注入：回声文本 = 展开后文本（≠ 发送原文）→ 经 queuedText 精确命中
+    fake.emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "r1" }], stopReason: "stop", timestamp: 2 } });
+    emitUserEcho(fake, "expanded: summarize please");
+
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    const steerSent = sent.find((m) => m.text === "/skill:summarize");
+    expect(steerSent).toBeTruthy();
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(2); // main + steer 各一条
+    const steerEntry = ui.find((m) => m.id === steerSent!.id);
+    expect(textOf(steerEntry?.blocks ?? [])).toBe("expanded: summarize please");
+    expect(userFinals(events).some((f) => f.messageId === steerSent!.id)).toBe(true);
+    await bridge.dispose();
+  });
+
+  it("U4 ② follow_up：agent 停后注入回声恰一条", async () => {
+    const { bridge, fakes, events } = makeBridge({ sendMode: "steer" });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("main");
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "main");
+    await bridge.sendPrompt("do fu after", "followUp");
+    fake.emit({ type: "queue_update", steering: [], followUp: ["do fu after"] });
+    // agent 停下 → follow_up 注入（agent_end 后、settled 前，rpc-commands.md L70–92）
+    fake.emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "r" }], stopReason: "stop", timestamp: 2 } });
+    fake.emit({ type: "agent_end", messages: [], willRetry: false });
+    emitUserEcho(fake, "do fu after");
+    fake.emit({ type: "queue_update", steering: [], followUp: [] });
+    fake.emit({ type: "agent_start" });
+    fake.emit({ type: "message_start", message: { role: "assistant", content: [], stopReason: "pending" } });
+    fake.emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "fu reply" }], stopReason: "stop", timestamp: 3 } });
+    fake.emit({ type: "agent_settled", aborted: false });
+
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    const fuSent = sent.find((m) => m.text === "do fu after");
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(2);
+    const fuEntry = ui.find((m) => m.id === fuSent!.id);
+    expect(textOf(fuEntry?.blocks ?? [])).toBe("do fu after"); // 恰一条、文本保真
+    await bridge.dispose();
+  });
+
+  it("U5 ②④ 乱序：followUp 先发、steer 后发，steer 回声先到 → 各自命中不错换", async () => {
+    const { bridge, fakes, events } = makeBridge({ sendMode: "steer" });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("main");
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "main");
+    await bridge.sendPrompt("FU-TEXT", "followUp");
+    await bridge.sendPrompt("ST-TEXT", "steer");
+    fake.emit({ type: "queue_update", steering: ["ST-TEXT"], followUp: ["FU-TEXT"] });
+    // 投递顺序与发送顺序不同：steer 先投
+    emitUserEcho(fake, "ST-TEXT");
+    emitUserEcho(fake, "FU-TEXT");
+
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    const idOf = (text: string) => sent.find((m) => m.text === text)!.id;
+    const finals = userFinals(events);
+    expect(finals.map((f) => textOf(f.message.blocks))).toEqual(["main", "ST-TEXT", "FU-TEXT"]);
+    expect(finals.map((f) => f.messageId)).toEqual([idOf("main"), idOf("ST-TEXT"), idOf("FU-TEXT")]); // 不错换
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(3);
+    for (const m of sent) {
+      expect(textOf(ui.find((x) => x.id === m.id)?.blocks ?? [])).toBe(m.text);
+    }
+    await bridge.dispose();
+  });
+
+  it("U6 ① 同文本两次独立发送 → 逐条消费不跨发送合并（run-head 优先 → FIFO）", async () => {
+    const { bridge, fakes, events } = makeBridge({ sendMode: "steer" });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("same text"); // idle prompt → run-head
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "same text"); // 首条回声 → run-head 条目优先
+    await bridge.sendPrompt("same text", "auto"); // 运行中 steer 同文本
+    fake.emit({ type: "queue_update", steering: ["same text"], followUp: [] });
+    emitUserEcho(fake, "same text"); // 次条回声 → 剩余同文本条目（FIFO）
+
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    expect(sent).toHaveLength(2); // 两条独立发送不合并
+    const finals = userFinals(events);
+    expect(finals).toHaveLength(2);
+    expect(finals[0].messageId).toBe(sent[0].id);
+    expect(finals[1].messageId).toBe(sent[1].id);
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(2);
+    expect(ui.every((m) => textOf(m.blocks) === "same text")).toBe(true);
+    await bridge.dispose();
+  });
+
+  it("U7 ①④ disposition handled：单条、即刻出账；后续无关回声不错绑（D3）", async () => {
+    const { bridge, fakes, events } = makeBridge({ promptResult: { ok: true, disposition: "handled" } });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("/extcmd run"); // 扩展命令消费：无 run 无回声
+    expect(userFinals(events)).toHaveLength(0); // 无回声终稿触碰该条目
+    expect(bridge.getRunState()).toBe("idle");
+
+    // 后续无关 user 回声（扩展 custom_message）：账本已空 → 宿主新 id 建条目（D4 合法追加），
+    // 不经 user_message 通道、不错绑到 handled 条目
+    emitUserEcho(fake, "extension injected");
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    const handled = sent.find((m) => m.text === "/extcmd run")!;
+    const finals = userFinals(events);
+    expect(finals).toHaveLength(1);
+    const injectedFinal = finals[0];
+    expect(textOf(injectedFinal.message.blocks)).toBe("extension injected");
+    expect(injectedFinal.messageId).not.toBe(handled.id); // 新 id，非 handled 条目 id
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(2);
+    expect(textOf(ui.find((m) => m.id === handled.id)?.blocks ?? [])).toBe("/extcmd run"); // 原文未被覆盖
+    expect(textOf(ui.find((m) => m.id === injectedFinal.messageId)?.blocks ?? [])).toBe("extension injected");
+    await bridge.dispose();
+  });
+
+  it("U8 ①④ success:false：单条、即刻出账；下一条消息回声正确关联（D3）", async () => {
+    const { bridge, fakes, events } = makeBridge({ promptResult: { ok: false, error: "already streaming" } });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("rejected text");
+    expect(userFinals(events)).toHaveLength(0);
+    fake.promptResult = { ok: true, disposition: "started" }; // 后续发送恢复受理
+    await bridge.sendPrompt("accepted text");
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "accepted text");
+
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    const accepted = sent.find((m) => m.text === "accepted text")!;
+    const finals = userFinals(events);
+    expect(finals).toHaveLength(1);
+    expect(finals[0].messageId).toBe(accepted.id); // 只关联新条目
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(2);
+    expect(textOf(ui.find((m) => m.id === accepted.id)?.blocks ?? [])).toBe("accepted text");
+    await bridge.dispose();
+  });
+
+  it("U9 ②④ abort 后队列保留（settled + queue_update 仍含该文本）→ 单条保留；后续 prompt 继续投递时迟到回声正确命中", async () => {
+    const { bridge, fakes, events } = makeBridge({ sendMode: "steer" });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("main long");
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "main long");
+    await bridge.sendPrompt("late steer text", "auto"); // 运行中排队
+    fake.emit({ type: "queue_update", steering: ["late steer text"], followUp: [] });
+    await bridge.abort();
+    fake.emit({ type: "agent_settled", aborted: true }); // abort 后队列保留（rpc-commands.md L126）
+    expect(userEntries(bridge)).toHaveLength(2); // 条目单条保留
+
+    // 后续 prompt：保留队列继续投递（迟到回声）+ 新 prompt 回声
+    await bridge.sendPrompt("next prompt");
+    emitUserEcho(fake, "late steer text"); // 迟到回声先到
+    emitUserEcho(fake, "next prompt");
+    fake.emit({ type: "queue_update", steering: [], followUp: [] });
+    fake.emit({ type: "message_start", message: { role: "assistant", content: [], stopReason: "pending" } });
+    fake.emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "ok" }], stopReason: "stop", timestamp: 3 } });
+    fake.emit({ type: "agent_settled", aborted: false });
+
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    const steerSent = sent.find((m) => m.text === "late steer text")!;
+    const nextSent = sent.find((m) => m.text === "next prompt")!;
+    const finals = userFinals(events);
+    expect(finals.map((f) => f.messageId)).toContain(steerSent.id); // 迟到回声命中保留条目
+    expect(finals.map((f) => f.messageId)).toContain(nextSent.id);
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(3);
+    expect(textOf(ui.find((m) => m.id === steerSent.id)?.blocks ?? [])).toBe("late steer text"); // 文本不错换
+    await bridge.dispose();
+  });
+
+  it("U10 ③④ refreshHistory 权威重建无重复；仍入队条目按发送序回填尾部，且后续回声仍命中（D5）", async () => {
+    const { bridge, fakes, events } = makeBridge({ sendMode: "steer" });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("main");
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "main");
+    await bridge.sendPrompt("queued fu text", "followUp");
+    fake.emit({ type: "queue_update", steering: [], followUp: ["queued fu text"] });
+    fake.emit({ type: "agent_settled", aborted: false }); // 仍入队 → 保留在账
+
+    // 权威重建：JSONL 只含 main（fu 尚未投递）
+    fake.messages = [
+      { role: "user", content: "main", timestamp: 1 },
+      { role: "assistant", content: [{ type: "text", text: "r" }], stopReason: "stop", timestamp: 2 },
+    ] as AgentMessage[];
+    await bridge.reloadHistory();
+    const history = events
+      .filter((e) => e.kind === "history_loaded")
+      .map((e) => (e as unknown as { messages: Array<{ role: string; blocks: Array<{ type: string; text?: string }> }> }).messages)
+      .pop() ?? [];
+    const historyUsers = history.filter((m) => m.role === "user").map((m) => textOf(m.blocks));
+    expect(historyUsers).toEqual(["main", "queued fu text"]); // 无重复 + 回填尾部（发送序）
+
+    // 回填条目后续回声仍命中（id 贯通，不产生重复）
+    const sent = events.filter((e) => e.kind === "user_message").map(asUserMessage);
+    const fuSent = sent.find((m) => m.text === "queued fu text")!;
+    emitUserEcho(fake, "queued fu text");
+    expect(userFinals(events).some((f) => f.messageId === fuSent.id)).toBe(true);
+    expect(userEntries(bridge).map((m) => textOf(m.blocks))).toEqual(["main", "queued fu text"]); // 仍两条
+    await bridge.dispose();
+  });
+
+  it("U11 ③ getUiMessages() 回放快照：每次发送恰一条 user 条目（面板重开数据源）", async () => {
+    const { bridge, fakes } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("a");
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "a");
+    fake.emit({ type: "message_start", message: { role: "assistant", content: [], stopReason: "pending" } });
+    fake.emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "ra" }], stopReason: "stop", timestamp: 2 } });
+    fake.emit({ type: "agent_settled", aborted: false });
+    await bridge.sendPrompt("b");
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "b");
+    fake.emit({ type: "message_start", message: { role: "assistant", content: [], stopReason: "pending" } });
+    fake.emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "rb" }], stopReason: "stop", timestamp: 3 } });
+    fake.emit({ type: "agent_settled", aborted: false });
+
+    const ui = userEntries(bridge);
+    expect(ui.map((m) => textOf(m.blocks))).toEqual(["a", "b"]);
+    expect(new Set(ui.map((m) => m.id)).size).toBe(2); // id 唯一（回放不产生重复）
+    await bridge.dispose();
+  });
+
+  it("U12 ⑤ 回归边界：回声在场的助手流式/工具卡事件序列与现状一致（D7 零改动）", async () => {
+    const { bridge, fakes, events } = makeBridge();
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("do tool");
+    fake.emit({ type: "agent_start" });
+    emitUserEcho(fake, "do tool");
+    fake.emit({ type: "message_start", message: { role: "assistant", content: [], stopReason: "pending" } });
+    fake.emit({ type: "message_update", assistantMessageEvent: { type: "toolcall_start", contentIndex: 0, id: "call_u12", toolName: "bash" } });
+    fake.emit({
+      type: "message_end",
+      message: {
+        role: "assistant",
+        content: [{ type: "toolCall", id: "call_u12", name: "bash", arguments: { command: "ls" } }],
+        stopReason: "toolUse",
+        timestamp: 1,
+      },
+    });
+    fake.emit({ type: "tool_execution_end", toolCallId: "call_u12", result: { content: [{ type: "text", text: "out" }] }, isError: false });
+    fake.emit({
+      type: "message_end",
+      message: { role: "toolResult", toolCallId: "call_u12", toolName: "bash", content: [{ type: "text", text: "out" }], isError: false, timestamp: 2 },
+    });
+    fake.emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "done" }], stopReason: "stop", timestamp: 3 } });
+    fake.emit({ type: "agent_settled", aborted: false });
+
+    // 助手流式（stream_start/message_final）、toolcall_start/status 路径与修复前一致，
+    // 仅在正确位置插入 user 回声终稿（message_final(user)）——事件序列全量断言
+    expect(kinds(events)).toEqual([
+      "model_info",
+      "history_loaded",
+      "user_message",
+      "run_state", // starting
+      "run_state", // streaming（agent_start）
+      "message_final", // user 回声（新插入，位于助手流式之前）
+      "stream_start",
+      "toolcall_start",
+      "message_final", // 含工具卡的助手终稿
+      "toolcall_status", // tool_execution_end
+      "toolcall_status", // toolResult message_end
+      "message_final", // 总结轮终稿
+      "run_state", // idle
+    ]);
+    await bridge.dispose();
+  });
+
+  it("D2.2 兑底：多通道不可判定时不重绑不追加，保留原文并 warn 留痕（宁保留不错换）", async () => {
+    const { bridge, fakes, events, logger } = makeBridge({ sendMode: "steer" });
+    await bridge.start();
+    const fake = fakes[0];
+
+    await bridge.sendPrompt("main"); // prompt 通道（未回声：快照未覆盖的变换假设场景）
+    fake.emit({ type: "agent_start" });
+    await bridge.sendPrompt("steer text", "auto"); // steer 通道
+    // 回声文本与两者均不匹配 → prompt+steer 跨通道不可判定
+    emitUserEcho(fake, "totally different text");
+
+    expect(userFinals(events)).toHaveLength(0); // 不重绑、不追加（无 message_final）
+    const ui = userEntries(bridge);
+    expect(ui).toHaveLength(2);
+    expect(textOf(ui[0].blocks)).toBe("main"); // 保留乐观条目原文
+    expect(textOf(ui[1].blocks)).toBe("steer text");
+    expect(logger.lines.some((l) => l.includes("无法唯一关联"))).toBe(true); // 留痕待权威重建
+    await bridge.dispose();
+  });
+});
+
 async function waitFor(predicate: () => boolean, timeoutMs = 2000, label = "condition"): Promise<void> {
   const start = Date.now();
   for (;;) {
