@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**已实现（MVP）**；TASK-008（FR-CHAT-11 用户消息单次展示）**已实现（待交付验收）**（§10.12） ｜ 版本：v0.5 ｜ 对应需求：docs/requirements.md v0.5（2026-11-21 冻结）｜ 修订日期：2026-11-21
+> 状态：**已实现（MVP）**；TASK-008（FR-CHAT-11 用户消息单次展示）已实现（§10.12） ｜ TASK-009 阶段①（assistant-ui 迁移试点，FR-AUI-01~06）：**设计基线（待审批点 1b）**（§10.13） ｜ 版本：v0.6 ｜ 对应需求：docs/requirements.md v0.6（2026-11-21 冻结）｜ 修订日期：2026-11-21
 
 ---
 
@@ -242,6 +242,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | 单元 | Vitest | 事件→UI 消息翻译状态机、运行状态机（含 aborted/error/重试）、配置解析、运行时来源解析（mock spawn）；TASK-008 增：user 回声关联/匹配账本（§10.12 D2）|
 | 集成 | Vitest + 真实 `--mode rpc` 子进程（`--no-session`） | 帧解析、prompt→settled 全链路、abort、崩溃重启；fake-pi 剧本已对照 json.md 补发 user 回声（§10.12 D8）|
 | **Golden fixture 回放** | Vitest + 静态 JSONL（`test/fixtures/golden/`，真实 pi 事件序列转录） | **防"自建 mock 自证"兑底（规范 §4.3）**：按真实 pi 录制的事件序列回放断言 user 回声关联、steer/follow-up 注入时序、settled 边界（FR-CHAT-11）；录制与回放方案见 §10.12 D8 |
+| **实验面板（TASK-009 阶段①）** | Vitest unit（映射纯函数 / 零变更冻结与预算 / CSP 指令集 / 主题审计结构断言）+ Vitest integration **in-node 真实通道回放**（路线 A = `serveWebviewHost`×`createVSCodeFetch`×PiBridge(`FAKE_PI_REPLAY`)；路线 B = LabChatPanel postMessage 泵×webview store）+ 真机手工 checklist（主题截图 / XSS DOM 探针 / CSP 下 zod jitless / retainContextWhenHidden / A-B 切换） | FR-AUI-01~06（判定面 = 通道 + 数据层，DOM 行为层 MANUAL，选型与锚点见 §10.13 D8） |
 | E2E 冒烟 | `@vscode/test-e2e` | 激活、开面板、发一条 prompt（mock provider 或录制回放）、切会话 |
 | 手工 | 三平台 checklist | 第 8 节验收标准 |
 
@@ -523,9 +524,116 @@ FR 追溯表（§10.1）将在实现交付时新增 FR-CHAT-11 行（状态、�
 
 ---
 
+### 10.13 TASK-009 阶段①设计记录（assistant-ui 迁移试点，需求基线 v0.6 §4.6）
+
+> 来源：docs/tasks/TASK-009-assistantui-migration.md（人类确认启动 2026-11-21）；需求基线 v0.6 §4.6 FR-AUI-01~06 + 澄清 #18 + §5 阶段①不做项。任务书 §5 生态实测为外部事实底座。
+> 状态：**设计基线（待审批点 1b）**——本节产出时未写任何实现代码、未装依赖；D1–D9 每条唯一决策（无二选一遗留）。
+> 外部证据核读（2026-11-21，逐源）：`@assistant-ui/vscode@0.0.1` npm tarball 全量源码（包随附 src/；dist shasum 76d9adbd…）、官方指南 assistant-ui.com/docs/guides/vscode 全文、官方测试床 github.com/assistant-ui/assistant-ui examples/with-vscode（fixtures/route.ts、fixtures/request.ts、webviews.ts、webview/zod-jitless.ts、test/）、`@assistant-ui/react@0.15.37` + `@assistant-ui/core@0.3.37` tarball 类型面。**关键新证据（超出任务书 §5）**：① fetch 隧道走 postMessage 不经网络——官方指南明文「The bridge needs no connect-src entry, because it does not use the network」；② `createVSCodeFetch(port)` 可注入自定义 port（DOM-free），测试进程内可驱动真实隧道两端；③ zod jitless 官方片段 `import { config } from "zod"; config({ jitless: true })`，须在任何 zod schema 构建前导入；④ UIMessage 流帧型以官方测试床 fixtures/route.ts（`ai` 包 `createUIMessageStream`）为权威样例；⑤ `ThreadMessageLike`/`useExternalStoreRuntime`/`ThreadPrimitive`/`ComposerPrimitive` 均由 `@assistant-ui/react`（类型面经 `@assistant-ui/core`）导出。
+
+#### D1 实验面板注册与零变更保障（FR-AUI-01）
+
+**决策**：
+- **命名（一概念一拼写；实验统一缀 `Lab`）**：viewType `sdysyhj.chatLabView`；贡献命令 `sdysyhj.openChatLab`（title「Open Chat (Lab)」，category Sdysyhj，执行 = `sdysyhj.chatLabView.focus`）；视图名「**聊天（实验）**」（= 面板标题，「实验」标识即落于此，HTML `<title>` 同名）。宿主文件 `src/lab/labViewProvider.ts`（vscode 侧薄 provider）+ `src/lab/labChatPanel.ts`（**不 import vscode** 的面板核心，构造入参 = PiBridge + WebviewLike 形状（postMessage/onDidReceiveMessage）——与 `serveWebviewHost` 的 `WebviewLike` 同形，供 in-node 测试直接实例化）。
+- **注册与共存隔离**：extension.ts 增量注册 `registerWebviewViewProvider(sdysyhj.chatLabView, provider, { webviewOptions: { retainContextWhenHidden: true } })`（FR-AUI-05④ 显式声明，与默认面板同值）；`activationEvents` 增 `onView:sdysyhj.chatLabView`（惰性激活，不打开即零成本）；视图条目挂既有 `sdysyhj` viewsContainer **第二位**（默认面板条目保持首位，FR-AUI-01③ 非默认视图）。构建隔离：实验 webview 独立入口独立产物 `media/lab.js(+.css)`（esbuild 第三项），默认面板 `media/main.js` 构建配置零改动。运行隔离：LabChatPanel 独立订阅 `bridge.onAny`（emitter 多订阅互不影响）；`serveWebviewHost` 只挂实验面板 webview。数据：与默认面板**共享同一 PiBridge/会话**（同源数据零副本，NFR-03；两面板同开时事件各投各的 webview，默认面板订阅路径不变）。
+- **零变更 diff 断言（FR-AUI-01②，自动层 = 结构化冻结断言 unit 测试，无人值守）**：① package.json 解析断言：默认视图条目 `{type:"webview",id:"sdysyhj.chatView",name:"Chat"}` 与 viewsContainer `sdysyhj` 原样、既有全部命令逐项 id/title/category 不变（新增命令允许追加，既有项不得变）、`main` 不变、`activationEvents` 仍含 `onView:sdysyhj.chatView`；② esbuild.mjs 文本断言：既有两项入口（`src/extension.ts→dist/extension.js` node/cjs、`webview/main.ts→media/main.js` browser/iife）逐项原样；③ `src/panel/chatPanel.ts` 文本断言：`viewType = "sdysyhj.chatView"`、`retainContextWhenHidden: true`、CSP meta 模板（`default-src 'none'; style-src … 'unsafe-inline'; script-src 'nonce-…'; img-src …`）逐字匹配冻结值；④ 默认面板依赖图：单独构建 `webview/main.ts`（esbuild metafile）断言 inputs 不含 react/react-dom/@assistant-ui/**（FR-AUI-05③「独立构建入口断言」）。git 层 = 交付时 `git diff --stat`（D7③）佐证默认面板冻结文件零改动。
+
+**理由**：独立 viewType + 追加视图条目是 VS Code 形态下唯一的不替换共存（不抢占默认视图 = 视图序不动）；冻结断言把「零变更」从承诺变为可判定证据（新增即失败），测试 Agent 可直接锚定本断言面写 TC。
+**锚点**：FR-AUI-01①②③、FR-AUI-05③④；§11 #11（renderWebviewHtml）；package.json v0.1.6 现状。
+
+#### D2 路线 A 架构（fetch-bridge，FR-AUI-02①）
+
+**决策**：宿主新增路由适配层 `src/lab/chatRoute.ts`：`createLabChatRoute(bridge: PiBridge): RouteHandler`（`(req: Request) => Promise<Response>`，即 `@assistant-ui/vscode` 宿主 route 形态），注册于实验面板 `serveWebviewHost(webview, { routes: { "/api/chat": { POST: route } } })`。
+- **请求解析**：POST body = AI SDK ChatRequest（`{ messages, … }`）——取最后一条 role==="user" 消息的 text part 拼接为 prompt 文本（官方测试床 `fixtures/request.ts` `readFixtureRequest` 同口径）；解析失败 → 400。
+- **流式映射（PiBridge 事件 → Response body 流）**：用 `ai` 包 `createUIMessageStream`/`createUIMessageStreamResponse` 构造 Response（官方测试床同款）；适配器订阅 `bridge.onAny`，帧映射：`stream_start`→`start-step`+按 contentIndex 开 part；`text_delta`(index)→`text-start`(首见)/`text-delta`(id=index)；`thinking_delta`→`reasoning-start`/`reasoning-delta`（同型）；`message_final`(assistant)→关闭打开 part（`text-end`/`reasoning-end`）+`finish-step`（阶段①纯文本：终稿==增量拼接，harness 断言相等；`tool-input-available` 等工具帧型留阶段②）；run 结束（`run_state` 回 idle/aborted）→`finish`；`error`→`error` 帧。**user 事件不发帧**：user 消息由 webview 侧 transport 请求自有渲染，pi user 回声仅用于多请求路由归属（下条）——路线 A 的 FR-CHAT-11 承载方式（结构性无双气泡），记入 D7④ 契合度框架。
+- **abort 传播**：`req.signal.addEventListener("abort")` → `bridge.abort()`（README：webview 中止请求即中止 handler 的 req.signal；页面重载 `fetch:reset` 中止全部在途——**run 生命周期绑定请求**，与默认面板「run 绑定 bridge」的差异记入 D7④）。
+- **多请求路由（P1 steer/followUp 回放所需）**：适配器维护「prompt 文本 → 请求流」账本：POST 到达即登记；pi user 回声（`message_final(user)`）按文本精确匹配（同文本按到达序消费）登记项，其后至下一回声前的 assistant 轮事件路由到该请求的 writer；失配归主流并 logger.warn（§10.12 D2 匹配原则的最小子集，只做精确文本+序，不做通道兜底）。
+- **golden 回放注入点（FR-AUI-02④ 防自证，精确到层）**：注入位 = **PiBridge 依赖的 RpcClient 子进程**——集成测试以 `FAKE_PI_REPLAY=<fixture>` 环境变量启动 `test/helpers/fake-pi-cli.js`（与 TASK-008 golden-replay.test.ts 同一注入位，经 `PiBridgeOptions.createClient` 的 env）。事件流**全链路真实**：fake-pi stdout JSONL → RpcClient 帧解析 → PiBridge 事件翻译 → 路由适配层 → UIMessageStream Response body → `serveWebviewRoutes` 泵（16ms/64KB 合块，`fetch:chunk` postMessage）→ **真实 `createVSCodeFetch(port)`**（官方 webview 侧 fetch 实现 + 测试注入 port）→ 测试进程内取 Response 解码 SSE 断言。断言不触 webview DOM/React 状态（判定面见 D8）；隧道两端消息协议（channel `aui-vscode`、fetch:request/head/chunk/end/error/abort）均为包源码真实实现。
+- **webview 侧（sliceA.tsx）**：`useChatRuntime({ transport: new AssistantChatTransport({ api: "/api/chat", fetch: vscodeFetch }) })`（`@assistant-ui/ai-sdk`）+ `AssistantRuntimeProvider` + 共享最小外壳（D4）。
+
+**理由**：route handler 是 `@assistant-ui/vscode` 的官方宿主形态；`createUIMessageStream` 是 AssistantChatTransport 消费协议的官方生产侧（官方测试床实证）；注入点低于适配层 ⇒ 回放数据必须穿越全部自有翻译与官方隧道，杜绝直写渲染结果的自证。
+**锚点**：§11 #11（Extension host/Webview 节）、#12（RouteHandler/泵/协议）、#13（How it works）、#16（fixtures/route.ts 帧型、request 解析）、#17（ai 写入器）；FR-AUI-02①④、FR-AUI-03①③。
+
+#### D3 路线 B 架构（ExternalStoreRuntime，FR-AUI-02②）
+
+**决策**：
+- **映射纯函数** `webview/lab/threadMessageLike.ts`：`toThreadMessageLike(ui: UiMessage): ThreadMessageLike`——role user/assistant 直映；blocks 最小映射（阶段①纯文本级口径）：`text`→`{type:"text",text}`、`thinking`→`{type:"reasoning",text}`、`toolcall`→`{type:"tool-call",toolCallId:id,toolName:tool,argsText:args}`（不注入 result/artifact，工具卡渲染归阶段②；三类齐全仅为零数据丢失，fixture 断言只覆盖 text）；`id`=ui.id、`createdAt:new Date(ui.timestamp)`。不用 `useExternalMessageConverter`/joinStrategy（直接 `convertMessage` 内联，相邻 assistant 消息不合并——pi 多轮 assistant 各自成条，与澄清 #12 计数口径一致）。
+- **状态源** = 宿主 `getUiMessages()` 快照 + 增量事件的 webview 侧镜像：`webview/lab/store.ts` **纯 reducer**（输入 HostToWebview 事件，输出 `{messages: UiMessage[], isRunning: boolean}`）：`ready`（宿主回放 `history_loaded(getUiMessages())`）→ 初始化；`user_message`→push（宿主单源 id）；`stream_start`/`text_delta`/`message_final`→按 id upsert/append（§10.12 D4 同幂等键语义：同 id 重复 final 就地覆盖不追加）；`run_state`→isRunning。sliceB.tsx 以 `useSyncExternalStore` 挂 store + `useExternalStoreRuntime({ messages, convertMessage: toThreadMessageLike, isRunning, onNew, onCancel })`：`onNew`→`post({kind:"prompt",text,mode:"auto"})`；`onCancel`→`post({kind:"abort"})`。流式 = 终稿前 `text_delta` 对 assistant 消息原地追加（ExternalStoreRuntime 官方流式口径同型）。
+- **与既有 postMessage 协议复用面**：`src/panel/messages.ts` 判别联合**零改动**复用；宿主 `src/lab/labChatPanel.ts`（vscode-free）处理 `ready`（回放 `model_info`/`run_state`/`history_loaded` 最小子集）/`prompt`/`abort`；vscode 薄壳 `src/lab/labViewProvider.ts` 只做 options/HTML/挂 serveWebviewHost。**PiBridge 零改动**（§10.12 D1/D2 回声账本原样生效——FR-CHAT-11 全语义由宿主承载，是路线 B 核心卖点，记入 D7④）。
+
+**理由**：ExternalStoreRuntime 为官方「自带状态」路线；复用既有协议+宿主账本使路线 B 的用户消息单条语义零新增逻辑；面板核心去 vscode 化使集成测试可在 node 内直接实例化（WebviewLike 同形）。
+**锚点**：§11 #14（ThreadMessageLike/Handler matrix/Streaming responses）；FR-AUI-02②④、FR-AUI-03①；§3.4、§10.12 D1/D2/D4。
+
+#### D4 双切片切换机制（FR-AUI-02⑥）
+
+**决策**：**面板内开关**——实验面板单 HTML/单 bundle（`webview/lab/main.tsx`）内顶部 A/B 切换控件（「路线 A（fetch-bridge）」/「路线 B（ExternalStoreRuntime）」），切换 = React 卸载/挂载对应 slice 子树（共享最小外壳 `shell.tsx`：ThreadPrimitive 消息列表 + ComposerPrimitive 输入），**不重载 HTML、不经宿主**；默认展示路线 A。
+**理由**：① webview 页面重载触发 `fetch:reset` 中止上一页全部在途请求（README「Webview」节）——以重载实现切换会破坏在途回放与度量；② 命令/boot 参数方案须宿主状态与 contributes 增面（与 D1 最小增量冲突）且同样依赖重载；③ 面板内开关天然满足「两切片同面板独立运行互不干扰」，且切换行为入 D8 手工 checklist；④ 单 bundle 双切片不影响预算口径（FR-AUI-05③ = 实验面板产物合计），逐切片体积经 D6/D7 度量专用入口拆分核算。
+**锚点**：§11 #11（Webview 节 fetch:reset）；FR-AUI-02⑥、FR-AUI-05③。
+
+#### D5 主题与 CSP（FR-AUI-04 / FR-AUI-05②）
+
+**决策**：
+- **主题**：CSS 入口 `webview/lab/lab.css` 导入 `@assistant-ui/vscode/theme.css`（esbuild 经 package exports `./theme.css` 解析，随 `media/lab.css` 产出）+ 手写外壳样式直接消费 shadcn token：正文/助手文本 `--foreground` on `--background`、用户气泡 `--primary`/`--primary-foreground`、输入框背景 `--input`/边框 `--border`——采样点与 FR-AUI-04① 对齐。**不引入 Tailwind**（阶段① 用 ThreadPrimitive 无头原语 + 手写 CSS；模板组件/Tailwind 归后续阶段评估）。`renderWebviewHtml` 传 `surface:"sidebar"`。
+- **CSP 基线与登记**：实验面板 HTML 由 `renderWebviewHtml`（strict 默认）生成，指令集 = 官方模板：`default-src 'none'; script-src 'nonce-…'; style-src <cspSource> 'nonce-…'; img-src <cspSource> blob: data:; media-src <cspSource> blob: data:; font-src <cspSource> data:; connect-src <cspSource>; frame-src 'none'`。**不新增任何指令/来源**：fetch 隧道走 postMessage 不经网络（官方指南明文无需 connect-src）；无远程图源需求（imgSrc/mediaSrc 不加）；无 WASM。与默认面板 CSP 的差异**逐一登记**（均为收紧/等强方向）：style-src `'unsafe-inline'`→nonce（官方 strict）；显式新增 media-src/font-src/connect-src(=cspSource)/frame-src `'none'`；img-src 收紧（去 `https:`）。唯一预登记回退：真机冒烟若库注入无 nonce `<style>` 被拦 → `csp:"relaxed"`（style-src 换 `'unsafe-inline'`，官方内建模式；script-src 仍仅 nonce，README 明文 `'unsafe-eval'` is never added），须经 §10.13 对比报告登记后生效。
+- **CSP 断言（自动）**：unit 测试以 stub webview（`{cspSource, asWebviewUri}`）**真实调用 `renderWebviewHtml`**，解析 `<meta http-equiv="Content-Security-Policy">` 断言指令集 = 上述模板（script-src 仅 nonce、无 `'unsafe-eval'`/`'unsafe-inline'`、connect-src ⊆ cspSource、frame-src `'none'`）。
+- **XSS 探针落点（FR-AUI-02⑤）**：自动层 = ① **LAB-XSS 回放剧本**（fake-pi-cli.js 新增：user 回声与 assistant 回复均含 `<script>alert(1)</script>` 与 `<img src=x onerror=…>` 探针文本，事件形状对照 json.md，文件头标注锚点）经 D2/D3 真实通道回放，断言两切片通道解码文本与探针原文逐字节一致（文本保真、未被解释为标记）；② 静态扫描断言：`webview/lab/**` 源码零 `innerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write`（扫描面限实验面板新文件、排除依赖产物与既有源码——规范 §5.2 扫描纪律）。DOM 层（无新增 script 元素、预埋哨兵 `window.__AUI_XSS_SENTINEL` 无副作用）= 真机手工 checklist（依据：React JSX 字符串 children 进文本节点不进 HTML 解析，构造性转义）。
+
+**理由/锚点**：§11 #11（CSP 节/relaxed/unsafe-eval never）、#13（「bridge needs no connect-src」）、#15（React 注入防护）；FR-AUI-04①②、FR-AUI-05②、FR-AUI-02⑤；NFR-03。
+
+#### D6 构建与依赖（FR-AUI-05①③）
+
+**决策**：
+- **esbuild 扩展（增量，不改既有两项）**：新增实验 webview 构建 `webview/lab/main.tsx → media/lab.js(+.css)`：`platform:"browser", format:"iife", target:"es2020", jsx:"automatic", minify:true, define:{"process.env.NODE_ENV":JSON.stringify("production")}, sourcemap:true`（React 读 `process.env.NODE_ENV` 而 webview 无该全局，必须 define——官方指南「Bundle both sides」；minify 为预算必要手段，默认面板构建零改动）。宿主不新增入口：lab 宿主代码经既有 `src/extension.ts → dist/extension.js` 打入（tree-shaking 后仅含 `@assistant-ui/vscode/host` 纯 TS 切片 + `ai` 流写入器子集，**无 React**——React 只进 webview bundle）。
+- **预算核算口径（FR-AUI-05③）**：实验面板 webview JS = `media/lab.js` + 全部代码分割 chunk（本设计单入口无 chunk，后续若启分割则计入）+ 打包入 bundle 的依赖运行时，**不含 .css 与 .map**，`fs.stat` 字节合计 ≤ 3,145,728；宿主增量 = 实现前后 `dist/extension.js` 字节差（基线 = 干净检出基线提交的构建产物）≤ 1,048,576；默认面板依赖图 = 单独构建 `webview/main.ts`（metafile inputs）不含 react/react-dom/@assistant-ui/**（D1③④ 断言）。
+- **预算预估（设计期估算，门禁以 D7 实测为准）**：lab webview（minified）≈ react+react-dom 0.45–0.55 MiB + `@assistant-ui/react` 链（core/store/zustand/radix-ui/assistant-stream/zod4）0.8–1.2 MiB + `@assistant-ui/ai-sdk`/`@ai-sdk/react`/`ai` 客户端子集 + zod 0.3–0.6 MiB + 外壳 0.02 MiB ≈ **1.6–2.3 MiB**（≤3 MiB，余量 0.7–1.4 MiB；**Shiki 全量不进产物**——阶段①无 Markdown 渲染、react-streamdown 未引入，≈15 MiB 自然违规源不存在）。宿主增量（现口径未 minify）= `ai` 子集+zod ≈ **0.4–1.0 MiB**（≤1 MiB，**中风险**）——预登记回退：实测超限则宿主 bundle 开 minify（不触 FR-AUI-01② 冻结面：viewType/注册配置/CSP/入口路径均不变）；再超限如实上报，不静默放宽口径。
+- **精确版本锁定清单（package.json 新增，全部零 `^`/`~`/`>=` 前缀，JSON 解析断言；版本号均已于 2026-11-21 registry 核实存在）**：dependencies `@assistant-ui/vscode 0.0.1`、`@assistant-ui/react 0.15.37`、`@assistant-ui/ai-sdk 0.0.19`、`ai 7.0.153`、`react 19.3.1`、`react-dom 19.3.1`、`zod 4.6.7`；devDependencies `@types/react 19.3.0`、`@types/react-dom 19.3.0`。（zod 为直依：`webview/lab/zod-jitless.ts` 显式 `import { config } from "zod"`；react 19 线 = 上游 vscode 包 devDeps react ^19.3.1 测试矩阵主线，peer `^18||^19` 均合法；ai 7.0.153 同时满足 vscode 包 devDeps `^7.0.153` 与 ai-sdk peer `^7.0.101`；`@assistant-ui/core 0.3.37` 为传递依赖由 lockfile 锁定，不加直依——无直接 import。）
+- **zod jitless 验证（FR-AUI-05②）三件套**：① 源顺序断言（`webview/lab/main.tsx` 首个 import = `./zod-jitless`，内容同官方片段 `config({jitless:true})`，esbuild 产物内顺序同断言）；② CSP 指令集断言（D5，无 unsafe-eval）；③ 运行时证据分层登记：无头回放（node 无 CSP，证「jitless 模式下 zod 校验路径不抛错」）+ 真机手工 checklist（真实 CSP 下完成一次回放、Webview devtools 控制台零 CSP violation——FR-AUI-05②「以回放通过为运行时证据」的真机层）。
+- **`@assistant-ui/vscode` 0.0.1 升级/退出策略评估要点（留痕于对比报告）**：0.0.x 无 semver 兼容承诺（0.0.x→0.0.y 均可能 breaking）——升级评估清单：① host/webview 协议常量与消息形状（channel、`fetch:*`/`rpc:*` 帧）；② CSP 模板与 renderWebviewHtml 选项面；③ 导出面（serveWebviewHost/createVSCodeFetch/theme.css）；④ peer/依赖矩阵（react 线、core 线、zod 线）；逐项对照 CHANGELOG/源码 diff 后小步升级 + 全量回放回归。**退出** = 双切片全部为增量代码（D1 隔离），删除注册与依赖即回默认面板基线；实验面板不落任何会话/状态副本（NFR-03），无数据残留。
+
+**锚点**：§11 #13（双构建/NODE_ENV define/Shiki 15MB/Hidden views）、#11（exports 面）；FR-AUI-05①②③、FR-AUI-01②。
+
+#### D7 度量与对比报告规格（FR-AUI-06）
+
+**决策**（四维均无人值守可复现；脚本 `test/tooling/lab-metrics.mjs`（实现期新增）+ 既有命令；**报告承载于本 §10.13 交付小节「阶段①双切片对比报告」**——研发可写文件清单内唯一合适的正式载体，不另开新文件、不开 docs/ 新目录）：
+- **① bundle 体积**：脚本产出——实验面板合计字节（口径同 D6）；**逐切片** = 两个度量专用入口（`slice-a.measure`/`slice-b.measure`：同一外壳仅挂对应 slice，临时构建到 /tmp，不入产物）同参构建字节；宿主增量 = 基线提交（worktree 干净检出）构建 `dist/extension.js` 与当前构建的字节差；默认面板依赖图 = metafile inputs 清单。输出 JSON+表格贴报告。
+- **② 首帧/首消息时延**（golden-prompt-basic 回放，**≥5 次取中位**，无头 harness 测通道里程碑）：T1 首帧 = 驱动发起（prompt 请求/事件发出）→ 切片侧**首个消息事件观测**（A：Response 首个 SSE 帧；B：store 首个 run 事件回调）；T2 首消息完成 = pi assistant `message_end` 到达桥 → 切片侧**终稿可读**（A：finish 帧解码且文本齐；B：store.messages 含终稿文本）。DOM 绘制时延不在此口径（无头无 DOM，见 D8），真机响应性入手工 checklist 定性记录。
+- **③ 代码侵入面**：`git diff --stat <基线>..HEAD`（基线 = 阶段①实现前的发版标签/提交），按「默认面板冻结文件（须为空）/共享文件增量（package.json、esbuild.mjs、src/extension.ts、test/helpers/fake-pi-cli.js）/新增文件」三组归类贴表——与 D1 零变更断言互证。
+- **④ PiBridge 事件契合度（定性框架，逐路线填写，结论中立）**：流式 delta（delta→帧/增量的保真与粒度）；**user 回声承载**（A：客户端自有 user 消息渲染、回声仅作流路由不重发——结构性无双气泡；B：宿主账本 §10.12 D1/D2 就地合并，FR-CHAT-11 全语义直接复用）；steer/followUp（A：run 绑定请求、注入=新请求经账本路由到所属流；B：复用 queue 语义与队列快照；以 golden-steer-followup P1 回放为实证输入）；abort（A：请求中止/页面重载→bridge.abort；B：onCancel→协议 abort；「中止后回 idle」两路线同口径）。每项观察结论+证据指针，不预设路线立场。
+- **报告小节结构（交付时填写）**：四维各一节 + 数据表 + 复现命令与输出 + `@assistant-ui/vscode` 升级评估要点 + 中性结论（路线选择 = 总调度阶段①出口裁决，按任务书 §2 向人类通报）。
+
+**锚点**：FR-AUI-06①②③、FR-AUI-05①③；规范 §0.3（证据即事实）。
+
+#### D8 测试策略（阶段①一层；判定面与 DOM 纪律选型）
+
+**决策**：**断言落「通道 + 数据」层，不建 DOM 测试基建**（沿 §10.10/§10.11 先例：webview 无 DOM 基建不硬造、不引 jsdom）。「渲染消息条数/文本一致」的可判定面 = **驱动渲染的消息数据**：路线 A = fetch 隧道解码后的 UIMessage 流帧（消息数、文本拼接、帧序）；路线 B = webview store 的 `messages` 状态 + `toThreadMessageLike` 输出。像素/组件 DOM 渲染 = 真机手工 checklist（证据 = 截图/控制台输出）。分层：
+- **unit（verify:unit）**：映射纯函数（toThreadMessageLike 三类 block；chatRoute 事件→帧翻译器纯函数化（事件序列→帧序列）；store reducer 增量/终稿/幂等）；结构断言（D1 零变更冻结面四项；lab 源码 innerHTML 禁令扫描；新依赖精确版本零前缀 JSON 断言）；CSP 指令集（D5）；**主题审计（FR-AUI-04 自动兜底，唯一选型 = 宿主侧静态解析层）**——`test/unit/lab-theme.test.ts` 内置审计函数：解析 `@assistant-ui/vscode/theme.css` + `webview/lab/lab.css` 文本 → ①采样 token（--background/--foreground/--primary/--primary-foreground/--input/--border）定义链非空且终点为 `--vscode-*` 引用（FR-AUI-04①「非空非全透明」的静态等价判据）；②以 VS Code 默认主题调色板 fixture（Dark Modern/Light Modern 的 --vscode-* 基值快照，锚定 microsoft/vscode `extensions/theme-defaults/themes/*.json`，入库 test/fixtures 并注明来源+版本）代入 token 链解析具体 RGB：浅深两套**至少一组采样值不同**（主题联动生效）+ 正文/背景 WCAG 相对亮度对比度 ≥4.5:1 各测（公式脚本计算）。getComputedStyle 字面执行与真实渲染 = FR-AUI-04③ UI 手工 checklist（截图）。选型理由：无 DOM 纪律下唯一可无人值守离线判定的层，核验可独立复跑（纯函数+静态输入）；lab 预算（esbuild api 构建 lab 入口断言 ≤3,145,728 + 默认入口 metafile 无 react/@assistant-ui）。
+- **integration（verify:integration，离线无人值守）**：`test/integration/lab-slice-a.test.ts`（D2 全链路：真实 serveWebviewHost+createVSCodeFetch×PiBridge(FAKE_PI_REPLAY golden-prompt-basic)——断言消息数=fixture user+assistant 数（逐行可推导）、assistant 文本与 fixture `message_end` 一致、流式帧序、abort 探针（`fetch:abort`→req.signal→bridge.abort）、LAB-XSS 探针文本保真；golden-steer-followup **P1**：三 POST 按录制时序、聚合断言三回声与三轮 assistant 不丢）；`test/integration/lab-slice-b.test.ts`（LabChatPanel（node 内直接实例化）×FAKE_PI_REPLAY：断言 postMessage 泵输出事件序列（user_message/message_final 计数、文本、id 贯通）== fixture 逐行推导；再喂**真实 store reducer** 断言最终 messages == user+assistant 全量 + 文本一致 + toThreadMessageLike 输出条数/文本）。
+- **手工 checklist 汇总（一次真机执行，证据类型括注）**：浅/深主题截图×2（FR-AUI-04③）；XSS 探针 DOM 检查无新增 script/哨兵无副作用（FR-AUI-02⑤ DOM 层）；CSP 下回放 + devtools 零 violation（FR-AUI-05② 真机层）；隐藏再显示面板已渲染消息仍存（FR-AUI-05④ 行为层——**自动兜底 = 注册结构断言 retainContextWhenHidden:true**，行为层按核验判定四值记 MANUAL 不计 FAIL）；A/B 切换互不干扰冒烟（FR-AUI-02⑥）。
+- **测试 Agent 盲写锚点（外部契约点）**：§11 #11–#18（vscode 包 README 节名 / tarball 源码协议与 Router 行为 / 官方指南章节 / ThreadMessageLike 与 useExternalStoreRuntime 官方文档 / fixtures-route 帧型 / ai 写入器 / VS Code 调色板）+ golden fixture（`test/fixtures/golden/`，期望值逐行可推导）+ 本节 D1–D9 判定面定义。
+
+**锚点**：FR-AUI-02③④⑤⑥、FR-AUI-03①②③、FR-AUI-04①②③、FR-AUI-05②③④；规范 §4.3/§5；§6（本版已增补阶段①行）。
+
+#### D9 风险与回退（FR-AUI-05 / FR-AUI-06②）
+
+**决策**：① **门禁处置原则 = 如实记录失败证据即阶段①有效产出（允许「证伪」结论）**：任一门禁（预算/CSP/回放/主题/零变更断言）不过 → 不放宽断言、不静默改口径，失败证据与最小化定位写入 §10.13 对比报告，上报总调度裁决（调整重试 / 证伪终止迁移 / 退出）。② **禁用出口**：实验面板全部为增量注册（独立 viewType/命令/视图条目，activationEvents 惰性 `onView:sdysyhj.chatLabView`，不打开即零运行时成本），**不新增设置项开关**（阶段①无运行时 flag 需求，阶段④切默认时再立）；应急回退 = revert 阶段①增量提交即回默认面板零变更基线（D1 冻结断言保证可回退性）。③ **主要风险登记**：宿主 bundle 增量超预算（D6 预登记回退 minify；再超=上报）；`@assistant-ui/vscode` 0.0.1 上游 breaking/缺陷（锁版+D6 升级评估清单，阶段①内不受影响）；react 19 与 VS Code webview Chromium 兼容（engines vscode ^1.85 内嵌 Chromium 满足，真机冒烟覆盖）；zod jitless 真机 violation（三件套+真机 checklist 覆盖）；官方 strict CSP 拦截库注入样式（D5 预登记 relaxed 回退，须报告登记后生效）；`@assistant-ui/ai-sdk` 将 `ai` 客户端子集带入 webview bundle 致预算趋紧（D6 预估已计入；超限即上报）。
+
+**锚点**：FR-AUI-05①③、FR-AUI-06②；任务书 §2（试点允许证伪）；规范 §0.3/§0.6。
+
+#### 实现阶段改动面预估（供审批点 1b 与 D7③ 基线核对）
+
+- **新增**：`src/lab/chatRoute.ts`、`src/lab/labChatPanel.ts`、`src/lab/labViewProvider.ts`、`webview/lab/main.tsx`、`webview/lab/zod-jitless.ts`、`webview/lab/shell.tsx`、`webview/lab/sliceA.tsx`、`webview/lab/sliceB.tsx`、`webview/lab/store.ts`、`webview/lab/threadMessageLike.ts`、`webview/lab/lab.css`、`test/unit/lab-*.test.ts`（mapping/store/isolation/csp/theme/budget/versions）、`test/integration/lab-slice-a.test.ts`、`test/integration/lab-slice-b.test.ts`、`test/tooling/lab-metrics.mjs`、调色板 fixture（`test/fixtures/`，来源锚点 §11 #18）。
+- **修改（共享文件增量，均不触默认面板冻结面）**：`package.json`（依赖 9 项精确版本 + 视图/命令/activationEvents 增量）、`esbuild.mjs`（新增 lab webview 构建项）、`src/extension.ts`（实验面板注册接线）、`test/helpers/fake-pi-cli.js`（LAB-XSS 剧本，文件头锚点注释）、`docs/technical-design.md`（交付期 FR 追溯表 FR-AUI 行 + §10.13 对比报告小节）。
+- **冻结不改（D1 断言面）**：`src/panel/chatPanel.ts`、`src/panel/messages.ts`、`src/bridge/**`、`webview/main.ts`、`webview/render/**`、`webview/styles/**`、esbuild 既有两项入口配置、package.json 既有视图/命令/配置项。
+
+#### 遗留上报（无需求歧义；供总调度知悉，不阻塞 1b）
+
+1. **DOM 行为层断言的可达性**：FR-AUI-05④「隐藏再显示已渲染消息 DOM 仍存」与 FR-AUI-02⑤「DOM 无新增 script 元素」的 DOM 行为层，在无 DOM 测试基建纪律（§10.10/§10.11 先例）下无法无人值守离线断言——本设计按核验判定四值制度落为 MANUAL 项（自动兜底 = 注册结构断言 / 通道文本保真+静态扫描）。若总调度认为必须全自动，需批准引入 `@vscode/test-electron` + 显示环境（xvfb）基建（官方测试床模式，成本与 CI 环境要求显著增加）。
+2. **「面板加载→首帧」口径**：无头环境不可测 DOM 绘制——本设计把口径定为「驱动发起→通道首个消息事件」（D7②），DOM 绘制时延入真机 checklist 定性记录；如需字面「首帧绘制」时延，同样依赖上条第 1 项基建。
+
+---
+
 ## 11. 外部契约依赖清单（规范 §6 必填项，2026-11-21 新建）
 
-> 本节登记本设计依赖的全部外部系统行为：外部系统 → 权威文档路径 + 版本锚定 → 关键行为章节/行号 → 我方依赖的行为 → 对应设计章节。供测试 Agent 用例锚点引用与审批点 1b 审查；设计中的事件流/接口契约须与本清单一致。**版本锚定：pi 1.5.2**（`pi --version`；依赖包随附文档，路径 = `node_modules/@earendil-works/pi-coding-agent/docs/`，绝对路径示例 `/home/connor/.nvm/versions/node/v24.19.0/lib/node_modules/@earendil-works/pi-coding-agent/docs/`）。
+> 本节登记本设计依赖的全部外部系统行为：外部系统 → 权威文档路径 + 版本锚定 → 关键行为章节/行号 → 我方依赖的行为 → 对应设计章节。供测试 Agent 用例锚点引用与审批点 1b 审查；设计中的事件流/接口契约须与本清单一致。**版本锚定：pi 1.5.2**（`pi --version`；依赖包随附文档，路径 = `node_modules/@earendil-works/pi-coding-agent/docs/`，绝对路径示例 `/home/connor/.nvm/versions/node/v24.19.0/lib/node_modules/@earendil-works/pi-coding-agent/docs/`）。**TASK-009 阶段①起增列 @assistant-ui 生态条目 #11–#18**（版本锚定 2026-11-21 registry/仓库实测，设计依据见 §10.13；#1–#10 仍为 pi 1.5.2 契约）。
 
 | # | 外部系统 / 行为 | 权威文档（pi 1.5.2 随附） | 关键章节 / 行号 | 我方依赖的行为（一句话） | 对应设计章节 |
 |---|---|---|---|---|---|
@@ -539,6 +647,14 @@ FR 追溯表（§10.1）将在实现交付时新增 FR-CHAT-11 行（状态、�
 | 8 | 队列事件 | `docs/json.md` | 「Queue and state events」L121–122 | `queue_update` 携带完整当前 steering/followUp 队列（含展开后文本），入队/投递/清除均触发 | §10.12 D2（快照绑定与残留清理） |
 | 9 | JSONL 帧约定 | `docs/json.md` + `docs/rpc.md` | json.md「Framing and process I/O」L12–20；rpc.md「Framing」 | 严格 LF 切分（U+2028/29 非行界）、stdout 持续消费、stdout 仅 JSONL、诊断走 stderr | §1、§3.3 |
 | 10 | 离线 provider 配置（仅 golden fixture 录制用） | `docs/models.md` + `docs/environment-variables.md` | models.md「Configure a compatible endpoint」L49–66；environment-variables.md L81–82 | `models.json` 可定义 OpenAI 兼容 provider（`baseUrl`+`api`+dummy `apiKey`）指向本地 mock；`PI_CODING_AGENT_DIR`/`PI_CODING_AGENT_SESSION_DIR` 可隔离配置与会话目录 | §6、§10.12 D8 |
+| 11 | `@assistant-ui/vscode@0.0.1` 宿主/桥接行为 | npm README（随包发布；`npm view @assistant-ui/vscode@0.0.1 readme`；仓库 packages/vscode@0.0.1） | 「Entry points」（host 不 import vscode）；「Extension host」（serveWebviewRoutes/serveWebviewHost、404/405/500、abort 传播、dispose 拒绝在途、非路由 origin TypeError）；「Webview」（vscodeFetch、页面重载中止旧请求）；「Webview HTML and Content Security Policy」（strict 模板全文、`'unsafe-eval'` never added、relaxed 选项）；「Theme」（shadcn token→`--vscode-*` 映射、surface 属性） | 宿主 route handler `(req)=>Response` 形态、流式回传、abort/reset 语义、CSP 模板与主题变量映射 | §10.13 D2/D5/D6 |
+| 12 | `@assistant-ui/vscode@0.0.1` 源码级协议/路由器 | npm tarball `src/`+`dist/`（registry.npmjs.org/@assistant-ui/vscode/-/vscode-0.0.1.tgz，dist shasum 76d9adbd，2026-11-21 核读） | `src/protocol.ts`（channel `"aui-vscode"`、虚拟 origin `https://webview.vscode.invalid`、`fetch:*`/`rpc:*` 帧型与校验器）；`src/host/router.ts`（`RouteHandler=(request:Request)=>Response\|Promise<Response>`、flushInterval 16ms/flushSize 64KB、in-flight abort、404/405/500）；`src/host/serve.ts`（serveWebviewHost、storage/openExternal、externalSchemes 默认 http/https/mailto）；`src/host/html.ts`（createWebviewCsp 指令集逐字、renderWebviewHtml 选项）；`src/webview/fetch.ts`（`createVSCodeFetch(port)` 可注入 port、abort→`fetch:abort`） | 隧道两端消息形状、注入式 fetch 的可测面、CSP 指令集精确值、abort 链路 | §10.13 D2/D5/D8 |
+| 13 | 官方 VS Code 集成指南 | https://www.assistant-ui.com/docs/guides/vscode（canonical .md） | 「How it works」；「Add to an existing extension」步骤 1–4（**zod-jitless 片段** `config({jitless:true})` 须最先导入、`process.env.NODE_ENV` define、esbuild 双构建示例）；「Follow the VS Code theme」；「Content Security Policy」（**"The bridge needs no connect-src entry, because it does not use the network"**）；「Runtimes」（useChatRuntime+AssistantChatTransport 唯一可过桥）；「Testing」（examples/with-vscode、@vscode/test-electron、Linux xvfb-run）；「Hidden views」（retainContextWhenHidden: true） | zod jitless 前置、构建约束、隧道无需 connect-src、retainContextWhenHidden、官方测试床模式 | §10.13 D2/D5/D6/D8 |
+| 14 | `@assistant-ui/react@0.15.37`（ExternalStoreRuntime / ThreadMessageLike / 无头原语；类型面经 `@assistant-ui/core@0.3.37`） | npm tarball `dist/*.d.ts`（`ThreadMessageLike` re-export 自 core）+ 官方文档 https://www.assistant-ui.com/docs/runtimes/custom/external-store 与 /docs/api-reference/external-store/message-conversion | 「Quickstart」「Handler matrix」（onNew 必需、onCancel→取消、setMessages→分支…）「Streaming responses」（**原地变更 assistant 消息**）「Message conversion」（convertMessage/useExternalMessageConverter/joinStrategy）；类型：`ThreadMessageLike={role:"assistant"\|"user"\|"system"; content:string\|readonly ThreadMessageLikePart[]; id?; createdAt?; …}`、part 型 `text`/`reasoning`/`tool-call`（core `dist/types/message.d.ts`、`dist/runtime/utils/thread-message-like.d.ts`）；`ThreadPrimitive`/`ComposerPrimitive` 由 react 包导出（`dist/index.d.ts`） | 路线 B 映射与运行时接线契约（消息形状、流式口径、handler 能力矩阵） | §10.13 D3/D8 |
+| 15 | react 19.3.1 / react-dom 19.3.1（+ @types/react、@types/react-dom 19.3.0） | npm registry（精确版 2026-11-21 核实）；React 官方文档 react.dev | React 文档「Rendering the DOM」/「JSX Prevents Injection Attacks」（字符串 children 进文本节点，构造性转义）；peer 要求 `react ^18\|\|^19`（@assistant-ui/react@0.15.37 peerDeps；@assistant-ui/vscode devDeps react ^19.3.1 实证 19 线为上游测试主线） | XSS 探针依据、版本锁定与 18/19 线选择 | §10.13 D5/D6 |
+| 16 | 官方测试床 examples/with-vscode | github.com/assistant-ui/assistant-ui（main 分支：examples/with-vscode） | `src/fixtures/route.ts`（`ai` `createUIMessageStream`/`createUIMessageStreamResponse`；帧型 start-step/text-start/text-delta/text-end/reasoning-*/tool-input-available/tool-output-*/source-url/file/data-*/error/finish-step；`req.signal` 中止观测）；`src/fixtures/request.ts`（ChatRequest 解析：取最后 user 消息）；`src/webviews.ts`（renderWebviewHtml scriptType classic + bodyAttributes boot + serveWebviewHost 接线）；`webview/zod-jitless.ts`；`test/`（@vscode/test-electron probes 模式，Readiness 视图跑 fetch bridge/abort/CSP/theme 等探针） | 路线 A 帧协议与请求解析权威样例、宿主接线形态、测试床参照 | §10.13 D2/D7/D8 |
+| 17 | `ai@7.0.153`（UIMessage 流写入器） | npm（@assistant-ui/vscode devDeps `ai ^7.0.153` 实证；满足 @assistant-ui/ai-sdk peer `^7.0.101`） | `createUIMessageStream`/`createUIMessageStreamResponse`（官方测试床 fixtures/route.ts 实证用法）＝ AssistantChatTransport 消费协议的生产侧 | 路线 A Response 构造（帧写入器） | §10.13 D2/D6 |
+| 18 | VS Code 默认主题调色板（FR-AUI-04 主题审计 fixture 基值） | github.com/microsoft/vscode `extensions/theme-defaults/themes/dark_modern.json` / `light_modern.json`（随 VS Code 发布；采样用 `--vscode-*` 基值快照入库 `test/fixtures/` 并注明来源+版本） | 主题 JSON `colors` 表 | `--vscode-*` 变量在浅/深主题的具体取值来源（审计脚本代入 token 链计算联动差异与 WCAG 对比度） | §10.13 D8 |
 
 ---
 
