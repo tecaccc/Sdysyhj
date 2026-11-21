@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**待评审** ｜ 版本：v0.5.1 ｜ 更新日期：2026-11-21
+> 状态：**待评审** ｜ 版本：v0.6 ｜ 更新日期：2026-11-21
 
 ---
 
@@ -36,6 +36,10 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 | 工具调用（tool call） | Agent 执行 read/bash/edit/write 等工具的动作 |
 | steer / follow-up | 运行中插话（steer）/ 排队等本轮结束再发送（follow-up） |
 | 内置运行时 | 插件依赖中自带的 pi 运行时（`@earendil-works/pi-coding-agent` 包） |
+| 实验面板 | TASK-009 阶段①新增的独立实验性 webview 面板（assistant-ui 迁移试点），非默认聊天面板，不影响既有面板行为 |
+| 路线 A（fetch-bridge） | assistant-ui 官方 fetch 桥接路线：宿主侧 route handler 适配 PiBridge + webview 侧 useChatRuntime/vscodeFetch（`@assistant-ui/vscode`） |
+| 路线 B（ExternalStoreRuntime） | 保留现有 postMessage 协议的路线：webview 侧 UiMessage→ThreadMessageLike 映射至 `@assistant-ui/react` ExternalStoreRuntime |
+| golden fixture | 真实 pi 事件序列录制而成的静态回放文件（`test/fixtures/golden/`，TASK-008 落地），作离线验收数据源 |
 
 ## 4. 功能需求（MVP）
 
@@ -94,6 +98,19 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 | FR-CMD-04 | MCP | P2 | 复用 pi 的 MCP 配置自动生效；UI 无专门管理界面（MVP） |
 | FR-CMD-05 | pi 运行时来源 | P0 | 自动模式下：PATH 中存在可用 pi 时优先使用；PATH 无可用 pi 时使用插件内置运行时并能正常对话（开箱即用）；设置中可显式指定 pi 路径，指定后按该路径启动；显式路径无效或启动失败时展示含错误详情的可行动指引 |
 
+### 4.6 实验面板：assistant-ui 迁移试点（TASK-009 阶段①）
+
+> 来源：通道 A TODO-List 条目②（任务单 docs/tasks/TASK-009-assistantui-migration.md，人类确认启动 2026-11-21）。阶段① = 以独立实验性 webview 面板验证 assistant-ui 在本插件环境的可行性，双路线最小垂直切片供对比裁决；**默认聊天面板的一切既有 FR 行为零变更**。**优先级口径**：本段「P0（阶段①）/P1（阶段①）」为阶段①出口门禁口径（P0 = 阶段①发版阻塞项、逐条可判定；P1 = 尽力），不进入 §8-5 MVP P0 门禁（见 §8 第 7 条与澄清 #18）。**分期路线图**（阶段②③④ FR 本期不立，届时另行基线修订）：② 消息渲染（text/thinking→reasoning/toolcall 三类 part + 工具卡）→ ③ Composer 定制（@ 文件引用、`/` 命令菜单、模型选择器、用量行、steer/followUp 队列 UI）→ ④ 切默认面板并删除旧实现。**外部事实锚点**（2026-11-21 实测，登记于任务书 §5）：`@assistant-ui/vscode@0.0.1`（vscodeFetch / serveWebviewRoutes / serveWebviewHost / installLinkInterceptor / createVSCodeStorage；theme.css 将 shadcn token 映射 --vscode-* 变量）、官方指南 assistant-ui.com/docs/guides/vscode、官方测试床 github.com/assistant-ui/assistant-ui `examples/with-vscode`、`@assistant-ui/react@0.15.37`（peer react ^18||^19、直依 zod ^4.6.7）。
+
+| 编号 | 需求 | 优先级 | 验收标准 |
+|---|---|---|---|
+| FR-AUI-01 | 独立实验面板（默认面板零变更） | P0（阶段①） | ① 独立注册：实验面板以独立 viewType 注册（与默认聊天面板 viewType 不同的标识符；package.json contributes / 注册代码结构断言），入口 = 命令面板命令（贡献命令存在、执行后面板打开无错误），面板标题含「实验」标识；② 默认面板零变更：默认面板 viewType、注册配置（含 retainContextWhenHidden，现状 true）、CSP 基线、入口产物路径不因实验面板引入而改变（配置 / 构建入口 diff 断言），且既有 `verify:unit` / `verify:integration` 全部用例全绿（§4.1–§4.5 全部既有 FR 仍由默认面板满足，行为零变更）；③ 非默认视图：Activity Bar 侧边栏默认打开的仍是默认聊天面板（实验面板不替换、不抢占默认视图注册） |
+| FR-AUI-02 | 路线 A/B 双切片最小垂直切片 | P0（阶段①） | 同一实验面板内提供两条可切换运行的切片（切换机制由设计基线定）：① 路线 A（fetch-bridge）= 宿主侧 route handler（`@assistant-ui/vscode` serveWebviewRoutes/serveWebviewHost 模式）适配 PiBridge + webview 侧 useChatRuntime/vscodeFetch；② 路线 B（ExternalStoreRuntime）= 保留既有 postMessage 协议 + webview 侧 UiMessage→ThreadMessageLike 映射；③ 最小切片口径 = 收发一条消息 + 渲染 + 基本主题：经发送入口提交 user prompt → 渲染对应 assistant 回复（纯文本级最小渲染；Markdown 富渲染 / thinking / toolcall part 化不做，见 §5）；④ 传输真实性：回放注入点位于宿主侧 PiBridge 适配层，路线 A 经 fetch 隧道、路线 B 经 postMessage 协议驱动渲染，不得直接向 webview DOM/状态写渲染结果（防自证）；⑤ 安全兜底（NFR-03 适用）：以含 `<script>` / inline 事件探针的消息经回放通道渲染，断言 DOM 无新增 script 元素、预埋哨兵无副作用；⑥ 切片共存：A/B 两切片在同一面板内均可独立运行且互不干扰（各自完成 FR-AUI-03① 判定） |
+| FR-AUI-03 | golden fixture 回放数据源 | P0（阶段①） | 阶段①验收以 TASK-008 golden fixture（`test/fixtures/golden/`）回放为数据源，不接真实 pi / 真实 provider（离线可判）：①（P0）每条切片独立完成 `golden-prompt-basic.jsonl` 全量回放：渲染消息条数 = fixture 内 user+assistant 消息数（口径同澄清 #12；期望值由 fixture 逐行可推导），assistant 消息文本与 fixture 对应消息文本一致（结构化断言，非视觉比对）；②（P1）`golden-steer-followup.jsonl` 在两条切片各完成一次全量回放并同口径断言（steer/followUp 消息序列完整不丢），作为 FR-AUI-06 契合度对比的度量输入；③ 方法约束：回放以 golden-driver 式确定性驱动（复用 TASK-008 回放测试模式），无人值守、可重复、离线 |
+| FR-AUI-04 | 主题映射验证（--vscode-* 变量） | P0（阶段①） | assistant-ui 主题 token 经 --vscode-* 变量映射（`@assistant-ui/vscode` theme.css 模式），浅色/深色主题下文本可读、无样式丢失：①（P0）关键颜色变量采样断言：浅、深两种主题条件下，对实验面板关键采样点（正文文本、用户消息气泡背景与文本、助手消息文本、输入框背景/边框）取 getComputedStyle 计算颜色——每个采样点计算值非空且非全透明，且浅深两主题间至少一组采样值发生变化（主题变量联动生效）；②（P0）对比度判据：正文文本与其所在背景的相对亮度对比度 ≥4.5:1（WCAG AA 正文级；按 WCAG 相对亮度公式脚本计算断言），浅、深主题各测；③（UI 手工 checklist，同 FR 自动兜底 = ①②）浅/深主题各一张面板截图，人工核对无样式丢失（元素错位 / 背景缺失 / 文本不可见即 FAIL）；证据类型 = 截图 |
+| FR-AUI-05 | 风险门禁判定证据 | P0（阶段①） | 四项风险各出可判定证据：① 版本锁定与升级策略——package.json 新增的 `@assistant-ui/*` 及 react/react-dom 依赖一律精确版本（无 `^` / `~` / `>=` 前缀；JSON 解析断言）；`@assistant-ui/vscode` 0.0.x 升级风险评估（breaking 面、升级与退出流程）留痕于对比报告（FR-AUI-06）；② zod jitless/无 eval——实验面板 CSP 保持 `default-src 'none'` 基线、script-src 仅含 nonce（不得含 'unsafe-eval' / 'unsafe-inline'；CSP 指令集断言；新增指令（如路线 A fetch 隧道所需 connect-src）须逐一登记于设计基线并保持最小化），且两条切片在该 CSP 下完成 FR-AUI-03 回放（zod 校验路径无 eval 运行时异常，以回放通过为运行时证据）；③ bundle 体积预算——实验面板 webview JS 产物合计（入口 + 全部代码分割 chunk，含打包入 bundle 的依赖运行时；不含 source map 与 .css）≤ 3 MiB（3,145,728 字节，构建产物字节级断言）；Shiki（含依赖链间接引入）若进入产物必须限语言集或代码分割并计入同一预算（全量 ≈15 MiB 自然违规）；宿主 bundle 增量 ≤ 1 MiB；默认面板产物依赖图不含 React/assistant-ui 运行时（独立构建入口断言）。定值理由：现状零依赖 webview bundle ≈ 0.56 MiB（v0.1.6 实测 586,752 字节），React + assistant-ui + zod 预计 1.5–2 MiB 量级，3 MiB ≈ 5× 现状体积上限，给足运行时余量、远低于 Shiki 全量 ≈15 MiB，VSIX 增量与 webview 首次解析耗时可控；④ retainContextWhenHidden——实验面板注册显式声明 retainContextWhenHidden = true（与现有默认面板一致；如设计裁决取其他值须在对比报告记录理由），行为断言：回放完成后隐藏再显示面板，已渲染消息 DOM 仍存在（不重建、不丢失） |
+| FR-AUI-06 | 双切片对比报告（阶段①交付物） | P0（阶段①） | 阶段①交付须含路线 A/B 双切片对比报告（承载位置与报告规格细节由设计基线 1b 冻结）：① 四个度量维度各成节——bundle 体积（两切片产物字节级数据）、首帧/首条消息渲染时延（golden 回放下测量：面板加载→首帧、数据就绪→首条消息渲染完成；≥5 次取中位数；测量方法无人值守可复现，细节由设计基线定）、代码侵入面（既有宿主/webview 代码的新增/修改文件清单与规模统计，`git diff --stat` 口径）、与 PiBridge 事件模型契合度（定性描述，须覆盖至少：流式 delta、user 回声（FR-CHAT-11 语义在各自路线的承载方式）、steer/followUp、abort）；② 证据即事实：每个量化维度附可复现的测量命令/脚本与输出；③ 结论中立：报告仅呈现对比数据与观察，路线选择不在本基线预设（裁决权 = 总调度阶段①出口，并按任务书 §2 向人类通报） |
+
 ## 5. 明确不做（MVP 边界外）
 
 - **Diff & Apply**：Pi 的 edit/write 结果在 VS Code diff 视图确认后应用 —— **二期**（体验关键，但工作量大）
@@ -105,6 +122,7 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 - 流式跟随辅助 UI（"回到底部/跳到最新"悬浮按钮、跟随状态指示）与跟随行为设置项（开关/阈值配置）—— 不做（MVP 仅按滚动位置自动判定与恢复，见 FR-CHAT-09）
 - 输入区独立"添加文件"按钮 —— 不做（v0.4 起 `@` 触发选择器为唯一文件引用入口，见 FR-FILE-02；资源管理器/编辑器右键发送 FR-FILE-03 保留）
 - 用户消息「发送原文 / pi 权威文本」不一致时的对照展示、切换开关或原文查看入口 —— 不做（MVP 统一以 pi 权威文本单条就地更新，见澄清 #16）
+- **TASK-009 阶段①不做项**（分期路线图：② 消息渲染 → ③ Composer 定制 → ④ 切默认面板删旧实现；各阶段范围届时另行基线修订，本期不立 FR）：不切换默认聊天面板（保持既有 vanilla 实现，阶段④才切换）、不删除/重写旧面板实现；实验面板不实现 @ 文件引用、`/` 命令菜单、模型选择器、上下文用量行、steer/followUp 队列 UI（阶段③ Composer 定制范围）；不做 Markdown 全量渲染对齐与 thinking/toolcall part 化工具卡（阶段②；本期最小渲染 = 纯文本级，见 FR-AUI-02③）；阶段①验收以 golden 回放为数据源，不要求接入真实 pi / 真实 provider（人工真机冒烟不禁止，但验收不依赖）
 
 ## 6. 非功能需求
 
@@ -156,8 +174,9 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 2. 流式输出、工具卡片、thinking 折叠均符合第 7 节约定
 3. 会话关闭 VS Code 重开后可从历史恢复，上下文完整
 4. 三平台冒烟通过；`pi --mode rpc` 子进程崩溃可恢复并提示
-5. 所有 P0 需求验收标准逐条勾选通过
+5. 所有 P0 需求验收标准逐条勾选通过（口径 = §4.1–§4.5 MVP 功能需求的 P0 项；§4.6 FR-AUI 段为阶段①出口优先级，不入本条，见第 7 条与澄清 #18）
 6. 发送 prompt（含运行中 steer / follow-up 插话）后，用户消息在聊天区各判定时点恰好一条；面板重开 / 会话切换的历史重放无重复用户气泡（FR-CHAT-11）
+7. TASK-009 阶段①出口门禁（独立于第 1–6 条 MVP 门禁）：§4.6 全部「P0（阶段①）」项逐条通过；双切片对比报告（FR-AUI-06）交付；默认面板既有行为零变更（第 1–6 条 MVP 门禁与既有 verify 套件回归全绿）
 
 ## 9. 里程碑
 
@@ -187,10 +206,11 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 | 2026-11-20 | v0.4 | 通道 A TODO 批次二 8 项素材（docs/tasks/TASK-006-todolist2-ui.md，人类直接指令）落成规范 FR，语义变更（范围扩展），版本 v0.3 → v0.4：① 新增 FR-CHAT-10「聊天面板视觉规范」（P1，素材①④⑤⑥）：内容列居中（最大宽度定值 960px）、输入框圆角 8px、发送按钮图标化（无文字标签）、用户消息右侧气泡 / 助手消息左侧无气泡、时间戳 HH:mm 替代 User/Assistant 角色标记；② 修订 FR-FILE-02（素材②）：移除输入区"添加文件"按钮，`@` 触发选择器为唯一文件引用入口，§5 同步增补对应不做项；③ FR-CMD-03 由 P2 转正 P1（素材③）：`/` 命令补全菜单（数据源 `get_commands`，含扩展命令 / prompt 模板 / skills，支持实时过滤、键盘导航、选中插入）——转正理由：人类通道 A 直接指令"键入 / 无法触发 PI 相关命令"属功能补缺，非产品自主扩权，故移出原 P2 二期口径；④ 修订 FR-MOD-01（素材⑦）：增补第三入口——底部内联模型选择器（常显当前模型、点击弹出选择，切换语义与 FR-MOD-03 一致），FR-MOD-03 展示口径同步补"底部模型选择器"；⑤ 新增 FR-MOD-04「上下文用量指示」（P1，素材⑧）：权威取值 = 最近一条助手消息 `usage.totalTokens`（`message_update` Usage），展示其占 `get_state` `contextWindow` 的百分比；compaction 既有 toast 不动。§7 布局示意与交互约定同步更新；§12 新增 #15（素材"触发旋转"按"触发选择"理解）并给 #1 补注（FR-CMD-03 已转正 P1）。 |
 | 2026-11-21 | v0.5 | 新增 FR-CHAT-11「用户消息单次展示」（来源：通道 A TODO-List 批次三条目①「【BUG】消息发送之后存在两条气泡记录」，任务单 docs/tasks/TASK-008-todolist3-echo-dedup.md；外部契约锚点 pi `docs/json.md`「Event sequence」明定 pi 对 user prompt 必回发 user 角色 `message_start`/`message_end` 回声，实时展示与历史重放均须在该回声下保持单条）。验收标准：①发送后任意判定时点（发送即时 / pi user 回声到达后 / 助手终稿渲染完成后）用户消息恰好一条，且发送后即时展示（不等待回声）、同一文本多次发送不跨发送合并；②运行中 steer / follow-up 插话同口径；③面板重开 / 会话切换历史重放不重复（引用澄清 #5）；④文本保真，pi 记录与发送原文不一致时以 pi 权威文本为准单条就地更新（澄清 #16 钉死）；⑤助手消息与 thinking / 工具卡展示为回归边界。**有 FR 范围与优先级变化（新增 FR，定级 P0）**，语义变更，版本 v0.4 → v0.5。定级 P0 理由 = 直接影响 P0 FR-CHAT-01 流式对话的展示正确性，同病影响 P0 FR-SESS-03 历史重放，并污染 FR-SESS-02 消息数口径（#12：user+assistant 合计，重复即翻倍）；随 §8-5「所有 P0 逐条通过」自动进入 MVP 门禁，§8 另增第 6 条显式门槛。FR-CHAT-01 / FR-SESS-03 仅追加交叉引用、验收标准未改；§5 增补不做项（原文 / 权威文本对照展示与切换入口不做）。 |
 | 2026-11-21 | v0.5.1 | 验收口径澄清 #17，总调度裁决（审批点 2，TASK-008）：不可关联回声（多通道不可判定）为 #16 受控例外——恒单条、不错换、不新增，实时保留原文，权威重建后收敛 JSONL；纯澄清，无 FR 范围/优先级变化。 |
+| 2026-11-21 | v0.6 | 新增 §4.6「实验面板：assistant-ui 迁移试点（TASK-009 阶段①）」FR-AUI-01~06（来源：通道 A TODO-List 条目②，任务单 docs/tasks/TASK-009-assistantui-migration.md，人类确认启动 2026-11-21；外部生态事实为当日实测、登记于任务书 §5）：FR-AUI-01 独立实验面板 + 默认面板零变更；FR-AUI-02 路线 A（fetch-bridge）/ B（ExternalStoreRuntime）双切片最小垂直切片（回放注入须经各自真实传输通道，防自证）；FR-AUI-03 golden fixture 回放数据源（golden-prompt-basic 双切片 P0；golden-steer-followup 双切片 P1）；FR-AUI-04 主题映射验证（--vscode-* 浅/深主题：采样断言 + 对比度 ≥4.5:1 自动兜底 + UI checklist）；FR-AUI-05 风险门禁判定证据（依赖精确版本锁定 + 升级策略留痕 / zod jitless（CSP 无 unsafe-eval + 回放运行时证据）/ bundle 预算（webview JS ≤3 MiB 含 chunk、宿主增量 ≤1 MiB）/ retainContextWhenHidden 核对）；FR-AUI-06 双切片对比报告（bundle 体积、首帧/首条消息渲染、代码侵入面、PiBridge 事件契合度四维度，结论中立供总调度裁决）。§3 术语表增 4 条；§5 增补阶段①不做项与②③④路线图注记；§8 第 5 条补门禁口径括注、新增第 7 条「阶段①出口门禁」；§12 新增 #18（阶段①优先级与门禁归属）。FR-AUI 优先级为阶段①出口口径、不入 §8-5 MVP P0 门禁；既有 FR（含 FR-CHAT-11）与澄清 #1–#17 语义未动。语义变更（新增 FR 范围），版本 v0.5.1 → v0.6。 |
 
 ## 12. 验收标准澄清（历次裁决）
 
-> 历次验收口径澄清（逐项裁决）：除注明外仅澄清验收口径，不变更 FR 范围/优先级，FR 表格本体维持原状。#1–#10 为测试 Agent 上报歧义（v0.2.1）；#11–#13 为核验阶段歧义（v0.2.2）；#14 为 GitHub Issue #2 / 缺陷 #D-03（v0.2.3）；#15 为通道 A 素材口径澄清（v0.4）；#16 为 TASK-008 缺陷修复口径澄清（v0.5，随 FR-CHAT-11 新增）；#17 为 TASK-008 审批点 2 口径澄清（v0.5.1）。
+> 历次验收口径澄清（逐项裁决）：除注明外仅澄清验收口径，不变更 FR 范围/优先级，FR 表格本体维持原状。#1–#10 为测试 Agent 上报歧义（v0.2.1）；#11–#13 为核验阶段歧义（v0.2.2）；#14 为 GitHub Issue #2 / 缺陷 #D-03（v0.2.3）；#15 为通道 A 素材口径澄清（v0.4）；#16 为 TASK-008 缺陷修复口径澄清（v0.5，随 FR-CHAT-11 新增）；#17 为 TASK-008 审批点 2 口径澄清（v0.5.1）；#18 为 TASK-009 阶段①优先级与门禁归属口径（v0.6）。
 
 1. **#1 FR-CMD-03 门禁边界**：MVP 门禁仅含 P0（依 §8-5）；FR-CMD-03 整条为 P2，不计入 MVP 门禁；"命令文本直接发送即可生效"作为 prompt 透传可用性的辅助判定（不阻塞门禁）。（v0.4 注：FR-CMD-03 优先级已调整为 P1、进入本期范围（见 §11），"不计入 MVP 门禁"结论不变。）
 2. **#2 FR-CHAT-04 截断阈值**：默认保留尾部 200 行（对应配置 `sdysyhj.outputTailLines` 默认 200）；超过阈值即截断展示且保留尾部；"复制全部"取完整输出。
@@ -209,6 +229,7 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 15. **#15 素材口径"触发旋转"（v0.4，TASK-006 素材②）**：通道 A 素材原文"输入 @ 触发旋转"中的"触发旋转"，统一按"触发选择"理解——即键入 `@` 弹出文件选择器（FR-FILE-02）；"旋转"判定为"选择"之笔误，不产生任何旋转类视觉/动画需求。
 16. **#16 用户消息展示文本以 pi 权威文本为准（v0.5，TASK-008 / FR-CHAT-11）**：当 pi 侧记录的用户消息文本与用户发送原文不一致时（如 pi 对 slash 命令、`@file` 引用作展开改写，或 steer 排队后文本被改写），唯一口径 = **以 pi 权威文本为准、单条就地更新**——pi 确认回声到达前展示发送原文，到达后该条目文本更新为 pi 权威文本，更新前后条目数均为 1（不得新增条目，不得同时展示两版文本）；历史重放（FR-SESS-03 / 澄清 #5）中的用户消息文本同以会话 JSONL 为准。理由：#5 已钉死「历史重放与会话 JSONL 一致」，若保留发送原文，同一条消息将在面板重开 / 会话切换后变为另一文本，实时展示与历史重放互相矛盾；就地更新使两处始终同源，且用户所见即 pi 实际处理的文本。
 17. **#17 不可关联回声的保守展示（v0.5.1，TASK-008 / FR-CHAT-11，总调度审批点 2 裁决）**：澄清 #16 覆盖「回声可关联」路径；当 pi 回声文本与全部待确认用户消息条目均无法唯一关联（多通道不可判定）时，「到达后更新为权威文本」无确定目标条目。唯一口径 = 该场景为 #16 的**受控例外**：各用户消息条目恒 1 条、文本不错换、不因该回声新增条目，实时窗口保留发送原文；经会话切换/刷新/面板重开的权威重建后，文本收敛为会话 JSONL 权威文本（澄清 #5、#16 末句）。产品语义不变：单条与不错换优先于即时权威化。
+18. **#18 阶段① FR 优先级与门禁归属（v0.6，TASK-009 / §4.6）**：§4.6 FR-AUI 段的「P0（阶段①）/P1（阶段①）」为**阶段①出口门禁口径**（P0 = 阶段①发版阻塞项、逐条可判定；P1 = 尽力），不进入 §8-5「所有 P0 需求逐条通过」的 MVP 发布门禁。理由：阶段①为实验性质，不改变默认面板任何用户可见行为（FR-AUI-01 零变更约束），MVP 已发版（v0.1.6），以可行性探针阻塞常规发版倒置风险优先级；阶段①交付以 §8 第 7 条出口门禁判定（FR-AUI P0 项全过 + 对比报告交付 + 既有 MVP 门禁回归全绿）。阶段②③④ FR 本期不立（路线图见 §5 注记），届时另行基线修订。
 
 ---
 
