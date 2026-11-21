@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6 — 用户消息重复气泡修复 + 协议 golden fixture（TASK-008 / FR-CHAT-11）
+
+- 修复发送消息后出现两条相同气泡记录的缺陷（FR-CHAT-11）：pi 对用户 prompt 必回发 user 确认回声，插件自己的乐观展示与回声终稿各持不同消息 id 无法对账，导致同一消息被渲染两次；现发送后即时单条展示，回声到达后原条目就地更新，全程恰好一条
+- 修复面板重开 / 会话切换后的历史重放中用户消息重复出现的问题（历史数据源同一缺陷同源修复）
+- pi 改写发送文本（如 slash 命令 / prompt 模板展开）时，展示文本以 pi 实际处理文本为准单条就地更新，不再与发送原文分叉
+- 运行中 steer / follow-up 插话消息同样恰好展示一条：乱序注入（steer 后发先投、follow-up 先发后投）时各归各位、不错换；中止后仍排队的插话在下次发送后继续投递且不重复
+- 新增协议级 golden fixture 兑底（真实 pi 事件序列录制入库 + 回放测试）：防止 mock 失真导致同类缺陷再次穿透验证（维护命令 `npm run record:golden`）
+- 核验：report-d25d689 PASS（独立核验全过；含并行负载稳定性抽查）
+
 ## 0.1.5 — 发布修复：Marketplace 类目回归（#D-05）
 
 - 修复 Marketplace 发布失败（#D-05，TASK-007）：v0.1.4 商店元数据把 categories 写为 `Chatbots`（en-us 类目枚举外非法值），导致发版流水线通道①（Marketplace）被拒退出——改为合法类目 `Chat`（现：AI / Chat / Other）；通道②（GitHub Release）不受影响，v0.1.4 安装包仍可从 Release 页获取
