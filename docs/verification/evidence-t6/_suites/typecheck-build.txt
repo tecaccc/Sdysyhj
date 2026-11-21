@@ -1,0 +1,20 @@
+
+> sdysyhj@0.1.3 typecheck
+> tsc --noEmit
+
+
+> sdysyhj@0.1.3 build
+> node esbuild.mjs
+
+
+  dist/extension.js       82.0kb
+  dist/extension.js.map  181.4kb
+
+⚡ Done in 12ms
+
+  media/main.js       573.0kb
+  media/main.css       12.7kb
+  media/main.js.map     1.0mb
+  media/main.css.map   23.6kb
+
+⚡ Done in 45ms

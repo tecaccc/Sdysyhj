@@ -1,0 +1,4 @@
+# TC-058 独立驱动（双层）
+node /tmp/t6harness/tc058-061-webview.mjs   # webview 层：常显/点击弹出/选中切换/跨入口同步（model_info 事件驱动）
+node /tmp/t6harness/tc-bridge.mjs           # 桥侧：listModels=get_available_models 透传；setModel→RPC set_model→refreshState→model_info
+# (c)(iii) ①→③ 反向：webview 状态栏点击 → switch_model 入口（宿主走 TC-027 路径）→ model_info 回流 → 底部选择器同步

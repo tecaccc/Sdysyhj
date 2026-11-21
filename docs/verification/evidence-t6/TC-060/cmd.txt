@@ -1,0 +1,4 @@
+# TC-060 独立驱动（三层）
+node /tmp/t6harness/tc-bridge.mjs            # 桥侧（fake client）：contextWindow 透出 / message_update 刷新 / message_end 权威 / 去重 / 切会话按历史取值 / newSession 重置 / compaction 无影响
+node /tmp/t6harness/tc060-format-pure.mjs    # 展示纯函数：12345→6% / 45600→23% / 15000→8%（half-up 边界）/ null→'—' / k 缩写≤1% 解析口径
+node /tmp/t6harness/tc058-061-webview.mjs    # webview 层：usage_info 事件 → #usage-line 文本逐场景断言

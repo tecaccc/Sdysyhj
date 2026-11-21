@@ -1,0 +1,682 @@
+<html><head><style>
+/* Sdysyhj 聊天面板样式（VS Code 主题变量自适应） */
+
+:root {
+  --sd-gap: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ---------- 内容列（FR-CHAT-10 ①） ---------- */
+/* 消息区与输入区（含底部模型选择器与上下文用量行）共享同一内容列：
+   最大宽度 960px，水平居中（左右外边距 auto），面板更宽时两侧留白相等。 */
+
+.content-col {
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+/* ---------- 头部（FR-CHAT-08 状态区） ---------- */
+
+#header {
+  padding: var(--sd-gap);
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  background: var(--vscode-sideBar-background);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sd-gap);
+  min-height: 24px;
+}
+
+.session-name {
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-name:hover {
+  text-decoration: underline;
+}
+
+.header-actions button {
+  background: transparent;
+  border: none;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.header-actions button:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
+}
+
+.status-line {
+  font-size: 11px;
+  opacity: 0.85;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-line:hover {
+  text-decoration: underline;
+}
+
+/* ---------- 消息流 ---------- */
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sd-gap);
+}
+
+.message {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* FR-CHAT-10 ④：用户消息右对齐、气泡包裹；助手消息左对齐、无气泡 */
+
+.message-user {
+  align-items: flex-end;
+}
+
+.message-assistant {
+  align-items: flex-start;
+}
+
+/* FR-CHAT-10 ⑤：时间戳（HH:mm）替代 User/Assistant 角色前缀 */
+
+.message-time {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-bottom: 2px;
+}
+
+.message-user .message-body {
+  background: var(--vscode-input-background, rgba(128, 128, 128, 0.15));
+  border-radius: 8px;
+  padding: 6px 10px;
+  max-width: 85%;
+}
+
+.message-assistant .message-body {
+  max-width: 100%;
+}
+
+.message-body {
+  line-height: 1.55;
+}
+
+.md > *:first-child {
+  margin-top: 0;
+}
+
+.md > *:last-child {
+  margin-bottom: 0;
+}
+
+.md pre.code-block,
+.thinking-text,
+.toolcard-args,
+.toolcard-output {
+  background: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.15));
+  border-radius: 4px;
+  padding: 6px 8px;
+  overflow-x: auto;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 4px 0;
+}
+
+.md code {
+  font-family: var(--vscode-editor-font-family, monospace);
+  background: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.15));
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+.md pre.code-block code {
+  background: transparent;
+  padding: 0;
+}
+
+.md a {
+  color: var(--vscode-textLink-foreground);
+}
+
+.md table {
+  border-collapse: collapse;
+}
+
+.md th,
+.md td {
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.4));
+  padding: 3px 8px;
+}
+
+/* ---------- thinking 折叠（FR-CHAT-03） ---------- */
+
+.blk-thinking {
+  margin: 4px 0;
+}
+
+.thinking-summary {
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.75;
+  user-select: none;
+}
+
+.thinking-text {
+  opacity: 0.8;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* ---------- 工具调用卡片（FR-CHAT-04） ---------- */
+
+.blk-toolcall {
+  margin: 4px 0;
+}
+
+.toolcard {
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.toolcard-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.12));
+  user-select: none;
+}
+
+.toolcard-name {
+  font-weight: 600;
+  font-family: var(--vscode-editor-font-family, monospace);
+}
+
+.toolcard-summary {
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  font-family: var(--vscode-editor-font-family, monospace);
+}
+
+.toolcard-status {
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.status-running {
+  color: var(--vscode-charts-yellow, #cca700);
+}
+
+.status-success {
+  color: var(--vscode-charts-green, #23a12b);
+}
+
+.status-error {
+  color: var(--vscode-errorForeground, #f14c4c);
+}
+
+.status-aborted {
+  opacity: 0.7;
+}
+
+.toolcard-body {
+  padding: 6px 8px;
+}
+
+.toolcard-section-label {
+  font-size: 10px;
+  opacity: 0.65;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.toolcard-copy {
+  background: var(--vscode-button-secondaryBackground, rgba(128, 128, 128, 0.25));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+  border: none;
+  border-radius: 3px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+.toolcard-copy:hover {
+  background: var(--vscode-button-secondaryHoverBackground, rgba(128, 128, 128, 0.35));
+}
+
+/* ---------- 其他标记 ---------- */
+
+.stream-cursor {
+  display: inline-block;
+  animation: blink 1s step-end infinite;
+  color: var(--vscode-foreground);
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.aborted-marker {
+  opacity: 0.75;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.message-error {
+  color: var(--vscode-errorForeground, #f14c4c);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ---------- 错误/提示区（FR-CHAT-07） ---------- */
+
+#errors {
+  max-height: 30vh;
+  overflow-y: auto;
+  padding: 0 var(--sd-gap);
+}
+
+.error-card {
+  position: relative;
+  border: 1px solid var(--vscode-inputValidation-errorBorder, #be1111);
+  background: var(--vscode-inputValidation-errorBackground, rgba(190, 17, 17, 0.15));
+  border-radius: 4px;
+  padding: 6px 26px 6px 8px;
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+.error-hint {
+  opacity: 0.9;
+  margin-top: 3px;
+}
+
+.error-dismiss {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--vscode-foreground);
+  font-size: 14px;
+}
+
+.toast {
+  background: var(--vscode-notifications-background, rgba(128, 128, 128, 0.25));
+  border-radius: 4px;
+  padding: 4px 10px;
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  border: 1px solid var(--vscode-inputValidation-warningBorder, #cca700);
+  background: var(--vscode-inputValidation-warningBackground, rgba(204, 167, 0, 0.15));
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+.banner button {
+  border: none;
+  border-radius: 3px;
+  padding: 3px 10px;
+  cursor: pointer;
+  background: var(--vscode-button-secondaryBackground, rgba(128, 128, 128, 0.3));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+}
+
+/* ---------- 输入区 ---------- */
+
+#input-area {
+  border-top: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  padding: var(--sd-gap);
+  background: var(--vscode-sideBar-background);
+}
+
+.input-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sd-gap);
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+.mode-label {
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mode-label select {
+  background: var(--vscode-dropdown-background);
+  color: var(--vscode-dropdown-foreground);
+  border: 1px solid var(--vscode-dropdown-border, rgba(128, 128, 128, 0.35));
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+/* FR-CHAT-10 ②：输入框容器圆角 8px；③：发送为图标按钮（无文字标签） */
+
+.input-shell {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.input-shell:focus-within {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+#input {
+  flex: 1;
+  min-height: 56px;
+  background: transparent;
+  color: var(--vscode-input-foreground);
+  border: none;
+  padding: 2px 4px;
+  resize: vertical;
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+#input:focus {
+  outline: none;
+}
+
+#btn-send {
+  border: none;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+#btn-send:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+#btn-send svg {
+  display: block;
+}
+
+/* ---------- `/` 命令补全菜单（FR-CMD-03） ---------- */
+
+.cmd-menu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--vscode-editorWidget-background, var(--vscode-input-background, #252526));
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.4));
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  z-index: 20;
+}
+
+.cmd-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.cmd-item:hover,
+.cmd-item-active {
+  background: var(--vscode-list-activeSelectionBackground, rgba(9, 71, 113, 0.55));
+  color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+}
+
+.cmd-name {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.cmd-desc {
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 底部行：内联模型选择器（FR-MOD-01③）+ 上下文用量（FR-MOD-04） ---------- */
+
+.input-bottom {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sd-gap);
+  margin-top: 6px;
+  font-size: 11px;
+  min-height: 24px;
+}
+
+.model-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  max-width: 60%;
+}
+
+.model-selector:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
+}
+
+#model-selector-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-caret {
+  opacity: 0.7;
+}
+
+.usage-line {
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.input-bottom-spacer {
+  flex: 1;
+}
+
+#btn-stop {
+  background: var(--vscode-inputValidation-errorBackground, rgba(190, 17, 17, 0.8));
+  color: var(--vscode-foreground);
+  border: none;
+  border-radius: 3px;
+  padding: 2px 10px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.model-menu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  min-width: 260px;
+  max-width: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--vscode-editorWidget-background, var(--vscode-input-background, #252526));
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.4));
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  z-index: 20;
+}
+
+.model-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.model-item:hover {
+  background: var(--vscode-list-activeSelectionBackground, rgba(9, 71, 113, 0.55));
+  color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
+}
+
+.model-item-name {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.model-item-current .model-item-name {
+  opacity: 1;
+}
+
+.model-item-desc {
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-note {
+  padding: 6px 8px;
+  opacity: 0.7;
+  font-size: 11px;
+}
+
+</style></head><body>
+  <header id="header">
+    <div class="header-row">
+      <span id="session-name" title="点击重命名" class="session-name">未命名会话</span>
+      <span class="header-actions">
+        <button id="btn-new" title="新建会话">＋</button>
+        <button id="btn-history" title="会话历史">🕘</button>
+        <button id="btn-settings" title="设置">⚙</button>
+      </span>
+    </div>
+    <div class="header-row">
+      <span id="status-line" title="点击切换模型" class="status-line">—</span>
+    </div>
+  </header>
+  <main id="messages" aria-live="polite"><div id="messages-col" class="content-col"><div class="message message-user"><div class="message-time">11:01</div><div class="message-body"><div class="blk blk-text"><div class="md"><p>看下 @a.ts 并解释</p>
+</div></div></div></div><div class="message message-assistant"><div class="message-time">11:01</div><div class="message-body"><div class="blk blk-thinking"><details class="thinking-details"><summary class="thinking-summary">▸ 💭 thinking…</summary><pre class="thinking-text">考虑先读取文件</pre></details></div><div class="blk blk-toolcall"><div class="toolcard"><details class="toolcard-details"><summary title="成功" class="toolcard-head"><span class="toolcard-icon">🔧</span><span class="toolcard-name">read</span><span class="toolcard-summary">read a.ts</span><span class="toolcard-status status-success">✔ 成功</span></summary><div class="toolcard-body"><div class="toolcard-section-label">输入</div><pre class="toolcard-args">{"path":"a.ts"}</pre><div class="toolcard-section-label">输出</div><pre class="toolcard-output">export function f() {}</pre><button class="toolcard-copy" hidden>复制全部</button></div></details></div></div><div class="blk blk-text"><div class="md"><p>该文件导出一个函数。</p>
+</div></div></div></div></div></main>
+  <div id="errors"><div id="errors-col" class="content-col"></div></div>
+  <footer id="input-area">
+    <div id="input-col" class="content-col">
+      <div class="input-toolbar">
+        <label class="mode-label">插话模式
+          <select id="send-mode" title="运行中插话模式（FR-CHAT-06）">
+            <option value="steer">steer（运行中插话）</option>
+            <option value="followUp">follow-up（本轮后处理）</option>
+          </select>
+        </label>
+      </div>
+      <div id="input-shell" class="input-shell">
+        <div id="cmd-menu" role="listbox" aria-label="命令补全" hidden="" class="cmd-menu" hidden></div>
+        <textarea id="input" rows="3" placeholder="输入消息…（Enter 发送 / Shift+Enter 换行；输入 @ 引用文件、/ 呼出命令）"></textarea>
+        <button id="btn-send" aria-label="发送" title="发送">
+          <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
+            <path d="M8 13.2V3.6M8 3.6 4.3 7.3M8 3.6l3.7 3.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+      </div>
+      <div id="input-bottom" class="input-bottom">
+        <button id="model-selector" title="切换模型（底部内联选择器）" class="model-selector">
+          <span id="model-selector-name">—</span><span aria-hidden="true" class="model-caret">▾</span>
+        </button>
+        <span id="usage-line" title="上下文用量：最近一条助手消息 token / 上下文窗口" class="usage-line">—</span>
+        <span class="input-bottom-spacer"></span>
+        <button id="btn-stop" hidden="" hidden>■ Stop</button>
+        <div id="model-menu" role="listbox" aria-label="可用模型" hidden="" class="model-menu" hidden></div>
+      </div>
+    </div>
+  </footer>
+  <script nonce="${nonce}" src="${scriptUri}"></script>
+</body></html>

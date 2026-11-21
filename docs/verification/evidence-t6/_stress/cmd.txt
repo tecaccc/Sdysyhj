@@ -1,0 +1,4 @@
+# 压力抽查（任务口径：verify:integration 并行 3 + 顺序 2；间歇失败按 FAIL）
+# 并行：3 个 npm run verify:integration 后台同时运行（HOME=临时目录）
+# 顺序：2 次 npm run verify:integration 依次运行
+# 判定：5 次退出码均须 0 且各 31/31 绿

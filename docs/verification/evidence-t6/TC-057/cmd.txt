@@ -1,0 +1,4 @@
+# TC-057 独立驱动（双层）
+node /tmp/t6harness/tc056-057-pure.mjs      # 纯逻辑层：高亮导航 / insertText / close 语义
+node /tmp/t6harness/tc056-057-webview.mjs   # webview 接线层：键盘（↓/↑/Enter/Esc）与 mousedown 派发、焦点跟踪、prompt 捕获
+# 判定依据 TC-057(a)-(d)：高亮索引 / Enter 选中插入不发送+焦点保持+二次 Enter 发送 / Esc 关闭不发送 / 鼠标等价

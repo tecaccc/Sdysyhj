@@ -1,0 +1,18 @@
+# 克隆与检出（ENV 头）
+git clone /data/workspace/Sdysyhj /tmp/verify-t6 && git checkout ready-for-verify-r6
+
+$ git status --porcelain
+(空，退出码 0)
+
+$ git describe --tags
+ready-for-verify-r6
+
+$ git rev-parse HEAD
+07911060d7d80bdf6c8467a7d346de028cfc260e
+
+$ node -v / npm -v
+v24.19.0
+11.17.0
+
+Linux Spring 5.14.0-687.15.1.el9_8.x86_64 #1 SMP PREEMPT_DYNAMIC Thu Jun 11 16:33:25 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+2026-11-21T11:01:40+08:00

@@ -1,0 +1,29 @@
+PASS  TC-056(a) 非 / 开头不显示菜单  onInput("hello") → isOpen=false
+PASS  TC-056(a) / 开头显示菜单  onInput("/rev") → isOpen=true, items=[review]
+PASS  TC-056(b) '/' → 全集 4 项  items=[review,ExPlain,skill-zebra,run-tests]（与 MOCK-CMD 全集一致）
+PASS  TC-056(b) /exp → 仅 ExPlain（名称子串、不区分大小写）  items=[ExPlain]
+PASS  TC-056(b) /REVIEW → 仅 review（不区分大小写）  items=[review]
+PASS  TC-056(b) /zeb → 仅 skill-zebra（描述子串命中）  items=[skill-zebra]（desc="zebra skill 斑马线" 含 zeb）
+PASS  TC-056(b) /nomatch → 无匹配隐藏  isOpen=false（过滤后无匹配）
+PASS  TC-056(c) 空全集 → '/' 不显示菜单  isOpen=false
+PASS  TC-056(c) 空全集下 /anything 菜单不显示（文本直发归宿主路径）  isOpen=false；状态机不阻断输入文本（发送由输入框接线层负责，见 webview 层证据）
+PASS  TC-056(c) 命令未就绪（晚到）→ 菜单不显示  先输 '/' 后全集仍空 → isOpen=false
+PASS  TC-056(c) 全集晚到 → 菜单显示（重算）  setCommands(4 项) 后 isOpen=true, items=4
+PASS  TC-057(a) 初始高亮第 1 项  highlighted=review
+PASS  TC-057(a) ↓ → 高亮第 2 项  highlighted=ExPlain
+PASS  TC-057(a) ↑ → 回到第 1 项  highlighted=review
+PASS  TC-057(a) 首项 ↑ 环绕到末项（观察项，需求未定义不判定）  highlighted=run-tests（环绕行为记录，不作判定项）
+PASS  TC-057(b) insertText='/'+命令名  insertText="/ExPlain"
+PASS  TC-057(b) 选中后菜单关闭  isOpen=false
+PASS  TC-057(b) 选中后 highlightedItem=null（不残留选中态）  highlightedItem=null
+PASS  TC-057(c) /rev 菜单打开  isOpen=true, items=[review]
+PASS  TC-057(c) Esc → 关闭  isOpen=false（close 不改输入文本、不发送——发送仅经接线层 Enter 路径）
+PASS  filter 直驱 query='' → 4 项  → review,ExPlain,skill-zebra,run-tests
+PASS  filter 直驱 'plain'（小写命中 ExPlain）  → ExPlain
+PASS  filter 直驱 '斑马'（中文描述子串）  → skill-zebra
+PASS  filter 直驱 'TESTS' → run-tests  → run-tests
+PASS  filter 直驱 'zzz' → 空  → 
+PASS  filter 直驱 空名命令防御剔除  name='' 被剔除
+
+[summary] TC-056/057 pure-logic assertions: 26/26 passed, failed=0
+exit=0

@@ -1,0 +1,4 @@
+# TC-053 独立驱动（自研 DOM shim + CSS 级联，不复用研发测试基建）
+node /tmp/t6harness/tc053-054.mjs
+# 载体：src/panel/chatPanel.ts HTML 模板（静态提取）+ webview bundle（esbuild IIFE，dompurify 透传 stub）
+#       + webview/styles/styles.css 解析级联（var() 取 fallback）

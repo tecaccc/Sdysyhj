@@ -1,0 +1,20 @@
+PASS  启动 model_info=mockllm/mock-small（get_state 回显）  model_info=["mockllm/mock-small"]
+PASS  TC-060② contextWindow=200000 随启动透出（totalTokens=null）  usage_info=[{"kind":"usage_info","totalTokens":null,"contextWindow":200000},{"kind":"usage_info","totalTokens":45600,"contextWindow":200000}]
+PASS  TC-060④ 启动历史重建取最近助手消息 45600  usage_info 序列=[{"kind":"usage_info","totalTokens":null,"contextWindow":200000},{"kind":"usage_info","totalTokens":45600,"contextWindow":200000}]；getUsageInfo()={"totalTokens":45600,"contextWindow":200000}
+PASS  TC-056① listCommands 透传 get_commands 全集 4 项  listCommands()=["review","ExPlain","skill-zebra","run-tests"]；client.calls 含 get_commands=true
+PASS  TC-058(b) listModels=get_available_models 候选 2 项  listModels()=["mockllm/mock-small","mockllm/mock-large"]
+PASS  TC-058(c)(i) setModel → RPC set_model(mockllm, mock-large)  calls=[["set_model","mockllm","mock-large"]]
+PASS  TC-058(c) 切换后 model_info=mockllm/mock-large（事件驱动三入口同步源）  model_info 序列=["mockllm/mock-small","mockllm/mock-large"]
+PASS  TC-060④ message_update 携带 usage=12345 → 即时刷新  末次 usage_info={"kind":"usage_info","totalTokens":12345,"contextWindow":200000}
+PASS  TC-060 观察：同值 usage 去重（不重复透出）  usage_info 计数=3
+PASS  TC-060① message_end 权威终稿覆盖为 45600  末次 usage_info={"kind":"usage_info","totalTokens":45600,"contextWindow":200000}
+PASS  TC-060⑤ compaction 事件不改变 usage（仅 toast）  usage_info 计数不变=true；toast=["模型已切换：mockllm/mock-large","上下文压缩中…","上下文压缩完成"]；getUsageInfo()={"totalTokens":45600,"contextWindow":200000}
+PASS  TC-060④ 切会话 B → 最近助手消息 15000  末次 usage_info={"kind":"usage_info","totalTokens":15000,"contextWindow":200000}
+PASS  TC-060④ 切回 A → 45600  末次 usage_info={"kind":"usage_info","totalTokens":45600,"contextWindow":200000}
+PASS  TC-060④ newSession → 无助手消息重置 null（'—' 占位口径）  末次 usage_info={"kind":"usage_info","totalTokens":null,"contextWindow":200000}；getUsageInfo()={"totalTokens":null,"contextWindow":200000}
+PASS  TC-059 重启后 model_info=mockllm/mock-large（get_state 回显，桥侧）  model_info=["mockllm/mock-large/high"]（状态栏/底部选择器经 model_info 事件同步，webview 侧证据见 TC-059 驱动）
+PASS  TC-059 getUsageInfo 快照供 ready 重放  getUsageInfo()={"totalTokens":45600,"contextWindow":200000}
+PASS  TC-056(c) get_commands 失败 → listCommands 返回空（菜单不显示，/ 文本仍可直发）  listCommands()=[]；warn 日志=[["warn","get_commands 失败：get_commands unavailable"]]
+
+[summary] bridge assertions: 17/17 passed, failed=0
+exit=0

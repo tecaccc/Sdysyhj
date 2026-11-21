@@ -1,0 +1,6 @@
+# TC-059 重启反映（三层链路，判定方式局限如实披露：无真实 VS Code 宿主可驱动，以分段链路证明）
+node /tmp/t6harness/tc-bridge.mjs            # 桥侧：新 PiBridge 实例（get_state 回显 mock-large+high）→ start() → model_info 事件；getUsageInfo 快照
+node -e "（chatPanel ready 分支结构化源级断言，见 static-readyreplay.txt）"
+node /tmp/t6harness/tc058-061-webview.mjs    # webview 侧：重载实例（新 bundle 执行）+ ready 回放 model_info → 底部选择器与状态栏同显 mock-large
+# 链路：重启 → extension get_state（会话持久 mock-large）→ model_info → webview refreshHeader（底部选择器+状态栏同源更新）
+# 局限：未做真实 VS Code extension host 重启端到端；webview 重载以同进程新 bundle 实例 + 宿主 ready 回放消息模拟

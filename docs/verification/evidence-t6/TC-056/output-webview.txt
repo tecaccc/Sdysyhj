@@ -1,0 +1,31 @@
+PASS  TC-056(a) hello → 菜单隐藏  menu.hidden=true
+PASS  TC-056(a) /rev → 首次触发 request_commands  request_commands 次数=1
+PASS  TC-056(a) 响应前菜单不显示（数据未就绪）  响应前 menu.hidden=true（⑤ 前半）
+PASS  TC-056(a) commands 回发后菜单显示  menu.hidden=false, items=["/review"]
+PASS  TC-056(b) '/' → 4 项且每项渲染名称与描述  items=["/review|审查当前文件","/ExPlain|Explain code in detail","/skill-zebra|zebra skill 斑马线","/run-tests|运行测试"]
+PASS  TC-056(b) /exp → 仅 /ExPlain  items=["/ExPlain"]
+PASS  TC-056(b) /REVIEW → 仅 /review  items=["/review"]
+PASS  TC-056(b) /zeb → 仅 /skill-zebra  items=["/skill-zebra"]
+PASS  TC-056(b) /nomatch → 菜单隐藏  menu.hidden=true
+PASS  TC-057(a) 初始高亮第 1 项  active=[1000]
+PASS  TC-057(a) ↓ → 高亮第 2 项  active=[0100]
+PASS  TC-057(a) ↑ → 回到第 1 项  active=[1000]
+PASS  TC-057(b)(i) 输入框文本='/ExPlain'  value="/ExPlain"
+PASS  TC-057(b)(ii) 菜单关闭  menu.hidden=true
+PASS  TC-057(b)(iii) 焦点保持在输入框  activeElement=input（input.id=input）
+PASS  TC-057(b)(iv) 无发送行为  prompt 消息数=0
+PASS  TC-057(b)(v) 二次 Enter → 发送 '/ExPlain' 原文  prompts=[{"kind":"prompt","text":"/ExPlain","mode":"auto"}]（命令文本透传口径同 TC-032）
+PASS  TC-057(c) /rev 菜单打开  items=1
+PASS  TC-057(c) Esc → 菜单关闭且无发送  menu.hidden=true, prompts=0
+PASS  TC-057(d) /run 菜单项=run-tests  items=["/run-tests"]
+PASS  TC-057(d)(i) 输入框文本='/run-tests'  value="/run-tests"
+PASS  TC-057(d)(ii) 菜单关闭  menu.hidden=true
+PASS  TC-057(d)(iii) 焦点保持在输入框  activeElement=input
+PASS  TC-057(d)(iv) 无发送行为  prompt 消息数=0
+PASS  TC-056(c) 空集回发 → '/' 菜单不显示  request_commands=0（已请求）
+PASS  TC-056(c) commands=[] → 菜单不显示  menu.hidden=true，无空菜单渲染
+PASS  TC-056(c) 空数据分支 '/anything' 可直接发送（判据同 TC-032）  prompts=[{"kind":"prompt","text":"/anything","mode":"auto"}]
+PASS  观察：会话切换后首次 '/' 重新 request_commands  request_commands=1（缓存失效重取）
+
+[summary] TC-056/057 wiring assertions: 28/28 passed, failed=0
+exit=0

@@ -1,0 +1,15 @@
+stress-par-1.txt: Test Files  4 passed (4)
+stress-par-1.txt:      Tests  31 passed (31)
+stress-par-1.txt:par-1 exit=0
+stress-par-2.txt: Test Files  4 passed (4)
+stress-par-2.txt:      Tests  31 passed (31)
+stress-par-2.txt:par-2 exit=0
+stress-par-3.txt: Test Files  4 passed (4)
+stress-par-3.txt:      Tests  31 passed (31)
+stress-par-3.txt:par-3 exit=0
+stress-seq-1.txt: Test Files  4 passed (4)
+stress-seq-1.txt:      Tests  31 passed (31)
+stress-seq-1.txt:seq-1 exit=0
+stress-seq-2.txt: Test Files  4 passed (4)
+stress-seq-2.txt:      Tests  31 passed (31)
+stress-seq-2.txt:seq-2 exit=0

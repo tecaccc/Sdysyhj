@@ -1,0 +1,6 @@
+# TC-061 独立驱动（webview 层 + 真实 chatPanel HTML）
+node /tmp/t6harness/tc058-061-webview.mjs
+# (a) 输入区（含工具行/底部行）无 input[type=file]（含隐藏实例，整文档核对）
+# (b) 输入区全部按钮可访问名称不匹配 attach|附件|添加文件|add file|upload file|选择文件（不区分大小写）
+# @ 唯一入口保持：输入 '@' → insert_file_ref 请求 → file_ref 回发插入 '@src/a.ts '（TC-024(a)(b) 等价断言）
+# 另：verify:integration 场景 SC-024（mock 收到含路径 prompt）全绿，见 _suites/verify-integration.txt

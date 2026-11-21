@@ -1,0 +1,4 @@
+# TC-056 独立驱动（双层）
+node /tmp/t6harness/tc056-057-pure.mjs      # 纯逻辑层：filterCommands/CommandMenuState 直驱（MOCK-CMD 全集 4 项）
+node /tmp/t6harness/tc056-057-webview.mjs   # webview 接线层：真实 main.ts bundle + 自研 DOM shim（宿主回发模拟）
+# 判定依据 TC-056(a)(b)(c)：出现条件 / 数据源+实时过滤（名称+描述两字段渲染）/ 空数据+不可用不显示且 / 文本可直发

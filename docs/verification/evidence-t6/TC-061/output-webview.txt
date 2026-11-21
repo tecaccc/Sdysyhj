@@ -1,0 +1,30 @@
+PASS  TC-058(a) 底部模型名元素存在且常显（无任何点击）  #model-selector 存在、hidden=false，#model-selector-name="mockllm/mock-small"
+PASS  TC-058(a) 文本=状态模型字段当前值  底部="mockllm/mock-small"，头部状态栏="mockllm/mock-small · off · 空闲"（同源 model_info）
+PASS  TC-058(b) 点击 → request_models  posted kinds=["request_models"]
+PASS  TC-058(b) 弹出即渲染（加载占位或数据）  model-menu.hidden=false（打开）
+PASS  TC-058(b) 列表 = get_available_models 结果  菜单项=["mockllm/mock-small","mockllm/mock-large"]（候选 2 项）
+PASS  TC-058(b) 当前项标记  aria-selected 项含 mock-small："✓ mockllm/mock-smallMock Small"
+PASS  TC-058(c)(i) mock 调用记录含 set_model(mock-large)  posted={"kind":"set_model","provider":"mockllm","modelId":"mock-large"}
+PASS  TC-058(c)(ii) 选择后菜单关闭  model-menu.hidden=true
+PASS  TC-058(c)(ii) 底部选择器展示更新为 mock-large  底部="mockllm/mock-large"
+PASS  TC-058(c)(iii) 顶部状态栏同步为 mock-large（③→①）  状态栏="mockllm/mock-large · off · 空闲"
+PASS  TC-058(c) 反向：状态栏点击 → switch_model 入口  posted kinds=["switch_model"]
+PASS  TC-058(c) 反向：底部选择器同步回 mock-small（①→③）  底部="mockllm/mock-small"，状态栏="mockllm/mock-small · off · 空闲"
+PASS  TC-059 重载实例就绪（ready 已发）  posted=[{"kind":"ready"}]
+PASS  TC-059 ready 回放后底部选择器=mock-large（≠切换前 mock-small）  底部="mockllm/mock-large"
+PASS  TC-059 状态栏模型字段同值  状态栏="mockllm/mock-large · high · 空闲"
+PASS  TC-059 usage 快照回放不丢  用量行="45.6k / 200k (23%)"
+PASS  TC-060(a) 12345/200000 → 12.3k / 200k (6%)  → "12.3k / 200k (6%)"
+PASS  TC-060(b) 45600/200000 → 45.6k / 200k (23%)（取最近一条，非累加）  → "45.6k / 200k (23%)"
+PASS  TC-060(c) 切会话 B → 15000/200000 → 15k / 200k (8%)  → "15k / 200k (8%)"
+PASS  TC-060(c) 切回 A → 45600/200000 → 45.6k / 200k (23%)  → "45.6k / 200k (23%)"
+PASS  TC-060(d) 新建空会话 → '—'（无 token/百分比数字）  → "—"
+PASS  TC-060(e) compaction toast 不改用量行  用量行="—"（toast 为既有行为，观察记录）
+PASS  TC-061(a) 输入区无 input[type=file]（含隐藏）  命中=0（整文档 input[type=file] 亦为 0）
+PASS  TC-061(b) 输入区按钮无可访问名称匹配文件添加语义  输入区按钮=[btn-send:"发送", model-selector:"切换模型（底部内联选择器）", btn-stop:"■ Stop"]
+PASS  TC-061 @ 触发文件选择器请求  posted kinds=["insert_file_ref"]
+PASS  TC-061 file_ref 回发 → 光标处插入路径  input.value="@src/a.ts "
+PASS  TC-061 观察：非行首/空白前缀的 @ 不触发（防误触）  insert_file_ref 无新增（posted 增量=0）
+
+[summary] TC-058/059/060/061 webview assertions: 27/27 passed, failed=0
+exit=0

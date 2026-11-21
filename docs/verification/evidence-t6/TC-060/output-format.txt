@@ -1,0 +1,13 @@
+PASS  formatHHmm(00:05)  → 00:05
+PASS  formatHHmm(09:00)  → 09:00
+PASS  formatHHmm(23:59)  → 23:59
+PASS  formatHHmm(12:34)  → 12:34
+PASS  TC-060(a) 12345/200000  文本="12.3k / 200k (6%)" → token=12.3k（k-abbrev, 值=12300），percent=6（halfUp(6.1725)=6）
+PASS  TC-060(b) 45600/200000  文本="45.6k / 200k (23%)" → token=45.6k（k-abbrev, 值=45600），percent=23（halfUp(22.8)=23）
+PASS  TC-060(c) 15000/200000（7.5→8 半向上取整边界）  文本="15k / 200k (8%)" → token=15k（k-abbrev, 值=15000），percent=8（halfUp(7.5)=8）
+PASS  TC-060(d) totalTokens=null → '—' 占位  → "—"
+PASS  TC-060 观察：窗口未知 → 仅 token 数（无百分比）  → "12.3k"（解析=12300，误差=0.36%≤1%）
+PASS  TC-060 观察：≥1M M 缩写 + 百分比  → "1.5M / 2M (75%)"
+
+[summary] format assertions: 10/10 passed, failed=0
+exit=0

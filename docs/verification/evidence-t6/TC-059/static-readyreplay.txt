@@ -1,0 +1,21 @@
+chatPanel ready 分支回放 model_info（← bridge.getModelInfo()）: true
+chatPanel ready 分支回放 usage_info（← bridge.getUsageInfo()）: true
+--- 节选 ---
+case "ready": {
+        const config = this.getConfig();
+        this.post({ kind: "config", tailLines: config.outputTailLines, sendMode: config.sendMode, workspaceLabel: path.basename(this.cwd) });
+        const startupError = this.getStartupError();
+        if (startupError) {
+          this.post({ kind: "error", message: startupError.message, hint: startupError.hint });
+          this.post({ kind: "run_state", state: "error", detail: startupError.message });
+        } else if (this.noWorkspace) {
+          this.post({
+            kind: "toast",
+            text: "未打开工作区：仍可聊天，但文件工具受限（cwd = 用户主目录）。",
+          });
+        }
+        const info = this.bridge.getModelInfo();
+        this.post({ kind: "model_info", model: info.model, thinkingLevel: info.thinkingLevel, sessionName: info.sessionName });
+        this.post({ kind: "usage_info", ...this.bridge.getUsageInfo() });
+        this.pos
+exit=0

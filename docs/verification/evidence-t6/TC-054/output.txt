@@ -1,0 +1,27 @@
+PASS  TC-053(a) 容器存在  content-col 元素 = messages-col/errors-col/input-col，class=content-col
+PASS  TC-053(a) max-width=960px（四处一致）  computed max-width = [960px, 960px, 960px]
+PASS  TC-053(a) 左右 margin=auto（留白相等蕴含）  margin-left/right = [auto/auto | auto/auto | auto/auto]
+PASS  TC-053(a) 模型选择器/用量行位于输入区内容列内  #model-selector、#usage-line ⊂ #input-col（.content-col）
+PASS  TC-053(b) 输入框容器 border-radius=8px  .input-shell computed border-radius = 8px
+PASS  TC-053(c) 可访问名称=发送  aria-label="发送", title="发送"
+PASS  TC-053(c) 按钮内无文字标签  textContent.trim()=""；子元素=SVG(图形元素)
+PASS  TC-054 fixture 消息行数=2  rows=2（1 user + 1 assistant）
+PASS  TC-054(a) 用户消息气泡背景≠transparent  .message-user .message-body background-color = rgba(128, 128, 128, 0.15)
+PASS  TC-054(a) 气泡圆角≠0  border-radius = 8px
+PASS  TC-054(a) 右对齐声明  行 align-items=flex-end（column flex 交叉轴末端=右侧）, body margin-left=0, justify-content=normal
+PASS  TC-054(b) 助手消息体背景 transparent  .message-assistant .message-body background-color = transparent
+PASS  TC-054(b) 助手消息体无边框  border = 0
+PASS  TC-054(b) 助手消息左对齐声明  行 align-items=flex-start
+PASS  TC-054(c) 每行含 HH:mm 时间戳  时间戳 = [11:01, 11:01]（正则 ^\d{2}:\d{2}$）
+PASS  TC-054(c) 时间落在执行时刻±2分钟（本地时区）  换算分钟偏差 = [0, 0]
+PASS  TC-054(d) 可见文本不以 user/assistant 开头  逐行首词检查 = ["11:01看下 ", "11:01▸ \ud83d"]
+PASS  TC-054(d) 无独立角色标记元素  role 类/ id 元素数 = 0；fixture 含 thinking 折叠块（"thinking" 功能标签）与工具卡（read 名标签），按豁免项不计
+
+[summary] TC-053/054 assertions: 18/18 passed, failed=0
+
+----- message row DOM snapshot (truncated per row) -----
+<div class="message message-user"><div class="message-time">11:01</div><div class="message-body"><div class="blk blk-text"><div class="md"><p>看下 @a.ts 并解释</p>
+</div></div></div></div>
+...
+<div class="message message-assistant"><div class="message-time">11:01</div><div class="message-body"><div class="blk blk-thinking"><details class="thinking-details"><summary class="thinking-summary">▸ 💭 thinking…</summary><pre class="thinking-text">考虑先读取文件</pre></details></div><div class="blk blk-toolcall"><div class="toolcard"><details class="toolcard-details"><summary title="成功" class="toolcard-head"><span class="toolcard-icon">🔧</span><span class="toolcard-name">read</span><span class="toolcard-summary">read a.ts</span><span class="toolcard-status status-success">✔ 成功</span></summary><di
+exit=0
