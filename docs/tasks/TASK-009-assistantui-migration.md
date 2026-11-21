@@ -45,6 +45,9 @@
 
 - 2026-11-22 00:4x 总调度（超时处置，规范 §7.2）：实现 Agent（run `b214fcc6`）用满 90 分钟预算被截断。现场：+2657 行全部改动面就位（src/lab×3、webview/lab×12、单测 8 文件、集成 2 文件、lab-metrics、主题调色板 fixture），构建产物 media/lab.js 1,157,591 B < 3MiB 预算、lab.css 9KB、dist/extension.js 459KB；断点 = unit 217/218（lab-versions.test.ts zod-jitless 源顺序断言提取了断言描述而非 import 语句——断言自身缺陷）。resume 收尾（预算 60 分钟），不占失败额度
 
+- 2026-11-22 01:2x 研发 Agent（resume 后交付）：FR-AUI-01~06 全实现——lab.js 1,157,591B（36.8% 预算）、宿主增量 +368,758B、冻结面零改动、9 依赖零前缀、四维对比报告入 §10.13（时延 A T1 2.94ms / B T1 0.06ms，结论中立）；unit 218/integration 45 全绿 + 10 连跑；run `b214fcc6`→`c3b721cd`
+- 2026-11-22 01:3x 总调度 **交付验收 PASS**：①写权限 23 项全在矩阵内（研发披露的 tsconfig/.gitignore 实为矩阵明列工程文件——任务书枚举窄于矩阵属任务书瑕疵，非代理越界）②冻结面 vs v0.1.6 零改动亲验 ③亲复跑 typecheck 0 错/build/unit 218/integration 45 全绿 ④3 轮并行抽查与 10 连跑一致 ⑤bundle/依赖锁定/CSP 亲验 ⑥对比报告可复现命令齐备。commit `f7a3518`（研发 Agent），标签 **ready-for-verify-r8** 已推送；下一步：独立核验（TC-077~097）
+
 ## 5. 可行性侦察（2026-11-21 21:3x–21:4x，外部证据均为当日实测）
 
 | # | 素材声称 | 实测结论 | 证据 |
