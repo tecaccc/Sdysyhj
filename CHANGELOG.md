@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5 — 发布修复：Marketplace 类目回归（#D-05）
+
+- 修复 Marketplace 发布失败（#D-05，TASK-007）：v0.1.4 商店元数据把 categories 写为 `Chatbots`（en-us 类目枚举外非法值），导致发版流水线通道①（Marketplace）被拒退出——改为合法类目 `Chat`（现：AI / Chat / Other）；通道②（GitHub Release）不受影响，v0.1.4 安装包仍可从 Release 页获取
+- 无代码变更：与 v0.1.4 代码完全一致，仅包清单与文档；全量自测由发版 CI 门禁重跑
+
 ## 0.1.4 — TODO 批次二：聊天面板改版与功能补缺（FR-CHAT-10 / FR-CMD-03 / FR-MOD-04）
 
 - 面板视觉改版（FR-CHAT-10）：内容列居中（最大宽度 960px）、输入框圆角、发送按钮图标化；用户消息右侧气泡、助手消息左侧平铺，以时间戳（HH:mm）替代角色标记

@@ -2,7 +2,7 @@
   "name": "sdysyhj",
   "displayName": "Sdysyhj",
   "description": "Chat with the pi coding agent inside VS Code — real tools, your own models & keys, sessions in native pi storage",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "tecacc",
   "license": "MIT",
   "repository": {
@@ -14,7 +14,7 @@
   },
   "categories": [
     "AI",
-    "Chatbots",
+    "Chat",
     "Other"
   ],
   "main": "./dist/extension.js",
