@@ -1,0 +1,5 @@
+# TC-092 cmd
+node /tmp/t9harness/t9-csp.mjs /tmp/verify-task009
+# SC-092 ↔ test/unit/lab-csp.test.ts + lab-versions.test.ts（源顺序）
+# (c) 运行时证据：TC-085/086/087 回放通过（本目录兄弟 TC 证据）即无头层运行时证据；无头 node 无 CSP 证 jitless 不抛错
+# (d) 产物顺序断言：交付套件仅实现源顺序断言（lab-versions）——产物文本顺序断言由核验自建脚本补齐（见 output.txt：config@329568 先于全部 137 处 .object({ schema 构建）

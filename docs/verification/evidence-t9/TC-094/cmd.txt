@@ -1,0 +1,9 @@
+# TC-094 cmd（核验自建脚本为准；交付 lab-budget.test.ts/lab-metrics.mjs 仅佐证）
+# 基线构建（v0.1.6 tag 检出，git archive 只读——clone 内无 git 写操作）：
+rm -rf /tmp/t9-baseline && mkdir -p /tmp/t9-baseline
+cd /tmp/verify-task009 && git archive v0.1.6 | tar -x -C /tmp/t9-baseline
+cp -al /tmp/verify-task009/node_modules /tmp/t9-baseline/node_modules   # 硬链接拷贝（esbuild 同版本 0.28.2；避免 symlink realpath 路径伪影）
+cd /tmp/t9-baseline && node esbuild.mjs
+node /tmp/t9harness/t9-budget.mjs /tmp/verify-task009 /tmp/t9-baseline
+# 佐证（交付度量工具独立重跑，对照 §10.13 报告数值）：
+node test/tooling/lab-metrics.mjs --baseline v0.1.6 --runs 5   # 输出见 lab-metrics-rerun.txt

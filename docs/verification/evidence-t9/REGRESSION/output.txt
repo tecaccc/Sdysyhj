@@ -1,0 +1,19 @@
+# B. 全量回归亲跑（2026-11-22，HOME=/tmp/verify-home-t9，clone 内）
+
+## typecheck
+\$ npm run typecheck  → exit 0（tsc --noEmit 零错误）
+
+## build
+\$ npm run build → exit 0；产物：dist/extension.js 459,382 B；media/main.js 586,752 B；media/lab.js 1,157,591 B；media/lab.css 9,133 B
+
+## verify:unit 第 1 次
+Test Files  21 passed (21) / Tests  218 passed (218) / Duration 5.66s
+
+## verify:integration 第 1 次
+Test Files  8 passed (8) / Tests  45 passed (45) / Duration 2.77s
+
+## verify:unit 第 2 次（TC-088b 重复）
+Test Files  21 passed (21) / Tests  218 passed (218)
+
+## verify:integration 第 2 次（TC-088b 重复）
+Test Files  8 passed (8) / Tests  45 passed (45)

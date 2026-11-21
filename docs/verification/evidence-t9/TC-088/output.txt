@@ -1,0 +1,13 @@
+# TC-088 离线证据（unshare -rn = 独立 netns，环境零网络接口）
+
+$ unshare -rn env HOME=/tmp/verify-home-t9 sh -c 'cd /tmp/verify-task009 && npm run verify:integration'
+
+ Test Files  8 passed (8)
+      Tests  45 passed (45)
+   Start at  02:23:50
+   Duration  2.41s (tests 89%, import 8%, transform 2%, worker 1%)
+
+
+$ unshare -rn env HOME=/tmp/verify-home-t9 sh -c 'cd /tmp/verify-task009 && npm run verify:unit'
+ Test Files  21 passed (21)
+      Tests  218 passed (218)

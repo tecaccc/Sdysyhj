@@ -1,0 +1,4 @@
+# TC-096 cmd
+node /tmp/t9harness/t9-report.mjs /tmp/verify-task009
+# 度量复核：node test/tooling/lab-metrics.mjs --baseline v0.1.6 --runs 5（见 ../TC-094/lab-metrics-rerun.txt）
+# 与报告数值比对：lab bundle 1,157,591 B（npm run build 产物口径）精确一致；宿主增量 +368,758 B 精确一致；时延同数量级（A T1 3.56ms vs 报告 2.94ms 等，时延类天然波动）；侵入面三组与冻结组为空一致

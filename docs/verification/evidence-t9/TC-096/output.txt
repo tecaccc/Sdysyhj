@@ -1,0 +1,24 @@
+INFO  报告小节 58 行（offset 67236..72104）
+== (a) 四维各成节 ==
+PASS  ① bundle 体积成节
+PASS  ② 时延成节
+PASS  ③ 代码侵入面成节
+PASS  ④ PiBridge 事件契合度成节
+PASS  ② 时延 ≥5 次取中位声明  —— ×7 取中位
+PASS  ③ 冻结组呈现且为空
+PASS  ③ 共享增量组 + 新增组归类呈现
+PASS  ③ docs/** 另列信息组（不计侵入面）
+PASS  ④ 四主题逐路线填写（流式 delta/user 回声/steer·followUp/abort）
+== (b) 证据即事实（量化维附命令+输出） ==
+PASS  ①②③ 复现命令附于报告（lab-metrics --baseline v0.1.6 --runs 7）
+PASS  ① 字节级数据与预算值在文
+PASS  ② T1/T2 数值在文
+PASS  ③ git diff --stat 口径在文
+== (c) 结论中立 ==
+PASS  预设路线选择类句式零命中  —— 零命中
+PASS  路线选择归属声明（= 总调度阶段①出口裁决）
+== (d) 升级策略留痕 ==
+PASS  0.0.x 升级风险评估节在文（breaking 面）
+PASS  退出流程在文（增量代码可回退）
+
+ALL PASS

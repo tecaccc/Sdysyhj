@@ -1,0 +1,6 @@
+# 外部锚点抽查（A 部分第 3 项，≥6 处）——命令与结果见 output.txt
+curl -sS -m 30 https://www.assistant-ui.com/docs/guides/vscode.md          # 官方指南 canonical .md
+grep 官方 README / tarball src（node_modules/@assistant-ui/*——npm registry 安装产物本体）
+curl -sS -m 30 https://raw.githubusercontent.com/assistant-ui/assistant-ui/main/examples/with-vscode/src/fixtures/route.ts
+curl -sS -m 30 https://raw.githubusercontent.com/microsoft/vscode/...      # 超时不可达（披露）
+curl -sS -m 30 https://react.dev/learn/writing-markup-with-jsx            # 客户端渲染，静态 HTML 无正文（披露）

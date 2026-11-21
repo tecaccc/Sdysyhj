@@ -1,0 +1,8 @@
+ RUN  v5.1.0 /tmp/verify-task009
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  02:00:31
+   Duration  3.05s (tests 94%, import 5%, transform 1%)
+

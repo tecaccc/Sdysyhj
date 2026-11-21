@@ -1,0 +1,4 @@
+# TC-088 方法约束
+(a) 无人值守：全部场景固定命令 + 退出码判定（npm run verify:unit / verify:integration；核验 harness npx vitest run .t9harness/t9-slices.test.ts）——无人工步骤
+(b) 可重复：同环境连跑 2 次（见 REGRESSION/output.txt：218/218 ×2、45/45 ×2）+ 核验 harness 复跑（slices exit=0，判定与观测一致）
+(c) 离线：unshare -rn（独立网络命名空间，无任何网络接口）下亲跑两套件——见 output.txt

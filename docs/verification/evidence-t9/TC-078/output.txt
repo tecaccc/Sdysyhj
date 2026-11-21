@@ -1,0 +1,13 @@
+INFO  git diff --name-status v0.1.6..HEAD 共 38 处
+INFO  归组：
+  [默认面板冻结组] （空）
+  [共享文件增量组] M .gitignore | M esbuild.mjs | M package-lock.json | M package.json | M src/extension.ts | M test/helpers/fake-pi-cli.js | M tsconfig.json
+  [新增组] src/lab/chatRoute.ts | src/lab/labChatPanel.ts | src/lab/labViewProvider.ts | test/fixtures/vscode-theme-defaults-palette.json | test/integration/lab-slice-a.test.ts | test/integration/lab-slice-b.test.ts | test/tooling/lab-metrics-driver.ts | test/tooling/lab-metrics.mjs | test/unit/lab-budget.test.ts | test/unit/lab-csp.test.ts | test/unit/lab-isolation.test.ts | test/unit/lab-route.test.ts | test/unit/lab-store-mapping.test.ts | test/unit/lab-store.test.ts | test/unit/lab-theme.test.ts | test/unit/lab-versions.test.ts | webview/lab/lab.css | webview/lab/main.tsx | webview/lab/shell.tsx | webview/lab/slice-a.measure.tsx | webview/lab/slice-b.measure.tsx | webview/lab/sliceA.tsx | webview/lab/sliceB.tsx | webview/lab/store.ts | webview/lab/threadMessageLike.ts | webview/lab/zod-jitless.ts
+  [docs/信息组（不计侵入面）] M docs/requirements.md | M docs/tasks/TASK-008-todolist3-echo-dedup.md | A docs/tasks/TASK-009-assistantui-migration.md | M docs/technical-design.md | M docs/test-cases.md
+PASS  TC-078(2) 默认面板冻结文件组零改动
+PASS  TC-078(1b) 宿主入口构建选项逐字原样
+PASS  TC-078(1b) 默认面板 webview 入口构建选项逐字原样
+PASS  TC-078(1c) chatPanel.ts 相对 v0.1.6 逐字节一致（viewType/retainContextWhenHidden/CSP 模板冻结）
+PASS  TC-078(1a/1c) 默认面板冻结源码 9 文件逐字节一致  —— src/panel/chatPanel.ts, src/panel/messages.ts, webview/main.ts, webview/render/commandMenu.ts, webview/render/followState.ts, webview/render/format.ts, webview/render/markdown.ts, webview/render/messages.ts, webview/styles/styles.css
+
+ALL PASS

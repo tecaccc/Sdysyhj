@@ -1,0 +1,201 @@
+
+== ① bundle 体积（字节，口径 D6：JS 产物合计，不含 .css/.map） ==
+实验面板 webview JS 合计（media/lab.js 口径）: 1,157,559 B（预算 3,145,728；占比 36.8%）
+  ├ 路线 A 度量入口（slice-a.measure）: 1,154,098 B
+  └ 路线 B 度量入口（slice-b.measure）: 611,407 B
+实验面板 CSS（不计预算）: 9,097 B
+宿主 bundle：当前 459,344 B；基线 90,586 B；增量 368,758 B（预算 1,048,576）
+默认面板依赖图 inputs 49 项；react/@assistant-ui 命中 0 项（须为 0）
+
+== ② 首帧/首消息时延（golden-prompt-basic 回放 ×5，中位数；口径 = 通道里程碑 T1/T2） ==
+路线 A：T1 首帧 3.56 ms；T2 首消息完成（message_end→finish 帧）1.10 ms
+路线 B：T1 首帧 0.09 ms；T2 首消息完成（message_end→store 终稿）0.01 ms
+
+== ③ 代码侵入面（基线 v0.1.6：git diff --name-only + 未跟踪新文件，三组归类；docs/** 不计入另列信息组） ==
+默认面板冻结文件改动（须为空）：（无 ✓）
+共享文件增量 7 项：.gitignore, esbuild.mjs, package-lock.json, package.json, src/extension.ts, test/helpers/fake-pi-cli.js, tsconfig.json
+新增文件 1 项：.t9harness/t9-slices.test.ts
+docs/** 信息组（基线..当前全部 docs 变更，含总调度/产品/设计各角色落档，不计入三组）：docs/requirements.md, docs/tasks/TASK-008-todolist3-echo-dedup.md, docs/tasks/TASK-009-assistantui-migration.md, docs/technical-design.md, docs/test-cases.md, docs/verification/evidence-t9/TC-085/output-slices-rerun.txt（未跟踪）
+其他/运行时文件（非本任务产物，信息组）：src/lab/chatRoute.ts, src/lab/labChatPanel.ts, src/lab/labViewProvider.ts, test/fixtures/vscode-theme-defaults-palette.json, test/integration/lab-slice-a.test.ts, test/integration/lab-slice-b.test.ts, test/tooling/lab-metrics-driver.ts, test/tooling/lab-metrics.mjs, test/unit/lab-budget.test.ts, test/unit/lab-csp.test.ts, test/unit/lab-isolation.test.ts, test/unit/lab-route.test.ts, test/unit/lab-store-mapping.test.ts, test/unit/lab-store.test.ts, test/unit/lab-theme.test.ts, test/unit/lab-versions.test.ts, webview/lab/lab.css, webview/lab/main.tsx, webview/lab/shell.tsx, webview/lab/slice-a.measure.tsx, webview/lab/slice-b.measure.tsx, webview/lab/sliceA.tsx, webview/lab/sliceB.tsx, webview/lab/store.ts, webview/lab/threadMessageLike.ts, webview/lab/zod-jitless.ts
+
+git diff --stat v0.1.6（38 files changed, 6053 insertions(+), 109 deletions(-)）
+
+== ④ PiBridge 事件契合度（定性框架；逐路线填写，结论中立——数据底座见上方 ①②③ 与集成测试） ==
+维度             ｜ 路线 A（fetch-bridge） ｜ 路线 B（ExternalStoreRuntime）
+流式 delta       ｜ text_delta→text-start/delta 帧（帧型=官方 AI SDK 协议） ｜ text_delta→store 原地追加（官方流式口径同型）
+user 回声承载      ｜ 客户端自有 user 渲染、回声仅作流路由不重发（结构性无双气泡） ｜ 宿主账本（§10.12 D1/D2）就地合并，FR-CHAT-11 全语义直接复用
+steer/followUp ｜ run 绑定请求；注入=新请求经账本路由到所属流（P1 回放实证） ｜ 复用 queue 语义与队列快照（P1 回放实证）
+abort          ｜ 请求中止/页面重载→bridge.abort（实验：LONG 剧本） ｜ onCancel→协议 abort（同一 bridge.abort 终点）
+{
+  "baseline": "v0.1.6",
+  "runs": 5,
+  "bundle": {
+    "labTotal": 1157559,
+    "sliceA": 1154098,
+    "sliceB": 611407,
+    "labCss": 9097,
+    "hostCurrent": 459344,
+    "hostBaseline": 90586,
+    "defaultPanelInputs": [
+      "node_modules/dompurify/dist/purify.es.mjs",
+      "node_modules/highlight.js/es/common.js",
+      "node_modules/highlight.js/lib/common.js",
+      "node_modules/highlight.js/lib/core.js",
+      "node_modules/highlight.js/lib/languages/bash.js",
+      "node_modules/highlight.js/lib/languages/c.js",
+      "node_modules/highlight.js/lib/languages/cpp.js",
+      "node_modules/highlight.js/lib/languages/csharp.js",
+      "node_modules/highlight.js/lib/languages/css.js",
+      "node_modules/highlight.js/lib/languages/diff.js",
+      "node_modules/highlight.js/lib/languages/go.js",
+      "node_modules/highlight.js/lib/languages/graphql.js",
+      "node_modules/highlight.js/lib/languages/ini.js",
+      "node_modules/highlight.js/lib/languages/java.js",
+      "node_modules/highlight.js/lib/languages/javascript.js",
+      "node_modules/highlight.js/lib/languages/json.js",
+      "node_modules/highlight.js/lib/languages/kotlin.js",
+      "node_modules/highlight.js/lib/languages/less.js",
+      "node_modules/highlight.js/lib/languages/lua.js",
+      "node_modules/highlight.js/lib/languages/makefile.js",
+      "node_modules/highlight.js/lib/languages/markdown.js",
+      "node_modules/highlight.js/lib/languages/objectivec.js",
+      "node_modules/highlight.js/lib/languages/perl.js",
+      "node_modules/highlight.js/lib/languages/php-template.js",
+      "node_modules/highlight.js/lib/languages/php.js",
+      "node_modules/highlight.js/lib/languages/plaintext.js",
+      "node_modules/highlight.js/lib/languages/python-repl.js",
+      "node_modules/highlight.js/lib/languages/python.js",
+      "node_modules/highlight.js/lib/languages/r.js",
+      "node_modules/highlight.js/lib/languages/ruby.js",
+      "node_modules/highlight.js/lib/languages/rust.js",
+      "node_modules/highlight.js/lib/languages/scss.js",
+      "node_modules/highlight.js/lib/languages/shell.js",
+      "node_modules/highlight.js/lib/languages/sql.js",
+      "node_modules/highlight.js/lib/languages/swift.js",
+      "node_modules/highlight.js/lib/languages/typescript.js",
+      "node_modules/highlight.js/lib/languages/vbnet.js",
+      "node_modules/highlight.js/lib/languages/wasm.js",
+      "node_modules/highlight.js/lib/languages/xml.js",
+      "node_modules/highlight.js/lib/languages/yaml.js",
+      "node_modules/highlight.js/styles/github.css",
+      "node_modules/marked/lib/marked.esm.js",
+      "webview/main.ts",
+      "webview/render/commandMenu.ts",
+      "webview/render/followState.ts",
+      "webview/render/format.ts",
+      "webview/render/markdown.ts",
+      "webview/render/messages.ts",
+      "webview/styles/styles.css"
+    ]
+  },
+  "defaultPanelForbiddenInputs": [],
+  "latency": {
+    "runs": 5,
+    "routeA": {
+      "t1MedianMs": 3.556433000000027,
+      "t2MedianMs": 1.099503000000027,
+      "samples": [
+        {
+          "t1Ms": 41.81993100000001,
+          "t2Ms": 3.5986660000000086
+        },
+        {
+          "t1Ms": 3.556433000000027,
+          "t2Ms": 1.099503000000027
+        },
+        {
+          "t1Ms": 3.718399999999974,
+          "t2Ms": 1.2142029999999977
+        },
+        {
+          "t1Ms": 2.7655599999999936,
+          "t2Ms": 0.8705760000000282
+        },
+        {
+          "t1Ms": 2.7938560000000052,
+          "t2Ms": 0.9307110000000876
+        }
+      ]
+    },
+    "routeB": {
+      "t1MedianMs": 0.08535100000000284,
+      "t2MedianMs": 0.010248000000046886,
+      "samples": [
+        {
+          "t1Ms": 0.3346990000000005,
+          "t2Ms": 0.08759299999999826
+        },
+        {
+          "t1Ms": 0.08809400000001233,
+          "t2Ms": 0.011371999999994387
+        },
+        {
+          "t1Ms": 0.08535100000000284,
+          "t2Ms": 0.009376000000031581
+        },
+        {
+          "t1Ms": 0.07357300000001032,
+          "t2Ms": 0.010248000000046886
+        },
+        {
+          "t1Ms": 0.047940999999923406,
+          "t2Ms": 0.010071000000039021
+        }
+      ]
+    }
+  },
+  "invasiveness": {
+    "frozenTouched": [],
+    "shared": [
+      ".gitignore",
+      "esbuild.mjs",
+      "package-lock.json",
+      "package.json",
+      "src/extension.ts",
+      "test/helpers/fake-pi-cli.js",
+      "tsconfig.json"
+    ],
+    "added": [
+      ".t9harness/t9-slices.test.ts"
+    ],
+    "docsInformational": [
+      "docs/requirements.md",
+      "docs/tasks/TASK-008-todolist3-echo-dedup.md",
+      "docs/tasks/TASK-009-assistantui-migration.md",
+      "docs/technical-design.md",
+      "docs/test-cases.md",
+      "docs/verification/evidence-t9/TC-085/output-slices-rerun.txt（未跟踪）"
+    ],
+    "other": [
+      "src/lab/chatRoute.ts",
+      "src/lab/labChatPanel.ts",
+      "src/lab/labViewProvider.ts",
+      "test/fixtures/vscode-theme-defaults-palette.json",
+      "test/integration/lab-slice-a.test.ts",
+      "test/integration/lab-slice-b.test.ts",
+      "test/tooling/lab-metrics-driver.ts",
+      "test/tooling/lab-metrics.mjs",
+      "test/unit/lab-budget.test.ts",
+      "test/unit/lab-csp.test.ts",
+      "test/unit/lab-isolation.test.ts",
+      "test/unit/lab-route.test.ts",
+      "test/unit/lab-store-mapping.test.ts",
+      "test/unit/lab-store.test.ts",
+      "test/unit/lab-theme.test.ts",
+      "test/unit/lab-versions.test.ts",
+      "webview/lab/lab.css",
+      "webview/lab/main.tsx",
+      "webview/lab/shell.tsx",
+      "webview/lab/slice-a.measure.tsx",
+      "webview/lab/slice-b.measure.tsx",
+      "webview/lab/sliceA.tsx",
+      "webview/lab/sliceB.tsx",
+      "webview/lab/store.ts",
+      "webview/lab/threadMessageLike.ts",
+      "webview/lab/zod-jitless.ts"
+    ]
+  },
+  "gitDiffStat": ".gitignore                                       |    2 +\n docs/requirements.md                             |   27 +-\n docs/tasks/TASK-008-todolist3-echo-dedup.md      |   15 +-\n docs/tasks/TASK-009-assistantui-migration.md     |   60 +\n docs/technical-design.md                         |  189 +-\n docs/test-cases.md                               |  263 ++-\n esbuild.mjs                                      |   21 +\n package-lock.json                                | 2657 +++++++++++++++++++++-\n package.json                                     |   27 +-\n src/extension.ts                                 |   12 +\n src/lab/chatRoute.ts                             |  264 +++\n src/lab/labChatPanel.ts                          |   72 +\n src/lab/labViewProvider.ts                       |   67 +\n test/fixtures/vscode-theme-defaults-palette.json |   37 +\n test/helpers/fake-pi-cli.js                      |   27 +\n test/integration/lab-slice-a.test.ts             |  321 +++\n test/integration/lab-slice-b.test.ts             |  257 +++\n test/tooling/lab-metrics-driver.ts               |  255 +++\n test/tooling/lab-metrics.mjs                     |  269 +++\n test/unit/lab-budget.test.ts                     |   37 +\n test/unit/lab-csp.test.ts                        |   78 +\n test/unit/lab-isolation.test.ts                  |  165 ++\n test/unit/lab-route.test.ts                      |   98 +\n test/unit/lab-store-mapping.test.ts              |   67 +\n test/unit/lab-store.test.ts                      |  112 +\n test/unit/lab-theme.test.ts                      |  156 ++\n test/unit/lab-versions.test.ts                   |   76 +\n tsconfig.json                                    |    1 +\n webview/lab/lab.css                              |  127 ++\n webview/lab/main.tsx                             |   70 +\n webview/lab/shell.tsx                            |   58 +\n webview/lab/slice-a.measure.tsx                  |   17 +\n webview/lab/slice-b.measure.tsx                  |   17 +\n webview/lab/sliceA.tsx                           |   20 +\n webview/lab/sliceB.tsx                           |   57 +\n webview/lab/store.ts                             |  115 +\n webview/lab/threadMessageLike.ts                 |   36 +\n webview/lab/zod-jitless.ts                       |   13 +\n 38 files changed, 6053 insertions(+), 109 deletions(-)"
+}
+
+DONE

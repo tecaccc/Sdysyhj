@@ -1,0 +1,40 @@
+# 外部锚点抽查结果（2026-11-22 实测）
+
+== 锚1 官方指南 §Content Security Policy（L220）==
+原文命中："The bridge needs no `connect-src` entry, because it does not use the network."  ✓（逐字）
+
+== 锚2 官方指南 §Add to an existing extension（L118/L125/L129/L227）==
+原文命中："Import `./zod-jitless` before anything else"；`config({ jitless: true });`；"import \"./zod-jitless\";"；
+"The AI SDK depends on zod, and zod's first object schema probes `new Function`. The strict policy reports that as a violation..."  ✓（逐字）
+
+== 锚3 官方指南 Hidden views（L279）==
+原文命中："Pass `webviewOptions: { retainContextWhenHidden: true }` to `registerWebviewViewProvider`..."  ✓（逐字）
+
+== 锚4 官方指南 Bundle both sides（L165/L192/L204）==
+原文命中："React reads `process.env.NODE_ENV`, which a webview does not define"；define 片段；
+"a single bundle carries every grammar and theme, about 15 MB"（Shiki 全量）✓（逐字）
+
+== 锚5 官方指南节名全集 ==
+How it works(L14)/Quick start(L23)/Add to an existing extension(L45)/4. Bundle both sides(L163)/5. Follow the VS Code theme(L206)/Content Security Policy(L218)/Runtimes(L229)  ✓ 与设计 §11 #13 登记一致
+
+== 锚6 @assistant-ui/vscode@0.0.1 npm README（node_modules 内 registry 安装产物）==
+节名命中：## Entry points(L13) / ## Extension host(L18) / ## Webview(L35) / ## Webview HTML and Content Security Policy(L100) / ## Theme(L134)；
+"`csp: \"relaxed\"` replaces the style nonce with `'unsafe-inline'"(L124)；"`'unsafe-eval'` is never added"(L127)  ✓ 与设计 §11 #11 登记一致
+
+== 锚7 tarball src 源码路径（§11 #12）==
+src/protocol.ts：VSCODE_BRIDGE_CHANNEL = "aui-vscode"、VSCODE_VIRTUAL_ORIGIN = "https://webview.vscode.invalid"、fetch:request/head/chunk/end/error/abort/rpc:* 帧型 ✓
+src/host/router.ts：RouteHandler = (request: Request) => Response | Promise<Response>（L10）；flushInterval 默认 16（L61）/ flushSize 64*1024（L62）✓
+src/webview/fetch.ts：VSCodeBridgePort 可注入 port（createVSCodeFetch）✓；src/theme.css 随包发布 ✓
+
+== 锚8 @assistant-ui/core 0.3.37 类型面（§11 #14）==
+dist/runtime/utils/thread-message-like.d.ts：ThreadMessageLikePart 联合；dist/types/message.d.ts：type "text"（L9）/ type "reasoning"（L18）/ tool-call ✓
+
+== 锚9 官方测试床 examples/with-vscode/src/fixtures/route.ts（main 分支，111 行，§11 #16）==
+命中：createUIMessageStream/createUIMessageStreamResponse（ai）；start-step(L29)/text-delta(L32-35)/finish-step(L106)/req.signal(L30)  ✓
+
+== 锚10 pi 1.5.2 docs/json.md「Event sequence」（§11 #1，本地 node_modules 随附）==
+L30-46：agent_start → turn_start → user message_start/end → assistant message_start → text_delta → message_end → turn_end → agent_end → agent_settled  ✓（golden fixture 与核验自建 XSS 剧本形状对照一致）
+
+== 不可达/受限（披露）==
+- raw.githubusercontent.com/microsoft/vscode（theme-defaults #18）：两次尝试 30-45s 超时——环境限制；fixture 文件头已注明来源与取样 commit（dark ab8f31f0c0b0 2026-09-23 / light 9d321d0067dc 2026-11-17）；TC-089 锚点定位该源「仅作理解，期望口径以 FR 文本为准」，非门禁。
+- react.dev（React 官方文档 #15）：页面为 Next.js 客户端渲染，静态 HTML 不含正文，无法逐字核对「Prevents Injection Attacks」节名；该锚为 TC-081 构造性依据（辅助），主判定面（通道字节保真）已由核验 harness 独立证实。

@@ -1,0 +1,11 @@
+# TC-080/081/083/085/086/087 cmd（核验自建 harness，独立于交付 test/ 一切 mock/驱动）
+cd /tmp/verify-task009
+# 回放子进程 = 核验自研 /tmp/t9harness/replay-cli.mjs（VERIFY_REPLAY=<golden fixture> 逐命令回放；VERIFY_SCRIPT=xss 自建探针剧本）
+# harness 仅 import 被测实现（src/bridge/piBridge、src/bridge/rpcClient、src/lab/labChatPanel、webview/lab/store、webview/lab/threadMessageLike）与官方库
+#（@assistant-ui/vscode/host + /webview）；期望值全部由 test/fixtures/golden/*.jsonl 运行时逐行推导（外部期望源）
+npx vitest run .t9harness/t9-slices.test.ts
+# SC ↔ 交付套件映射（核验剧本 v2.0 未覆盖 TASK-009，映射自建）：
+#   SC-080a/b → test/integration/lab-slice-a.test.ts / lab-slice-b.test.ts
+#   SC-081a/b → lab-slice-a/b.test.ts（LAB-XSS）+ lab-isolation.test.ts（XSS 静态扫描）
+#   SC-083    → lab-isolation.test.ts（结构前提）+ 双切片各自独立全绿
+#   SC-085    → lab-slice-a.test.ts；SC-086 → lab-slice-b.test.ts；SC-087a/b → lab-slice-a/b（GOLDEN-MIX）

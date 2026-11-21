@@ -1,0 +1,29 @@
+PASS  产物含 CSP meta
+INFO  CSP 全文：
+      default-src 'none'; script-src 'nonce-NGU6hDNRTvRxQl+a10mvuQ=='; style-src https://vscode-webview.test.csp 'nonce-NGU6hDNRTvRxQl+a10mvuQ=='; img-src https://vscode-webview.test.csp blob: data:; media-src https://vscode-webview.test.csp blob: data:; font-src https://vscode-webview.test.csp data:; connect-src https://vscode-webview.test.csp; frame-src 'none'
+INFO  指令集：default-src=['none'] | script-src=['nonce-NGU6hDNRTvRxQl+a10mvuQ=='] | style-src=[https://vscode-webview.test.csp 'nonce-NGU6hDNRTvRxQl+a10mvuQ=='] | img-src=[https://vscode-webview.test.csp blob: data:] | media-src=[https://vscode-webview.test.csp blob: data:] | font-src=[https://vscode-webview.test.csp data:] | connect-src=[https://vscode-webview.test.csp] | frame-src=['none']
+== (a) 官方 strict 模板逐指令 ==
+PASS  script-src 首值 = 'nonce-…'（仅 nonce）  —— nonce 长度 24
+PASS  无 'unsafe-eval'
+PASS  无 'unsafe-inline'
+PASS  default-src 'none'
+PASS  style-src = cspSource + nonce
+PASS  img-src = cspSource + blob: + data:
+PASS  media-src = cspSource + blob: + data:
+PASS  font-src = cspSource + data:
+PASS  connect-src = cspSource（fetch 隧道走 postMessage 不新增来源）
+PASS  frame-src 'none'
+PASS  指令面恰 8 项（无模板外指令）  —— n=8：default-src,script-src,style-src,img-src,media-src,font-src,connect-src,frame-src
+== (b) 与默认面板 CSP 差异逐一登记核对（设计 D5 清单） ==
+INFO  默认面板 CSP 模板（chatPanel.ts 摘录）：<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${cspSource} https: data:;" />
+INFO  默认面板 CSP 行：<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${cspSource} https: data:;" />
+PASS  登记①：默认面板 style-src 含 'unsafe-inline' → 实验面板改 nonce（收紧）
+PASS  登记②：默认面板 img-src 含 https: → 实验面板去除（收紧）
+PASS  登记③：默认面板无显式 frame-src/media-src/font-src/connect-src → 实验面板显式收紧补齐
+PASS  产物非 relaxed 回退（style-src 含 unsafe-inline 须报告登记——未观察到）
+== (d) zod jitless 前置（产物文本顺序） ==
+PASS  lab.js 含 config({jitless:!0}) 调用形态  —— offset=329568
+PASS  jitless 配置先于任何 zod schema 构建调用 `.object({`（产物文本顺序）  —— config@329568；.object({ 共 137 处，先于 config 的 0 处
+PASS  源顺序佐证：main.tsx 首个 import = ./zod-jitless  —— import "./zod-jitless";
+
+ALL PASS

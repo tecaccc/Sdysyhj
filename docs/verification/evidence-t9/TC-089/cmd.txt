@@ -1,0 +1,5 @@
+# TC-089 cmd
+node /tmp/t9harness/t9-theme.mjs /tmp/verify-task009
+# SC-089 ↔ test/unit/lab-theme.test.ts；核验自建静态解析层独立重测（自研 var() 链解析器 + WCAG 公式）
+# 调色板 fixture = test/fixtures/vscode-theme-defaults-palette.json（入库，文件头注明 microsoft/vscode theme-defaults 来源与取样 commit）
+# 上游 raw.githubusercontent.com/microsoft/vscode 本环境超时不可达（环境限制，锚点 #18 按用例定位「仅作理解」非门禁）

@@ -1,0 +1,11 @@
+# 证据头（ENV）
+date: 2026-11-21T18:36:22Z
+git describe --tags: ready-for-verify-r8
+HEAD: f7a351807d7d13f58043511a6e66f75fa26ad386
+v0.1.6 tag object: d121438e80cc7381b6d997a7015ff9376c9baa8b / commit: e9fc9d871c5697442e0abc1f27ca269878af6c61
+OS: Linux 5.14.0-687.15.1.el9_8.x86_64 x86_64 GNU/Linux
+Node: v24.19.0  npm: 11.17.0
+HOME(隔离): /tmp/verify-home-t9
+clone: git clone --no-hardlinks /data/workspace/Sdysyhj /tmp/verify-task009 && git checkout ready-for-verify-r8（git status --porcelain 为空）
+交付 commit: f7a3518（feat(lab): TASK-009 阶段①）
+依赖: npm ci（HOME=/tmp/verify-home-t9）——package-lock 含 9 项精确版本新依赖，安装成功

@@ -1,0 +1,4 @@
+# TC-082 判定：MANUAL（真机/UI 手工 checklist，本核验环境无图形界面/无 VS Code 真机会话）
+- 证据类型要求：见用例 TC 条目（截图/录屏/devtools 记录类）
+- 自动兜底：TC-081 → 兜底核验结果见对应 TC 证据目录（全 PASS）
+- MANUAL 遗留不计 FAIL（共用约定 MANUAL 判定四值口径）

@@ -1,0 +1,3 @@
+# TC-091 cmd
+node /tmp/t9harness/t9-manifest.mjs /tmp/verify-task009
+# SC-091 ↔ test/unit/lab-versions.test.ts；核验自建 JSON 解析断言独立重测（含 v0.1.6 基线差集口径）

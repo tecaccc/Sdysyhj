@@ -1,0 +1,10 @@
+INFO  media/lab.js = 1157591 B
+PASS  (a) 实验面板 webview JS 合计 ≤ 3,145,728 B（3 MiB）  —— 合计 1157591 B（余量 1,988,137 B）
+INFO  被测宿主 dist/extension.js = 459382 B；基线（v0.1.6 构建）= 90624 B
+PASS  (b) 宿主 bundle 增量 ≤ 1,048,576 B（1 MiB）  —— 增量 +368758 B（余量 679,818 B）
+PASS  (c) 实验面板依赖图无 shiki/@shikijs/*  —— inputs=973 零命中
+PASS  (d) 默认面板依赖图无 react/react-dom/@assistant-ui  —— inputs=49 零命中
+INFO  lab inputs 973 项（前 8：node_modules/zod/v4/core/util.js ; node_modules/zod/v4/core/core.js ; node_modules/zod/v4/core/errors.js ; node_modules/zod/v4/core/parse.js ; node_modules/zod/v4/core/regexes.js ; node_modules/zod/v4/core/checks.js ; node_modules/zod/v4/core/doc.js ; node_modules/zod/v4/core/versions.js…）
+INFO  默认面板 inputs 49 项
+
+ALL PASS

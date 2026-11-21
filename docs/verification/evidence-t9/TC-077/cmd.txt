@@ -1,0 +1,3 @@
+# TC-077 cmd
+node /tmp/t9harness/t9-manifest.mjs /tmp/verify-task009
+# SC-077 ↔ 交付套件映射：test/unit/lab-isolation.test.ts（D1 注册断言 + retainContextWhenHidden 注册结构）；核验自建脚本独立重测（结构化解析 package.json + src/extension.ts + src/panel/chatPanel.ts）

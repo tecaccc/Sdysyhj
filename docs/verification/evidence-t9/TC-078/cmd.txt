@@ -1,0 +1,4 @@
+# TC-078 cmd
+node /tmp/t9harness/t9-freeze.mjs /tmp/verify-task009
+# 步骤 3（既有套件全绿）：见 evidence-t9/REGRESSION/output.txt（unit 218/218 ×2 + integration 45/45 ×2）
+# SC-078 ↔ 交付套件映射：test/unit/lab-isolation.test.ts（D1①~④）

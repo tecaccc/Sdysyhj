@@ -1,0 +1,29 @@
+== (a) 采样 token 定义链非空且终点 --vscode-* ==
+PASS  --background 有定义  —— theme.css
+PASS  --background 主链终点为 --vscode-* 引用（外部终点语义）  —— --background → --vscode-sideBar-background
+PASS  --foreground 有定义  —— theme.css
+PASS  --foreground 主链终点为 --vscode-* 引用（外部终点语义）  —— --foreground → --vscode-sideBar-foreground
+PASS  --primary 有定义  —— theme.css
+PASS  --primary 主链终点为 --vscode-* 引用（外部终点语义）  —— --primary → --vscode-button-background
+PASS  --primary-foreground 有定义  —— theme.css
+PASS  --primary-foreground 主链终点为 --vscode-* 引用（外部终点语义）  —— --primary-foreground → --vscode-button-foreground
+PASS  --input 有定义  —— theme.css
+PASS  --input 主链终点为 --vscode-* 引用（外部终点语义）  —— --input → --vscode-input-border
+PASS  --border 有定义  —— theme.css
+PASS  --border 主链终点为 --vscode-* 引用（外部终点语义）  —— --border → --vscode-panel-border
+== (b) 浅/深两主题联动（调色板 fixture 代入） ==
+INFO  --background: dark=#181818 light=#F8F8F8
+INFO  --foreground: dark=#CCCCCC light=#3B3B3B
+INFO  --primary: dark=#0078D4 light=#005FB8
+INFO  --primary-foreground: dark=#FFFFFF light=#FFFFFF
+INFO  --input: dark=#3C3C3C light=#CECECE
+INFO  --border: dark=#2B2B2B light=#E5E5E5
+PASS  全部采样点两主题解析出具体 hex
+PASS  浅深两主题间 ≥1 组采样值不同（联动生效）  —— diff=5/6
+== (c) WCAG 对比度 ≥4.5:1（公式脚本，浅深各测） ==
+PASS  dark: 正文 --foreground vs --background ≥4.5:1  —— 实测 11.057:1（fg=#CCCCCC bg=#181818）
+PASS  dark: 用户气泡 --primary-foreground vs --primary ≥4.5:1  —— 实测 4.529:1
+PASS  light: 正文 --foreground vs --background ≥4.5:1  —— 实测 10.548:1（fg=#3B3B3B bg=#F8F8F8）
+PASS  light: 用户气泡 --primary-foreground vs --primary ≥4.5:1  —— 实测 6.308:1
+
+ALL PASS
