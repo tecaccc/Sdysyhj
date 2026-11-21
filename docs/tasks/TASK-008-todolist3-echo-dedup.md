@@ -52,6 +52,7 @@ agent_start → turn_start → message_start(user) → message_end(user)
 - 审查内容：①外部契约依赖清单完备（10 条，版本锚定 pi 1.5.2）②事件流/接口契约与权威文档一致（抽检 8 锚点通过）③可测性（D8 golden 录制/回放 + D9 U1–U12/I1–I5 映射 FR-CHAT-11①–⑤）
 - 裁决：通过，设计基线（含 §11 契约清单）即刻冻结；测试 Agent 盲写以冻结快照为依据
 - 并行启动：研发 Agent（fresh，按 D1–D10 实现）∥ 测试 Agent（fresh，盲写 TC-062+）；双方过程产物互不可见（规范第二部分 §4）
+- 2026-11-21 16:0x 总调度（瞬态故障处置，规范 §7.2）：研发 Agent golden 录制 spike 的 bash 调用挂死于 `wait $SERVER_PID`（mock server 永不退出 + PORT 提取为空命令）；总调度外部清理挂起进程使调用返回，steer 提示改自终止结构（内嵌 server + spawn pi + 有界超时）。属工具面瞬态，不占失败回路额度（N=2），研发继续
 
 ## 4. 范围裁决说明：条目②另立 TASK-009
 
