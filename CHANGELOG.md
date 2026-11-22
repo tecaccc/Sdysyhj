@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.8 — 新 UI 转正：assistant-ui 聊天面板全面接管（TASK-009 切换批次）
+
+- 聊天面板切换为 assistant-ui（React）新实现并转正为默认面板（沿用 viewType `sdysyhj.chatView` 与 Open Chat 命令，用户无感切换）；功能全量等价迁移，用户可见行为零回退：流式对话、Markdown 渲染与代码高亮（highlight.js 常用语言集，集外语言纯代码展示）、thinking 折叠、工具调用卡片（状态/参数摘要/可展开输入输出/大输出截断与「复制全部」）、中止运行、运行中 steer / follow-up 插话、错误展示与状态栏、`@` 文件引用、`/` 命令补全菜单、底部模型选择器与上下文用量行、会话管理（历史/切换/重命名/外部修改提示）
+- 视觉规范不变（FR-CHAT-10 维持既有口径）：内容列 960px 居中、输入框圆角 8px、发送按钮图标化（可访问性名称「发送」）、用户消息右侧气泡 / 助手消息左对齐无气泡、HH:mm 时间戳替代角色标记；用户消息单条展示语义保持（FR-CHAT-11：发送/回声/终稿各判定时点恒一条，历史重放不重复）
+- 旧面板保留为「Chat (Classic)」可经命令 Open Chat (Classic) 切换回（行为冻结的回退载体，一个版本周期后移除）；0.1.7 的实验面板（Open Chat (Lab) / 聊天（实验））已随本批次移除，「实验/Lab」命名清零
+- 性能与安全面：webview 产物约 1.0 MB（预算 4 MiB）、宿主 bundle 净减约 355 KB（移除旧实验桥接依赖链）；strict CSP（default-src 'none'，无 unsafe-eval/unsafe-inline，zod jitless）；新增依赖全部精确版本锁定，代码高亮仅 DOMPurify 消毒后注入（防 XSS）
+- 核验：report-19588eb PASS（R9，产品缺陷 0；32 项自动判定 + 4 项真机项自动兜底全过，含消费端真实 runtime 端到端验证与双面板行为一致快照）
+
 ## 0.1.7 — 实验面板：assistant-ui 迁移试点阶段①（TASK-009 / FR-AUI-01~06）
 
 - 新增独立实验性聊天面板「聊天（实验）」：命令面板搜索 Open Chat (Lab) 打开（Activity Bar 侧边栏第二视图位，不替换默认聊天面板）；基于 assistant-ui（React）验证 UI 层迁移可行性，**默认聊天面板行为零变更**（本版为实验性质，阶段①不切默认面板）
