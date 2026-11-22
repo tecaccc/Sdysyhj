@@ -1,28 +1,25 @@
-// ChatPanel：WebviewViewProvider + postMessage 路由。
+// ChatPanel（经典面板，FR-AUI-07③）：WebviewViewProvider + postMessage 路由。
 // 宿主侧中介：webview 消息 → PiBridge 操作 / vscode API；PiBridge 事件 → webview。
+// TASK-009 切换批次（§10.14 D1/D3）：viewType 迁移为 sdysyhj.chatViewClassic（旧 vanilla
+// 实现冻结承载回退）；vscode 交互动作机械提取至 hostActions.ts（同名委托，行为零变化）。
 
 import * as crypto from "crypto";
 import * as path from "path";
 import * as vscode from "vscode";
 import type { PiBridge } from "../bridge/piBridge";
-import { PiRuntimeError } from "../bridge/rpcTransport";
-import { listSessions } from "../session/sessionStore";
+import { createHostActions, type HostActions, type StartupError } from "./hostActions";
 import type { SdysyhjConfig } from "../util/config";
 import type { Logger } from "../util/log";
-import { firstLine } from "../util/text";
 import { isHostToWebview, type HostToWebview, type WebviewToHost } from "./messages";
 
-export interface StartupError {
-  message: string;
-  hint?: string;
-  detail?: string;
-}
+export type { StartupError } from "./hostActions";
 
 export class ChatPanel implements vscode.WebviewViewProvider {
-  public static readonly viewType = "sdysyhj.chatView";
+  public static readonly viewType = "sdysyhj.chatViewClassic";
 
   private view: vscode.WebviewView | null = null;
   private readonly disposables: vscode.Disposable[] = [];
+  private readonly actions: HostActions;
 
   constructor(
     private readonly context: vscode.ExtensionContext,
@@ -36,6 +33,14 @@ export class ChatPanel implements vscode.WebviewViewProvider {
     private readonly sessionsRoot?: string,
     private readonly getStartupError: () => StartupError | null = () => null
   ) {
+    this.actions = createHostActions({
+      bridge: this.bridge,
+      logger: this.logger,
+      cwd: this.cwd,
+      ...(this.sessionsRoot ? { sessionsRoot: this.sessionsRoot } : {}),
+      post: (message) => this.post(message),
+      reveal: () => this.reveal(),
+    });
     this.disposables.push(new vscode.Disposable(this.bridge.onAny((event) => this.post(event))));
     this.disposables.push(
       vscode.window.registerWebviewViewProvider(ChatPanel.viewType, this, {
@@ -68,99 +73,27 @@ export class ChatPanel implements vscode.WebviewViewProvider {
     void vscode.commands.executeCommand(`${ChatPanel.viewType}.focus`);
   }
 
-  /** 右键“发送到 Pi”（FR-FILE-03）：文件路径或选区作为 prompt 素材预填输入框。 */
+  /** 右键“发送到 Pi”（FR-FILE-03）：hostActions 委托（行为零变化）。 */
   sendToPi(uri?: vscode.Uri): void {
-    const editor = vscode.window.activeTextEditor;
-    const target = uri ?? editor?.document.uri;
-    if (!target) {
-      void vscode.window.showWarningMessage("Sdysyhj：没有可发送的文件。");
-      return;
-    }
-    const rel = this.relativePath(target.fsPath);
-    let text = `@${rel}`;
-    if (editor && editor.document.uri.fsPath === target.fsPath && !editor.selection.isEmpty) {
-      const selection = editor.document.getText(editor.selection);
-      const startLine = editor.selection.start.line + 1;
-      const endLine = editor.selection.end.line + 1;
-      text += `\n\n选区（L${startLine}-L${endLine}）：\n\`\`\`\n${selection}\n\`\`\``;
-    }
-    this.reveal();
-    this.post({ kind: "input_prefill", text });
+    this.actions.sendToPi(uri);
   }
 
-  // ---------- 面板操作（命令入口复用） ----------
+  // ---------- 面板操作（命令入口复用；hostActions 同名委托） ----------
 
   async showHistory(): Promise<void> {
-    const sessions = listSessions(this.cwd, this.sessionsRoot);
-    if (sessions.length === 0) {
-      void vscode.window.showInformationMessage("Sdysyhj：当前工作区暂无历史会话。");
-      return;
-    }
-    const items = sessions.map((s) => ({
-      label: `$(comment-discussion) ${s.title}`,
-      description: `${new Date(s.modifiedAt).toLocaleString()} · ${s.messageCount} 条消息`,
-      detail: s.name ? s.path : undefined,
-      sessionPath: s.path,
-    }));
-    const picked = await vscode.window.showQuickPick(items, {
-      placeHolder: "选择会话切换（上下文将完整恢复）",
-      matchOnDescription: true,
-      matchOnDetail: true,
-    });
-    if (!picked) return;
-    await this.guard(async () => {
-      await this.bridge.switchSession(picked.sessionPath);
-    }, "切换会话失败");
+    await this.actions.showHistory();
   }
 
   async showModelPicker(): Promise<void> {
-    await this.guard(async () => {
-      const models = await this.bridge.listModels();
-      if (models.length === 0) {
-        void vscode.window.showInformationMessage("Sdysyhj：没有可用模型，请先运行 pi config / pi auth 配置。");
-        return;
-      }
-      const picked = await vscode.window.showQuickPick(
-        models.map((m) => ({
-          label: m.id,
-          description: `${m.provider}${m.name ? ` · ${m.name}` : ""}${m.reasoning ? " · reasoning" : ""}`,
-          model: m,
-        })),
-        { placeHolder: "选择模型（随会话持久化）" }
-      );
-      if (!picked) return;
-      await this.bridge.setModel(picked.model.provider, picked.model.id);
-    }, "切换模型失败");
+    await this.actions.showModelPicker();
   }
 
   async showThinkingPicker(): Promise<void> {
-    await this.guard(async () => {
-      const levels = await this.bridge.listThinkingLevels();
-      const items = [
-        { label: "$(sync) 循环切换", level: "__cycle__" as string },
-        ...levels.map((l) => ({ label: l, level: l })),
-      ];
-      const picked = await vscode.window.showQuickPick(items, { placeHolder: "选择 thinking 等级" });
-      if (!picked) return;
-      if (picked.level === "__cycle__") {
-        await this.bridge.cycleThinkingLevel();
-      } else {
-        await this.bridge.setThinkingLevel(picked.level);
-      }
-    }, "切换 thinking 等级失败");
+    await this.actions.showThinkingPicker();
   }
 
   async showRenameInput(): Promise<void> {
-    const current = this.bridge.getModelInfo().sessionName;
-    const name = await vscode.window.showInputBox({
-      prompt: "会话名称",
-      value: current,
-      placeHolder: "例如：重构鉴权模块",
-    });
-    if (name === undefined) return;
-    await this.guard(async () => {
-      await this.bridge.renameSession(name.trim());
-    }, "重命名会话失败");
+    await this.actions.showRenameInput();
   }
 
   // ---------- 内部 ----------
@@ -243,13 +176,7 @@ export class ChatPanel implements vscode.WebviewViewProvider {
         await this.guard(() => this.bridge.reloadHistory(), "刷新会话失败");
         break;
       case "copy_output": {
-        const text = this.bridge.getToolOutput(msg.toolCallId);
-        if (text !== undefined) {
-          await vscode.env.clipboard.writeText(text);
-          this.post({ kind: "toast", text: "已复制全部输出" });
-        } else {
-          this.post({ kind: "toast", text: "没有可复制的输出" });
-        }
+        await this.actions.copyOutput(msg.toolCallId);
         break;
       }
       default:
@@ -257,40 +184,13 @@ export class ChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
-  /** @file 文件选择器（FR-FILE-02）：当前工作区内选文件，路径插入 prompt。 */
+  /** @file 文件选择器（FR-FILE-02）：hostActions 委托。 */
   private async showFilePicker(): Promise<void> {
-    const root = vscode.workspace.workspaceFolders?.[0];
-    const uris = await vscode.workspace.findFiles("**/*", "**/{node_modules,.git,out,dist}/**", 2000);
-    const inRoot = root ? uris.filter((u) => u.fsPath.startsWith(root.uri.fsPath)) : uris;
-    const items = inRoot.map((u) => {
-      const rel = this.relativePath(u.fsPath);
-      return { label: path.basename(u.fsPath), description: rel, rel };
-    });
-    const picked = await vscode.window.showQuickPick(items, {
-      placeHolder: "选择要引用的文件（@file）",
-      matchOnDescription: true,
-    });
-    if (!picked) return;
-    this.post({ kind: "file_ref", path: picked.rel });
-  }
-
-  private relativePath(fsPath: string): string {
-    const root = vscode.workspace.workspaceFolders?.[0];
-    const base = root?.uri.fsPath ?? this.cwd;
-    const rel = path.relative(base, fsPath) || path.basename(fsPath);
-    return rel.split(path.sep).join("/");
+    await this.actions.showFilePicker();
   }
 
   private async guard(fn: () => Promise<void> | void, label: string): Promise<void> {
-    try {
-      await fn();
-    } catch (err) {
-      const message = err instanceof PiRuntimeError ? err.message : err instanceof Error ? err.message : String(err);
-      const hint = err instanceof PiRuntimeError ? err.hint : undefined;
-      this.logger.error(`${label}：${message}`);
-      this.post({ kind: "error", message: `${label}：${message}`, ...(hint ? { hint } : {}) });
-      void vscode.window.showErrorMessage(`Sdysyhj：${label}（${firstLine(message, 120)}）`);
-    }
+    await this.actions.guard(fn, label);
   }
 
   private post(message: HostToWebview): void {

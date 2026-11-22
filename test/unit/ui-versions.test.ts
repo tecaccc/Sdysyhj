@@ -1,6 +1,8 @@
-// TASK-009 §10.13 D8 单测：依赖精确版本锁定（FR-AUI-05①，D6 清单）。
+// TASK-009 §10.14 D8 单测：依赖精确版本锁定（FR-AUI-05①，D7 清单）。
+// 回归重定向：lab-versions.test.ts → 本文件（清单更新：删 ai/ai-sdk 断言、增 react-markdown 链 +
+// devDeps jsdom/RTL；zod-jitless 源顺序断言面 webview/lab→webview/ui；无放宽）。
 // package.json 新增的 @assistant-ui/* 与 react 线依赖一律精确版本（零 ^ / ~ / >= / * 前缀；
-// JSON 解析断言，非文本匹配）。清单 = 设计 D6 锁定清单（版本号 2026-11-21 registry 核实）。
+// JSON 解析断言，非文本匹配）。清单 = 设计 D7 锁定清单（版本号 2026-11-22 registry 核实）。
 
 import * as fs from "fs";
 import * as path from "path";
@@ -12,12 +14,13 @@ const read = (rel: string): string => fs.readFileSync(path.join(root, rel), "utf
 
 const pkg = JSON.parse(read("package.json")) as { dependencies: Record<string, string>; devDependencies: Record<string, string> };
 
-/** D6 精确锁定清单：依赖 → 精确版本。 */
+/** D7 精确锁定清单：依赖 → 精确版本。 */
 const PINNED_DEPENDENCIES: Record<string, string> = {
   "@assistant-ui/vscode": "0.0.1",
   "@assistant-ui/react": "0.15.37",
-  "@assistant-ui/ai-sdk": "0.0.19",
-  ai: "7.0.153",
+  "@assistant-ui/react-markdown": "0.14.26",
+  "remark-gfm": "4.0.1",
+  "remark-breaks": "4.0.0",
   react: "19.3.1",
   "react-dom": "19.3.1",
   zod: "4.6.7",
@@ -25,12 +28,15 @@ const PINNED_DEPENDENCIES: Record<string, string> = {
 const PINNED_DEV_DEPENDENCIES: Record<string, string> = {
   "@types/react": "19.3.0",
   "@types/react-dom": "19.3.0",
+  jsdom: "31.0.1",
+  "@testing-library/react": "16.3.3",
+  "@testing-library/dom": "10.4.2",
 };
 
 const isExact = (version: string): boolean => /^\d+\.\d+\.\d+([+-][0-9A-Za-z.-]+)?$/.test(version);
 
 describe("FR-AUI-05① 依赖精确版本锁定（零 ^ / ~ / >= 前缀）", () => {
-  it("① 九项锁定清单逐项：精确版本 + 与 D6 清单一致", () => {
+  it("① 锁定清单逐项：精确版本 + 与 D7 清单一致", () => {
     for (const [name, version] of Object.entries(PINNED_DEPENDENCIES)) {
       expect(pkg.dependencies[name], `dependencies 缺 ${name}`).toBe(version);
     }
@@ -48,17 +54,24 @@ describe("FR-AUI-05① 依赖精确版本锁定（零 ^ / ~ / >= 前缀）", () 
     }
   });
 
-  it("③ 既有依赖冻结（阶段①前已有的四项运行时依赖不变）", () => {
+  it("③ 既有依赖冻结（切换批次前已有的运行时依赖不变）", () => {
     expect(pkg.dependencies["@earendil-works/pi-coding-agent"]).toBe("1.5.2");
     expect(pkg.dependencies.dompurify).toBe("3.4.18");
     expect(pkg.dependencies["highlight.js"]).toBe("11.12.0");
     expect(pkg.dependencies.marked).toBe("18.2.1");
   });
+
+  it("④ 删除项断言（#D-06 路线 A 随批次移除）：package.json 无 @assistant-ui/ai-sdk / ai", () => {
+    expect(pkg.dependencies["@assistant-ui/ai-sdk"]).toBeUndefined();
+    expect(pkg.dependencies.ai).toBeUndefined();
+    expect(pkg.devDependencies["@assistant-ui/ai-sdk"]).toBeUndefined();
+    expect(pkg.devDependencies.ai).toBeUndefined();
+  });
 });
 
 describe("FR-AUI-05② zod jitless 三件套①：源顺序断言（官方指南：须在任何 zod schema 构建前导入）", () => {
-  it("webview/lab/main.tsx 首个 import = ./zod-jitless", () => {
-    const main = read("webview/lab/main.tsx");
+  it("webview/ui/main.tsx 首个 import = ./zod-jitless", () => {
+    const main = read("webview/ui/main.tsx");
     // 剥离行注释后再取首个 import 语句（避免头部说明注释中的“import”字样被误捕）
     const codeOnly = main
       .split("\n")
@@ -69,7 +82,7 @@ describe("FR-AUI-05② zod jitless 三件套①：源顺序断言（官方指南
   });
 
   it("zod-jitless.ts 内容 = 官方片段 config({ jitless: true })（import config from zod 后调用）", () => {
-    const source = read("webview/lab/zod-jitless.ts");
+    const source = read("webview/ui/zod-jitless.ts");
     expect(source).toContain('import { config } from "zod";');
     expect(source).toContain("config({ jitless: true });");
   });

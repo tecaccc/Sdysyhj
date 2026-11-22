@@ -1,10 +1,10 @@
-// TASK-009 §10.13 D8 单测：主题映射审计（FR-AUI-04 自动兜底——唯一选型 = 宿主侧静态解析层）。
-// 审计函数解析 `@assistant-ui/vscode/theme.css` + `webview/lab/lab.css` 文本：
-//   ①采样 token（--background/--foreground/--primary/--primary-foreground/--input/--border）
-//     定义链非空且终点为 --vscode-* 引用（FR-AUI-04①「非空非全透明」的静态等价判据）；
-//   ②以 VS Code 默认主题调色板 fixture（Dark/Light Modern --vscode-* 基值快照，§11 #18）
-//     代入 token 链解析具体 RGB：浅深两套至少一组采样值不同（主题变量联动生效）；
-//   ③正文文本（--foreground）与其背景（--background）WCAG 相对亮度对比度 ≥4.5:1，浅深各测（②）。
+// TASK-009 §10.14 D8 单测：主题映射审计（FR-AUI-04 自动兜底）+ FR-CHAT-10 五子条 CSS 钉值断言（D6）。
+// 回归重定向：lab-theme.test.ts → 本文件（①–⑤ 断言平移，采样面 lab.css→chat.css；无放宽）。
+// 审计函数解析 `@assistant-ui/vscode/theme.css` + `webview/ui/chat.css` 文本：
+//   ①采样 token 定义链非空且终点为 --vscode-* 引用（FR-AUI-04① 静态等价判据）；
+//   ②以 VS Code 默认主题调色板 fixture（Dark/Light Modern 基值快照，§11 #18）代入解析 RGB：
+//     浅深两套至少一组采样值不同（主题变量联动生效）；
+//   ③正文/气泡 WCAG 相对亮度对比度 ≥4.5:1，浅深各测（FR-AUI-04②）。
 // getComputedStyle 字面执行与真实渲染 = FR-AUI-04③ UI 手工 checklist（截图）。
 
 import * as fs from "fs";
@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const themeCss = fs.readFileSync(path.join(root, "node_modules/@assistant-ui/vscode/src/theme.css"), "utf8");
-const labCss = fs.readFileSync(path.join(root, "webview/lab/lab.css"), "utf8");
+const chatCss = fs.readFileSync(path.join(root, "webview/ui/chat.css"), "utf8");
 const palette = JSON.parse(
   fs
     .readFileSync(path.join(root, "test/fixtures/vscode-theme-defaults-palette.json"), "utf8")
@@ -61,7 +61,6 @@ function resolveValueString(value: string, values: Record<string, string>, seen:
     if (hit) return hit;
     return ref.fallback !== null ? resolveValueString(ref.fallback, values, seen) : null;
   }
-  // 本地 var：链下行（seen 防环由 resolveToken 统一标记）；下行失败走 fallback
   const viaRef = resolveToken(ref.name, values, seen);
   if (viaRef !== null) return viaRef;
   return ref.fallback !== null ? resolveValueString(ref.fallback, values, seen) : null;
@@ -83,7 +82,7 @@ function terminalIsVscodeRef(name: string): boolean {
     const declaration = themeTokens.get(current);
     if (declaration === undefined) return false;
     const ref = firstVarRef(declaration);
-    if (!ref) return false; // 纯字面值：无 --vscode-* 联动
+    if (!ref) return false;
     if (ref.name.startsWith("--vscode-")) return true;
     if (seen.has(ref.name)) return false;
     seen.add(ref.name);
@@ -117,9 +116,9 @@ describe("FR-AUI-04① 主题 token 静态审计（采样点对齐：正文/气�
     }
   });
 
-  it("② lab.css 外壳实际消费全部采样 token（采样点与外壳样式对齐）", () => {
+  it("② chat.css 外壳实际消费全部采样 token（采样点与外壳样式对齐）", () => {
     for (const token of SAMPLED_TOKENS) {
-      expect(labCss.includes(`var(${token})`), `lab.css 未消费 ${token}`).toBe(true);
+      expect(chatCss.includes(`var(${token})`), `chat.css 未消费 ${token}`).toBe(true);
     }
   });
 
@@ -134,7 +133,7 @@ describe("FR-AUI-04① 主题 token 静态审计（采样点对齐：正文/气�
     expect(differing.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("④ 正文文本对比度 ≥4.5:1（--foreground vs --background，WCAG 相对亮度公式，浅深各测）", () => {
+  it("④ 正文文本对比度 ≥4.5:1（--foreground vs --background，浅深各测）", () => {
     for (const [name, values] of [["Dark Modern", palette.darkModern], ["Light Modern", palette.lightModern]] as const) {
       const fg = resolveToken("--foreground", values);
       const bg = resolveToken("--background", values);
@@ -152,5 +151,37 @@ describe("FR-AUI-04① 主题 token 静态审计（采样点对齐：正文/气�
       const ratio = contrastRatio(fg!, bg!);
       expect(ratio, `${name} 气泡对比度 ${ratio} < 4.5`).toBeGreaterThanOrEqual(4.5);
     }
+  });
+});
+
+describe("FR-CHAT-10 五子条 CSS 钉值断言（D6/#19(a) 全维持口径）", () => {
+  /** 取选择器块的声明体（简易解析：首个 { 后至 } 前）。 */
+  const blockOf = (selector: string): string => {
+    const index = chatCss.indexOf(`${selector} {`);
+    expect(index, `chat.css 缺 ${selector}`).toBeGreaterThanOrEqual(0);
+    return chatCss.slice(index, chatCss.indexOf("}", index));
+  };
+
+  it("① 内容列：max-width: 960px 且左右外边距 auto（.content-col）", () => {
+    const block = blockOf(".content-col");
+    expect(block).toContain("max-width: 960px");
+    expect(block).toContain("margin-left: auto");
+    expect(block).toContain("margin-right: auto");
+  });
+
+  it("② 输入框容器圆角 8px（.composer-shell）", () => {
+    expect(blockOf(".composer-shell")).toContain("border-radius: 8px");
+  });
+
+  it("④⑤ 布局钉值：用户气泡（.message-user .message-body 背景+圆角）/ 助手无气泡 / .message-time 存在", () => {
+    const userBody = blockOf(".message-user .message-body");
+    expect(userBody).toContain("background: var(--primary)");
+    expect(userBody).toContain("border-radius: 8px");
+    const assistantBody = blockOf(".message-assistant .message-body");
+    expect(assistantBody).not.toContain("background:");
+    expect(assistantBody).not.toContain("border:");
+    expect(chatCss).toContain(".message-time");
+    expect(chatCss).toContain("justify-content: flex-end"); // 用户右对齐
+    expect(chatCss).not.toContain("avatar"); // 禁 avatar（#19(a)④⑤）
   });
 });
