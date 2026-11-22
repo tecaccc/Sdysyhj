@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**已实现（MVP）**；TASK-008（FR-CHAT-11 用户消息单次展示）已实现（§10.12） ｜ TASK-009 阶段①（assistant-ui 迁移试点，FR-AUI-01~06）：**已实现（待交付验收；双切片对比报告见 §10.13 末尾交付小节）**（§10.13 + §10.5.1 追溯行） ｜ 版本：v0.6 ｜ 对应需求：docs/requirements.md v0.6（2026-11-21 冻结）｜ 修订日期：2026-11-22
+> 状态：**已实现（MVP）**；TASK-008（FR-CHAT-11 用户消息单次展示）已实现（§10.12）；TASK-009 阶段①（FR-AUI-01~06）已实现并闭环（v0.1.7 + report-f7a3518，§10.13 + §10.5.1 追溯行）；TASK-009 **切换批次**（新 UI 转正默认 + 旧面板退役，FR-AUI-02/03/05/07/08）：**设计中（§10.14，待审批点 1b）** ｜ 版本：v0.7 ｜ 对应需求：docs/requirements.md v0.7（2026-11-22 冻结）｜ 修订日期：2026-11-22
 
 ---
 
@@ -243,6 +243,7 @@ provider / model / api-key / MCP / skills 一律走 pi 自身配置（`~/.pi/age
 | 集成 | Vitest + 真实 `--mode rpc` 子进程（`--no-session`） | 帧解析、prompt→settled 全链路、abort、崩溃重启；fake-pi 剧本已对照 json.md 补发 user 回声（§10.12 D8）|
 | **Golden fixture 回放** | Vitest + 静态 JSONL（`test/fixtures/golden/`，真实 pi 事件序列转录） | **防"自建 mock 自证"兑底（规范 §4.3）**：按真实 pi 录制的事件序列回放断言 user 回声关联、steer/follow-up 注入时序、settled 边界（FR-CHAT-11）；录制与回放方案见 §10.12 D8 |
 | **实验面板（TASK-009 阶段①）** | Vitest unit（映射纯函数 / 零变更冻结与预算 / CSP 指令集 / 主题审计结构断言）+ Vitest integration **in-node 真实通道回放**（路线 A = `serveWebviewHost`×`createVSCodeFetch`×PiBridge(`FAKE_PI_REPLAY`)；路线 B = LabChatPanel postMessage 泵×webview store）+ 真机手工 checklist（主题截图 / XSS DOM 探针 / CSP 下 zod jitless / retainContextWhenHidden / A-B 切换） | FR-AUI-01~06（判定面 = 通道 + 数据层，DOM 行为层 MANUAL，选型与锚点见 §10.13 D8） |
+| **新 UI 消费端契约（TASK-009 切换批次，#D-06 制度化）** | Vitest unit（node，纯逻辑）+ Vitest integration **jsdom 31 + @testing-library/react 16 真实 runtime 消费**（golden 回放端到端：FAKE_PI_REPLAY 子进程→PiBridge→postMessage 泵→store→真实 `AssistantRuntimeProvider`+`useExternalStoreRuntime`+组件→DOM 断言；文件级 `// @vitest-environment jsdom` 注解，范围限 webview/ui 测试）+ 真机 checklist（MANUAL：主题截图 / 真实 CSP violation / retainContextWhenHidden / 双面板切换 / 跟随观感） | FR-AUI-02/03/05/07/08 与 §4.1–4.5 判定载体平移（FR-CHAT-11 三时点单气泡、FR-CHAT-09 跟随、FR-CHAT-10 五子条、工具卡/Markdown 等价）；映射/流式/交互断言一律以真实 runtime 消费为准（非自建解码器）；选型与回归重定向见 §10.14 D8 |
 | E2E 冒烟 | `@vscode/test-e2e` | 激活、开面板、发一条 prompt（mock provider 或录制回放）、切会话 |
 | 手工 | 三平台 checklist | 第 8 节验收标准 |
 
@@ -700,9 +701,191 @@ FR 追溯表（§10.1）将在实现交付时新增 FR-CHAT-11 行（状态、�
 
 ---
 
+### 10.14 TASK-009 切换批次设计记录（新 UI 转正默认 + 旧面板退役，需求基线 v0.7 §4.6）
+
+> 来源：docs/tasks/TASK-009-assistantui-migration.md（人类指令 2026-11-22「直接切换到新的 UI 界面，不要使用这种实验性的内容」+ 真机反馈路线 A 无法回复 → #D-06 裁决路线 A 淘汰 + 计划修订：阶段②③④压缩为单一切换批次，发版 0.1.8 = 功能等价迁移 + 新 UI 转正默认 + 旧面板退役过渡）；需求基线 v0.7 §4.6（FR-AUI-02 修订为路线 B 单实现、FR-AUI-05③ 预算新口径、FR-AUI-07 切换与退役、FR-AUI-08 功能等价口径）+ 澄清 #19（视觉取舍/命名/退役节奏）+ §5 切换批次不做项。
+> 状态：**设计中（本节为设计基线，待审批点 1b）**——实现位置与 FR 追溯表随交付补齐（交付期预告见 D10 末尾）。
+> 起点代码锚点（设计期只读核验）：`webview/lab/`（sliceB.tsx / store.ts / threadMessageLike.ts / shell.tsx = 路线 B 切片，切换批次起点）、`src/lab/labChatPanel.ts`（vscode-free 面板核心）、`webview/main.ts` + `webview/render/`（旧 vanilla 面板全交互能力迁移参照）、`src/panel/chatPanel.ts`（旧面板宿主接线与 HTML 模板）。
+> 外部证据核读（2026-11-22，设计期只读核验，未装依赖）：`@assistant-ui/react-markdown@0.14.26` npm tarball 全量导出面（§11 #19：MarkdownTextPrimitive / SyntaxHighlighterProps / code-fence；依赖 `react-markdown ^10.1.0`——**无 Shiki**，证实任务书 §5 #5）；`@assistant-ui/core@0.3.37` `fromThreadMessageLike` 实现级消费契约（§11 #21，#D-06 教训的直接锚点）；`ComposerRuntime.setText` / ExternalStoreAdapter 接口面（§11 #22）；highlight.js 11.12.0 `lib/common` 语言注册清单（§11 #23）；npm registry 版本核值（remark-gfm 4.0.1 / remark-breaks 4.0.0 / @testing-library/react 16.3.3 / @testing-library/dom 10.4.2 / jsdom 31.0.1）。§10.13 D1–D9 中与本批次冲突的约束（默认面板冻结面、实验面板零变更）随 FR-AUI-01 使命结束自然解除，下文逐处显式声明取代范围。
+
+#### D1 面板架构切换（FR-AUI-07①②④）
+
+**决策**：
+- **新 UI 转正为默认面板**：viewType `sdysyhj.chatView`（视图名 "Chat"，首位条目不变）改由新 UI 承载——宿主 = `src/ui/chatViewProvider.ts`（vscode 薄壳，`renderWebviewHtml` strict CSP + `retainContextWhenHidden: true`，labViewProvider 演进）+ `src/ui/chatController.ts`（vscode-free 面板核心，labChatPanel 演进：`bridge.onAny` → postMessage 泵 + **WebviewToHost 协议全集处理**（ready 回放 superset：config/model_info/usage_info/run_state/history_loaded，对齐 chatPanel.ts 现行为））；webview = `webview/ui/`（现 shell.tsx 演进的 React 壳 + Composer 全量，见 D3）；产物 `media/chat.js` + `media/chat.css`。
+- **经典面板冻结迁移**：viewType `sdysyhj.chatViewClassic`（视图名 "Chat (Classic)"，#19(b)）承载旧 vanilla 实现——`src/panel/chatPanel.ts` 仅两类改动：① viewType/标题常量迁移；② 宿主动作层机械提取（D3，行为零变化）；`webview/main.ts`、`webview/render/**`、`webview/styles/**`、`media/main.js` 构建参数**零改动**（经典面板字节冻结面）。命令 `sdysyhj.openChatClassic`（标题 "Open Chat (Classic)"）→ `chatViewClassic.focus`。
+- **移除（实验命名清零 + #D-06 随之关闭）**：viewType `sdysyhj.chatLabView`、命令 `sdysyhj.openChatLab`、`activationEvents` 条目 `onView:sdysyhj.chatLabView`、`webview/lab/**`（含 sliceA/切片 A/B 开关/度量入口）、`src/lab/**`（含 chatRoute.ts——路线 A 宿主路由）、esbuild lab 第三入口、依赖 `@assistant-ui/ai-sdk` 与 `ai`（路线 A 专属消费者消失）。
+- **package.json contributes 迁移方案**：views 数组 = `[{sdysyhj.chatView,"Chat"},{sdysyhj.chatViewClassic,"Chat (Classic)"}]`；commands 删 `openChatLab`、增 `openChatClassic`，既有 9 项命令（openChat/newSession/abort/showHistory/reportIssue/renameSession/switchModel/switchThinking/sendToPi）与 5 项配置（piRuntime/piPath/thinkingDefault/outputTailLines/sendMode）**逐项零变更**（FR-AUI-07④ 结构断言面）；activationEvents = `[onView:sdysyhj.chatView, onView:sdysyhj.chatViewClassic]`（均惰性）；contributes 全文「实验/Lab」字符串清零（FR-AUI-07② 断言面）。
+- **构建入口收敛**：esbuild 三入口重定义 = 宿主 `src/extension.ts → dist/extension.js`（参数不变）+ 新默认 webview `webview/ui/main.tsx → media/chat.js`（lab 第三入口转正改名）+ 经典 webview `webview/main.ts → media/main.js`（冻结不变）。
+- **运行接线**：两面板共享同一 PiBridge（现状延续；emitter 多订阅互不影响）；`sdysyhj.openChat` 仍指向 `sdysyhj.chatView.focus`（用户无感）；`sendToPi`/`input_prefill` 目标 = 新 UI 面板（经典面板保持自有行为不迁移）。
+
+**理由**：FR-AUI-07① 钦定 viewType 不变 = 用户无感切换；#19(b) 钦定命名与 openChatLab 移除（实验入口存活一个版本、非对外契约）；「实验/Lab」命名清零贯彻到源码层（`webview/lab`→`webview/ui`、`src/lab`→`src/ui`，一概念一拼写）；构建产物改名 `media/chat.js` 避免「lab」语义残留且不触经典面板冻结路径。
+**锚点**：FR-AUI-07①②③④、FR-AUI-05④、#19(b)(c)；package.json v0.1.7 现状；§10.13 D1（实验面板注册形态——本批次语义反转，由 FR-AUI-07 取代）。
+
+#### D2 消息渲染 part 化（FR-CHAT-01/02/03/04 等价；FR-AUI-02②）
+
+**决策（映射扩容表，`webview/ui/threadMessageLike.ts`——threadMessageLike.ts 平移扩容）**：
+
+| UiBlock/字段 | ThreadMessageLike 映射 | 渲染组件（MessagePrimitive.Content components） |
+|---|---|---|
+| `text` | `{type:"text", text}` | `Text` = **MarkdownTextPrimitive**（@assistant-ui/react-markdown，D2 下半） |
+| `thinking` | `{type:"reasoning", text}` | `Reasoning` = 折叠块（默认折叠、展开后流式显示，FR-CHAT-03） |
+| `toolcall` | `{type:"tool-call", toolCallId: block.id, toolName: block.tool, argsText: block.args}`；终端态注入 `result: {status, summary, output, outputTruncated}`（running 态不注入 result）、`isError: status==="error"` | `ToolFallback` 覆盖 = 工具卡（FR-CHAT-04 全要素：工具名/关键参数摘要/状态（进行中/成功/失败/已中止）/可展开输入输出/bash 命令与输出摘要/大输出截断保留尾部 +「复制全部」→ `post copy_output` 取宿主缓存全量） |
+| `UiMessage.aborted` | `metadata.custom.aborted = true` | AssistantMessage 尾部「⏹ 已中止」消息级标记（与旧 `finalize` 同构） |
+| `UiMessage.errorMessage` | `metadata.custom.errorMessage` | 消息级「⚠ …」提示（旧实现同构） |
+| 空文本块 | **不建 part**（映射期滤除） | ——（消费契约 #21：空 text/reasoning part 会被 `fromThreadMessageLike` 丢弃，提前滤除保序） |
+
+- **status 不注入**：运行态经 `isRunning` 驱动（ExternalStoreAdapter 既定口径）；`status` 仅 assistant 消息合法（#21：user 带 status 即 throw），不注入可规避消费契约陷阱。相邻 assistant 消息**不合并**（无 joinStrategy）——pi 多轮 assistant 各自成条，与澄清 #12 计数口径一致。
+- **Markdown 与高亮（唯一决策 = 渐进高亮：highlight.js common 同集平移 + Markdown 解析 defer；Shiki 全系不引入）**：`MarkdownTextPrimitive`（@assistant-ui/react-markdown 0.14.26）+ `remarkPlugins: [remarkGfm, remarkBreaks]`（表格/删除线/任务列表 = FR-CHAT-02 表格；单换行→`<br>` 对齐旧 marked `breaks:true`）；代码高亮经 `components.SyntaxHighlighter`（§11 #19 挂接契约）自研适配器 = **highlight.js 11.12.0 `lib/common`**（既有依赖，与旧实现逐字同一语言集——回归为零）；`defer: true`（官方渐进解析：流式期低优先级重解析、终稿必渲染）。**否决 Shiki/限语言/代码分割方案**：FR-CHAT-02 边界只要求「不窄于 hljs common」——同集平移零回归；Shiki 需 TextMate 语法链 + oniguruma（限语言仍 1–2 MiB 且引入 wasm/CSP 复杂度，全量 ≈15 MiB 直接违 FR-AUI-05③）；`@assistant-ui/react-streamdown`（Shiki 唯一入口）不引入。
+- **高亮语言集定值（#19(a) 附注「具体清单由设计基线定值」）= highlight.js lib/common 36 语言**（node_modules 实测 registerLanguage 清单，§11 #23）：bash, c, cpp, csharp, css, diff, go, graphql, ini, java, javascript, json, kotlin, less, lua, makefile, markdown, objectivec, perl, php, php-template, plaintext, python, python-repl, r, ruby, rust, scss, shell, sql, swift, typescript, vbnet, wasm, xml, yaml。集外语言回退纯代码转义展示（与旧实现未收录语言行为同构，不构成回退）。
+- **XSS 口径（NFR-03 / FR-AUI-02④）**：Markdown 主体 = react-markdown 构造性转义（rehype-raw 不引入 = 无 raw HTML 通道）+ 默认 `urlTransform` 过滤危险协议 + 链接组件补 `rel="noopener noreferrer"`（点击行为沿用 VS Code webview 内建外开，与旧面板同口径）；唯一受控 HTML sink = SyntaxHighlighter 内 `hljs.highlight` 输出经 **DOMPurify.sanitize**（既有依赖，与旧实现同一消毒口径）后 `dangerouslySetInnerHTML`——源码扫描对 `webview/ui/**` 禁 innerHTML 系 API，仅该 sink 白名单。XSS 探针（UI-XSS 回放剧本）断言升级：jsdom 真实渲染下 DOM 无新增 script 元素、探针文本逐字为文本节点（FR-AUI-02④ 从 MANUAL 升格可自动判定）。
+
+**理由**：part 化字段保真走官方转换契约（#21 实现级核实：result/isError/argsText/metadata.custom 均透传），工具卡数据经 tool-call part 承载 = 全部渲染数据穿越真实 runtime 转换链（#D-06 教训正向制度化：消费面即测试面）；高亮同集平移是 FR-CHAT-02「零回退」的最短路径。
+**锚点**：FR-CHAT-01/02/03/04、FR-AUI-02②④、FR-AUI-08②；#19(a) 附注；§11 #19/#20/#21/#23；§10.13 D3（最小映射 → 本批次全量取代）。
+
+#### D3 Composer 等价迁移（FR-FILE-02 / FR-CMD-03 / FR-MOD-01③ / FR-MOD-04 / FR-CHAT-05/06）
+
+**逐能力决策表**（旧实现参照 = `webview/main.ts` + `webview/render/*` + `src/panel/chatPanel.ts`）：
+
+| 能力（FR） | 旧实现 | 决策（复用/重写） |
+|---|---|---|
+| 输入主体：Enter 发送 / Shift+Enter 换行 / isComposing 防误发 | main.ts keydown | **重写**（React 接线，语义同构：命令菜单打开时 ↑/↓/Enter/Esc 导航优先不发送） |
+| 发送按钮 + 中止（FR-CHAT-05） | btn-send 图标 / btn-stop | **重写**：ComposerPrimitive.Send（图标化 + aria-label「发送」，D6③）/ ComposerPrimitive.Cancel → `post abort`；运行中显示 Stop、隐藏发送（ThreadPrimitive.If running 同构） |
+| `@` 文件选择器（FR-FILE-02） | input 处理器（前一字符行首/空白 + 1s 防抖）→ insert_file_ref → 宿主 QuickPick → file_ref → insertAtCursor(replaceAt `@`) | **半复用**：触发谓词机械提取为纯函数 `webview/ui/fileRefTrigger.ts`（可单测）；宿主 QuickPick 经 hostActions 复用；光标插入 = textarea ref 读选区 + `ComposerRuntime.setText` 全文重写（§11 #22，保 replaceAt `@` 语义）；输入区无添加文件按钮（DOM 断言面） |
+| `/` 命令菜单（FR-CMD-03） | `render/commandMenu.ts`（纯逻辑）+ main.ts 接线 | **纯逻辑原样复用**（CommandMenuState/filterCommands 零改动，随 UI 目录平移）；React 菜单组件按状态机快照渲染；request_commands/commands 协议复用；↑/↓ 环绕、Enter 选中插入 `/`+命令名、Esc 关闭、鼠标 mousedown 等效（保持焦点）逐条同构 |
+| 底部模型选择器（FR-MOD-01③） | model-selector/model-menu | **重写**（React 组件）；request_models/models_list/set_model 协议复用，终接同一 `bridge.setModel` 三入口同步（FR-MOD-01） |
+| 上下文用量行（FR-MOD-04） | usage-line + format.ts | **纯函数复用**（formatContextUsage/formatHHmm 零改动）；usage_info 协议复用；React 组件重写 |
+| steer/followUp 模式切换与发送语义（FR-CHAT-06） | send-mode select；运行中 mode=select 值、否则 auto | **重写**（React 状态 + 同语义）；config 事件（sendMode 默认）复用；placeholder 运行中提示同构 |
+| 头部：状态行/会话名/新会话/历史/设置（FR-CHAT-08/FR-SESS-01/04） | header DOM | **重写**（React 组件）；model_info/run_state/session_name/new_session/open_history/rename_session/open_settings 协议复用 |
+| 错误卡片 / toast / 外部修改横幅（FR-CHAT-07/FR-SESS-07） | showError/showToast/showExternalChangeBanner | **重写**（React 组件，含刷新按钮 → refresh_session）；error/toast/external_change 协议复用 |
+| input_prefill（FR-FILE-03 右键发送预填） | insertAtCursor | **重写**：ComposerRuntime.setText 预填（协议复用） |
+
+- **纯逻辑模块复用总表**：`commandMenu.ts`（复用）、`format.ts`（复用）、`followState.ts`（复用，D4）；`markdown.ts`（**弃用**——Markdown 渲染换 @assistant-ui/react-markdown，DOMPurify 仅存于 hljs sink）；`render/messages.ts` MessageView（**弃用**——React 组件化，D2）。
+- **宿主动作层提取（`src/panel/hostActions.ts`，新文件）**：chatPanel.ts 的 vscode 交互动作（showHistory/showFilePicker/showModelPicker/showThinkingPicker/showRenameInput/guard/relativePath/copy_output 约 120 行）机械提取为共享模块，chatPanel.ts 改为同名委托（**行为零变化**），`chatController.ts` 复用同一模块。FR-AUI-07③「行为冻结」口径 = **行为冻结非字节冻结**：判定 = 既有回归套件零放宽全绿 + 双面板一致快照（D9）；chatPanel.ts 改动收敛为 viewType 常量 + 该机械提取两处。否决方案：复制 120 行到新宿主（一概念两拼写，维护性不可接受）；chatPanel.ts 字节冻结（则新宿主无法复用 QuickPick 面，同样落复制）。
+
+**锚点**：FR-FILE-02、FR-CMD-03 ①–⑤、FR-MOD-01③/03/04、FR-CHAT-05/06、FR-CHAT-08、FR-SESS-01/04/07、FR-FILE-03；§11 #22；§10.11（各能力实现口径逐条迁移基线）。
+
+#### D4 流式与跟随（FR-CHAT-01 / FR-CHAT-09 四款；NFR-01）
+
+**决策**：
+- **增量渲染链**：postMessage 泵 → **delta 合批缓冲**（rAF 冲刷；`message_final`/`history_loaded`/`session_reset` 前强制冲刷 = 零丢失保证）→ store reducer（appendDelta 既有语义）→ React commit。批处理痕迹 = 每 rAF 至多一次 store 演进（NFR-01 #3 代理判据沿用：≥600 delta 零丢失 + 全量渲染 ≤30s + 批处理迹象）。
+- **FR-CHAT-09 40px 跟随语义等价（React 适配层）**：
+  - 决策点 = **`useLayoutEffect`（依赖 store 快照）**：每次 React commit（= 一次增量渲染）后调用 `applyFollowScroll()`——对应旧实现「MutationObserver 渲染点」口径（①“每次增量渲染后保持底部”）；useLayoutEffect 在 DOM 变更后、绘制前执行，等价且优于旧异步回调（无可见闪烁窗口）；
+  - 度量与执行：滚动容器 `scrollHeight/clientHeight/scrollTop` 同公式（distanceFromBottom 下限 0）；
+  - 用户滚动识别：scroll 事件 + **selfScrollPending 程序滚动自标记**同构迁移（React 合成事件不改变语义；已在底部无位移不自标记）；>40px 打断（②，增量渲染不推动滚动位置）、≤40px 恢复（③）；
+  - 每轮默认跟随重置 = `FollowState.onStreamStart`（本轮首个 stream_start，roundStarted 口径不变——轮内后续消息不覆盖用户打断）；`onRunState` 门控 idle 不自动滚动（④）；会话载入/切换尾部一次性定位不走向量决策（④排除项）；
+  - 跟随态 = FollowState 实例存活 React 组件内（不入 store、不写会话、不持久化——④）。
+- Markdown `defer`（D2）中间态跳过不影响①判据：判据挂在 commit 点（每次实际 DOM 变更后回底），跳过的中间态即未渲染、无「增量渲染」发生。
+
+**理由**：FollowState 纯状态机零改动复用使四款语义判定（单测 13 用例）原样生效，React 侧仅替换「渲染点观测」与「滚动执行」两个接线面；useLayoutEffect 是 React 语义下“渲染后”的精确定义（D10 风险登记备选：若真机发现时序缺口，回退 = 滚动执行再锚定一次 rAF，语义不放宽）。
+**锚点**：FR-CHAT-01、FR-CHAT-09①②③④；§10.10 FR-CHAT-09 实现注记（口径界定「每轮」定义原样迁移）；NFR-01；§11 #14（「Streaming responses」原地变更口径）。
+
+#### D5 user 回声与单气泡（FR-CHAT-11 ①–⑤全语义）
+
+**决策**：
+- **宿主零改动**：§10.12 D1–D7（单源 id 贯通 + pending 账本 + 就地 finalize + 权威重建）原样承载 FR-CHAT-11 全语义——路线 B 既定卖点，切换批次对 `src/bridge/**` 零改动（D10 冻结面）。
+- **store 消费侧单条映射口径**：
+  - `user_message`（宿主单源 id）→ push 单条（①发送即时展示，不等回声）；
+  - `message_final(user)`（回声终稿，同 id）→ `applyMessageEvent` **就地覆盖**（幂等键 = 消息 id，§10.12 D4 同语义）——澄清 #16 就地更新：更新前后条目数均为 1，文本收敛为 pi 权威文本；
+  - 澄清 #17 保守分支：宿主不重绑不追加 → store 收不到该条 message_final → 保留发送原文单条（不错换/不新增）；权威重建（`history_loaded` 全量替换 store.messages）后收敛 JSONL 权威文本（③④）；
+  - steer / followUp 插话经同一 `user_message` 路径（②同口径）；历史重放（面板重开/会话切换）以 `history_loaded` 全量替换为唯一重建入口（③）；
+  - 映射层一 UiMessage → 一 ThreadMessage（无合并/无 joinStrategy），转换契约遵守 #21（user 仅 text part；assistant part 保真）；⑤回归边界 = assistant 流式/工具卡路径不涉 user 事件（§10.12 D7 同边界）。
+- **判定**：jsdom golden E2E 三判定时点（发送后 / user 回声后 / 本轮终稿后）user 气泡 DOM 计数恒 1 + 就地更新文本断言 + 历史重放计数断言（D8）。
+
+**理由**：FR-CHAT-11 的全部关联复杂度已在宿主账本收敛（TASK-008 核验 PASS），消费侧只需「同 id 就地更新 + 权威重建替换」两条规则；#17 的多通道不可判定性在 store 层天然成立（无回声 = 无事件，被动保留即正确）。
+**锚点**：FR-CHAT-11①–⑤、澄清 #5/#12/#16/#17；§10.12 D1/D2/D4/D5/D6；§11 #21。
+
+#### D6 主题与视觉（FR-CHAT-10 五子条 + FR-AUI-04；#19(a) 全维持口径）
+
+**决策（五子条逐条落地）**：
+- **token 映射载体**：`webview/ui/chat.css` = `@import "@assistant-ui/vscode/theme.css"`（shadcn token → `--vscode-*` 映射，§11 #11 Theme 节）+ 显式覆盖层（lab.css 平移扩容）。FR-AUI-04 验证面平移：ui-theme.test.ts 静态审计（token 链终点 --vscode-*、浅深调色板差异、WCAG ≥4.5）+ 真机截图 checklist。
+- ① **内容列 960px 居中**：消息视口内层与 Composer（含底部模型选择器/用量行）共享同一 `.content-col { max-width: 960px; margin: 0 auto; }`（shadcn 默认宽度不采纳，CSS 显式钉值断言）。
+- ② **输入框圆角 8px**：`.composer-shell { border-radius: 8px; }` 显式钉值（shadcn rounded-lg 恰合仍断言钉值）。
+- ③ **发送图标化**：自定义 Send 组件 = 上箭头 SVG、无文字内容、`aria-label="发送"` + `title="发送"`（覆盖 assistant-ui 默认英文 aria 文案——#19(a)③ 钦定）；jsdom 断言按钮无文本子节点 + 可访问性名称。
+- ④ **消息布局**：用户消息右对齐 + 气泡容器（背景色+圆角包裹）；助手消息左对齐无气泡包裹；**禁 avatar**（自定义 UserMessage/AssistantMessage 组件不渲染头像槽位；jsdom 断言消息子树无 img/avatar 元素——#19(a)④⑤）。
+- ⑤ **HH:mm 时间戳替代角色标记**：MessageRoot 自定义渲染 `.message-time` = `formatHHmm(createdAt.getTime())`（format.ts 复用，本地时区 24 小时制）；不显示 User/Assistant 文字前缀；jsdom 断言 `^\d{2}:\d{2}$`；thinking 折叠块与工具卡功能标签不受约束（FR-CHAT-10⑤ 原文）。
+- **判定载体**：③④⑤ jsdom 结构断言（FR-CHAT-10 从 MANUAL 全量升格可自动判定）+ ①② CSS 钉值断言 + FR-AUI-04①② 采样/对比度自动兜底 + 浅/深主题截图 MANUAL（证据类型：截图）。
+
+**锚点**：FR-CHAT-10①–⑤、FR-AUI-04①②③、#19(a)；§11 #11；§10.11 FR-CHAT-10 实现注记（口径平移基线）。
+
+#### D7 预算与构建（FR-AUI-05①③（v0.7 新口径））
+
+**决策**：
+- **构建参数**：`webview/ui/main.tsx → media/chat.js(+.css)` 沿 lab 入口既定参数（platform browser / iife / es2020 / `jsx:"automatic"` / minify / `define NODE_ENV=production`）；`zod-jitless.ts` 首 import 保留（zod 经 @assistant-ui/react 传递依赖仍在 bundle，jitless 三件套平移）；宿主入口与 `webview/main.ts → media/main.js` 参数零改动。
+- **依赖变更（全部精确锁定，零 ^/~/>= 前缀）**：删 `@assistant-ui/ai-sdk 0.0.19`、`ai 7.0.153`（路线 A 专属）；增 `@assistant-ui/react-markdown 0.14.26`、`remark-gfm 4.0.1`、`remark-breaks 4.0.0`；devDependencies 增 `@testing-library/react 16.3.3`、`@testing-library/dom 10.4.2`、`jsdom 31.0.1`（D8 测试基建）；保留 react 19.3.1 / react-dom 19.3.1 / @assistant-ui/react 0.15.37 / @assistant-ui/vscode 0.0.1 / zod 4.6.7 / marked·dompurify·highlight.js（经典面板冻结面依赖，不删）。
+- **预算核算预估（设计期估算，门禁以实现期实测为准）**：
+
+| 项 | 预估 | 预算 | 依据 |
+|---|---|---|---|
+| 默认面板 `media/chat.js`（入口+chunk，不含 css/map） | **≈1.3–1.8 MiB** | ≤ 4 MiB（4,194,304 B，FR-AUI-05③） | react+react-dom ≈0.45 MiB + @assistant-ui/react 链 ≈0.6 MiB（阶段①切片 B 度量 611 KB 内含 react 实测锚）+ react-markdown/remark-gfm/remark-breaks 链 ≈0.3–0.5 MiB + highlight.js common ≈0.26 MiB + 应用壳 ≈0.05 MiB；占用 ≈31–43%，余量充足 |
+| 宿主 bundle 增量 | **≈−50 KB ~ 0**（净变化或负向） | ≤ 1 MiB（基线 v0.1.7 = 459,382 B） | +hostActions/controller 全协议 ≈+10 KB，−chatRoute（`ai` 流写入器子集）≈−30~60 KB |
+| 经典面板 `media/main.js` | 0（不变） | 依赖图无 react/@assistant-ui（断言平移） | 冻结入口 |
+| VSIX | 略缩 | — | 删 ai/ai-sdk 依赖链（v0.1.7 实测 31,176,757 B 为参照） |
+
+- **门禁断言（ui-budget.test.ts 平移扩容）**：chat.js+全部 chunk `fs.stat` 合计 ≤ 4,194,304 B；宿主增量 ≤ 1,048,576 B（vs v0.1.7 构建产物基线）；经典入口 metafile inputs 零 react/react-dom/@assistant-ui 命中；依赖精确版本 JSON 断言（ui-versions.test.ts，含删除项断言：package.json 无 `@assistant-ui/ai-sdk`/`ai`）。
+
+**理由**：FR-AUI-05③ v0.7 口径（默认面板全链 4 MiB）为本设计定值的上位口径；高亮方案选型（D2）对预算影响已核算（hljs common 0.26 MiB vs Shiki 限语言 1–2 MiB——选型与预算互证）。
+**锚点**：FR-AUI-05①③（v0.7）、§10.13 D6（阶段①实测基线）、§11 #19/#23。
+
+#### D8 测试策略（#D-06 教训制度化：消费端契约验证）
+
+**唯一选型 = headless React 测试基建（jsdom 31 + @testing-library/react 16）引入为新 UI 消费端契约验证面**；至少一条端到端 golden 回放链路以**真实 @assistant-ui/react runtime 消费**断言（非自建解码器）。
+
+**理由（对备选的裁决）**：① #D-06 根因 = 断言以自建解码器消费、真实 runtime 消费面从未被验证——「真实 runtime 的 store/订阅层驱动」仍绕开 `fromThreadMessageLike` 转换与组件消费层，与自建解码器**同构风险**（§11 #21 的消费契约陷阱：status 仅 assistant 即 throw、空文本 part 丢弃、user 无 tool-call part——这些分歧只有真实 runtime 消费才暴露）；② 「无 DOM 纪律」先例（§10.10/§10.11）针对旧 vanilla 面板（手写 DOM 测试收益低），而切换批次后产品面即 React 组件——jsdom + RTL 是 React 组件的标准测试面，属**有意的、范围受限的纪律演进**（仅 `webview/ui` 相关测试文件以 `// @vitest-environment jsdom` 文件级注解启用；经典面板与桥侧测试维持 node 零 DOM）；③ 基建全部 devDependencies（jsdom 31.0.1 / @testing-library/react 16.3.3 / @testing-library/dom 10.4.2，peer react ^18||^19 已核），不进产物、不触 CSP/构建面。
+
+**端到端 golden 回放链路（P0，≥1 条）**：`golden-prompt-basic.jsonl` → fake-pi `FAKE_PI_REPLAY` 子进程（§10.12 D8 注入位）→ RpcClient → PiBridge → chatController（postMessage 泵）→ jsdom window MessageEvent → store dispatch → **真实 `AssistantRuntimeProvider` + `useExternalStoreRuntime` + MarkdownTextPrimitive/自定义组件渲染** → DOM 断言：消息条数 = fixture user+assistant 逐行推导值、assistant 文本逐字一致、user 气泡三时点计数 = 1（D5）、工具卡状态/摘要/输出/复制接线、reasoning 折叠存在、时间戳 `^\d{2}:\d{2}$`、无 avatar、XSS 探针文本保真且无新增 script 元素。`golden-steer-followup.jsonl`（P1）同链路断言插话序列不丢不错换。**传输真实性（FR-AUI-02③ 防自证口径不变）**：注入点 = PiBridge 之下的 fake-pi 子进程，事件经真实 postMessage 通道进 store，测试不直接触 store/渲染结果。
+
+**分层**：
+- unit（verify:unit，node 环境，确定性纯逻辑）：映射纯函数扩容（tool-call result/isError、metadata.custom、空文本不建块、#21 契约顺从）；store reducer（含 delta 合批缓冲零丢失）；fileRefTrigger；commandMenu/format/followState 复用件回归（原用例平移）；ui-budget/ui-csp/ui-versions/ui-theme/ui-isolation（经典面板冻结面 + 预算 + 依赖锁 + 主题审计）。
+- integration（verify:integration，node 环境）：宿主零改动判定面原样保留（golden-replay/user-echo/pi-bridge/defects-regression/rpc-client/runtime-resolve 等）。
+- integration（verify:integration，jsdom 环境文件级注解）：ui-golden-dom.test.ts（上列 E2E 链路）、ui-dual-panel.test.ts（D9 一致快照）、ui-xss.test.ts（UI-XSS 探针真实渲染断言）。
+- MANUAL（真机 checklist，核验四值制度）：浅/深主题截图（FR-AUI-04③）、真实 CSP 下 devtools 零 violation（FR-AUI-05② 真机层）、retainContextWhenHidden 行为层（FR-AUI-05④）、双面板切换冒烟（FR-AUI-07③）、流式跟随观感、Composer 交互细节（IME/焦点保持）。
+
+**回归清单重定向（基线 = 218 unit / 45 integration）**：
+- **删除**（#D-06 随路线 A 关闭）：`test/unit/lab-route.test.ts`、`test/integration/lab-slice-a.test.ts`；
+- **平移改判**：lab-store/lab-store-mapping → ui-store/ui-mapping（断言扩容）；lab-csp/lab-theme/lab-budget/lab-versions/lab-isolation → ui-*（预算口径 3→4 MiB、HTML/注册断言面改 chatView、冻结面反转为**经典面板**零改动断言）；lab-slice-b → **ui-golden-dom**（store 数据断言升格为真实 runtime DOM 断言，#D-06 制度化的落点）；
+- **保留零改动**：commandMenu/format/followState/text/protocol/redact/config/jsonl/runtime/rpcClient/stderr-ordering/sessionStore/piBridge（unit）+ golden-replay/user-echo/pi-bridge/defects-regression/rpc-client/runtime-resolve（integration）——宿主零改动 = 用例零改动；
+- **新增**：jsdom 组（上列）+ ui-composer.test.ts（@ 触发谓词/命令菜单接线纯逻辑）。
+
+**锚点**：规范 §4.3（mock 对齐 + golden 兑底）/#D-06 任务单裁决；FR-AUI-02③④、FR-AUI-03①②③、FR-AUI-08③；§11 #21（消费契约）；§10.13 D8（先例与本次有意偏离的理由）。
+
+#### D9 经典面板回退与退役（FR-AUI-07③④；#19(c)）
+
+**决策**：
+- **双面板行为一致快照（FR-AUI-03④/FR-AUI-07③）**：同一 golden 回放分别驱动两面板消费端、断言同一期望（fixture 逐行推导）——新 UI = jsdom 真实 runtime DOM 断言（D8）；经典面板 = **同一 jsdom 基建**加载 chatPanel HTML 模板 + `media/main.js` 冻结 bundle（vscode stub 取 HTML，沿既有 prod-vscode-stub 模式），DOM 断言消息条数与消息文本；两面板断言结果逐条相等即快照成立。**受控回退（预登记）**：若经典 bundle 在 jsdom 挂载成本超预期，经典侧降级为数据层断言（消息视图计数/文本经其公开路径）+ 真机 MANUAL 对照，自动断言以新 UI 为准——如触发，记设计偏差留痕，不静默降级。
+- **双面板可切换**：同一工作区分别打开两面板无错误 = MANUAL 冒烟 + 命令/注册结构断言（openChatClassic → chatViewClassic.focus、两 viewType 注册齐全）。
+- **并存期行为冻结**：经典面板仅缺陷级修复（FR-AUI-07③）；0.1.8 全程可经 `sdysyhj.openChatClassic` 切回（用户自救入口）。
+- **0.2.x 删除步骤预告（#19(c) 删除判定 = contributes 无 chatViewClassic/openChatClassic 结构断言）**：① package.json 删 viewType `sdysyhj.chatViewClassic`、命令 `sdysyhj.openChatClassic`、activationEvents 对应条目；② 删 `src/panel/chatPanel.ts`、`webview/main.ts`、`webview/render/**`、`webview/styles/**`、esbuild `media/main.js` 入口与产物；③ `src/panel/hostActions.ts` 留存（新 UI 继续消费，删除不涉）；④ 测试删除 ui-dual-panel 经典侧、ui-isolation 经典冻结断言与相关回归载体，回归清单去经典行；⑤ docs/README/CHANGELOG 同步。
+
+**理由**：一致快照是 FR-AUI-08③「既有验收 + golden 回放 + 双面板一致兜底」三件套的兜底层；jsdom 双载体对比使「行为一致」字面可判定（两面板渲染同一 fixture 同一期望），不依赖肉眼对照。
+**锚点**：FR-AUI-03④、FR-AUI-07③④、FR-AUI-08③、#19(c)。
+
+#### D10 改动面与迁移顺序（含风险与回退）
+
+**文件清单**：
+- **移除**：`webview/lab/**`（12 文件：main.tsx/sliceA/sliceB/slice-a.measure/slice-b.measure/shell.tsx/store.ts/threadMessageLike.ts/lab.css/zod-jitless.ts 等——实现体平移扩容至 webview/ui 后原路径删）、`src/lab/**`（3 文件）、`test/unit/lab-route.test.ts`、`test/integration/lab-slice-a.test.ts`、依赖 `@assistant-ui/ai-sdk` + `ai`。
+- **新增**：`webview/ui/`（main.tsx 入口 / shell.tsx（全壳：header+消息区+Composer+错误区）/ store.ts（reducer+delta 合批）/ threadMessageLike.ts（D2 全量映射）/ markdown.tsx（MarkdownTextPrimitive+hljs SyntaxHighlighter）/ toolCard.tsx / composer.tsx / fileRefTrigger.ts / zod-jitless.ts / chat.css）；`src/ui/chatViewProvider.ts`、`src/ui/chatController.ts`；`src/panel/hostActions.ts`；测试：`test/unit/ui-mapping|ui-store|ui-composer|ui-theme|ui-budget|ui-csp|ui-versions|ui-isolation.test.ts`、`test/integration/ui-golden-dom|ui-dual-panel|ui-xss.test.ts`。
+- **修改**：`package.json`（contributes/依赖，D1/D7）、`package-lock.json`、`esbuild.mjs`（入口重定义）、`src/extension.ts`（注册接线反转：chatView→新 UI、chatViewClassic→经典、删 lab）、`src/panel/chatPanel.ts`（viewType 常量 + hostActions 委托）、`test/helpers/fake-pi-cli.js`（LAB-XSS 剧本改名 UI-XSS 并按需扩充，文件头锚点注释保留）、`.gitignore`（media/chat.* 构建产物）、`docs/technical-design.md`（本节 + FR 追溯表交付期）。
+- **冻结零改动**：`src/bridge/**`、`src/panel/messages.ts`（协议零改动）、`webview/main.ts`、`webview/render/**`、`webview/styles/**`、esbuild 宿主与 main.js 入口参数。
+
+**实施顺序**（每步可独立绿灯，判定面自第一天成立）：① 依赖 + 构建入口重定义（chat.js 空壳可构建、预算断言就位）→ ② store/映射扩容 + **ui-golden-dom E2E 骨架先行**（真实 runtime 消费断言从首个实现提交即存在）→ ③ 消息渲染（text/Markdown/高亮 → reasoning 折叠 → 工具卡）→ ④ Composer 全量 + 宿主协议全集（hostActions 提取与 chatPanel 委托同提交，回归全绿护航）→ ⑤ 跟随（D4）/头部/错误/toast/横幅 → ⑥ 主题五子条 + CSP/预算/版本门禁全绿 → ⑦ 切注册（chatView 换新 + chatViewClassic 上线 + lab 移除）→ ⑧ 双面板一致快照 + 回归重定向 + 全量 verify + 10 连跑稳定性。
+
+**风险登记**：① FR-CHAT-09 跟随语义 React 等价性（useLayoutEffect 时序——回退 = 滚动执行补一次 rAF 锚定，语义不放宽）；② 高亮/Markdown 预算（react-markdown 链超预估——回退 = defer+代码分割，仍 ≤4 MiB；hljs common 已按 0.26 MiB 计入）；③ Composer 交互细节（IME isComposing、@ 防抖、命令菜单焦点保持——jsdom 部分可断言 + 真机 checklist）；④ `@assistant-ui/react-markdown 0.14.26` × react 19.3.1 × remark-gfm 4.0.1 实际构建兼容（实现期首步核验项，导出面已 tarball 核读）；⑤ Markdown defer 中间态跳过对 FR-CHAT-01「实时」观感（判据 = delta 级渲染存在性，defer 仅调优先级）。
+
+**回退**：注册切换是原子开关（extension.ts 注册面单点）；用户自救 = `sdysyhj.openChatClassic` 公开命令全程可用；发版回退 = revert 切换提交即回经典默认（经典面板冻结断言保证回退可用，FR-AUI-05③④）；#D-06 相关代码已删除，无路线 A 残留。
+
+**交付期预告（FR 追溯表）**：交付时 §10.1 FR-AUI-02/03/05/07/08 行更新为实现位置 + 回归索引，§4.1–4.5 各 FR 行「实现位置」补新 UI 载体（判定载体平移注记，FR-AUI-08①）；本阶段不写「已实现」。
+
+#### 遗留上报（无需求歧义；供总调度知悉，不阻塞 1b）
+
+1. **jsdom 基建引入 = 对「无 DOM 纪律」先例的有意偏离**（D8 理由已裁决选型；本条为透明度披露）：范围限 webview/ui 测试文件、devDependencies、不进产物。若总调度不采纳，替代口径 = 真实 runtime store/订阅层驱动 + DOM 层全 MANUAL——消费端覆盖显著变薄（#D-06 同类盲区部分回归），不推荐。
+2. **实现期首步核验项**（设计期不装依赖，导出面已 tarball 核读）：react-markdown 0.14.26 × react 19.3.1 × remark-gfm/remark-breaks 构建兼容与表格/换行渲染实测（D2/D10 风险④）；若 remark-breaks 行为与旧 marked `breaks:true` 有可见差异，按「用户可见行为零回退」取齐并记设计偏差。
+3. **ui-dual-panel 经典侧 jsdom 挂载**已预登记受控回退（D9）；如触发按设计偏差留痕。
+
+---
+
 ## 11. 外部契约依赖清单（规范 §6 必填项，2026-11-21 新建）
 
-> 本节登记本设计依赖的全部外部系统行为：外部系统 → 权威文档路径 + 版本锚定 → 关键行为章节/行号 → 我方依赖的行为 → 对应设计章节。供测试 Agent 用例锚点引用与审批点 1b 审查；设计中的事件流/接口契约须与本清单一致。**版本锚定：pi 1.5.2**（`pi --version`；依赖包随附文档，路径 = `node_modules/@earendil-works/pi-coding-agent/docs/`，绝对路径示例 `/home/connor/.nvm/versions/node/v24.19.0/lib/node_modules/@earendil-works/pi-coding-agent/docs/`）。**TASK-009 阶段①起增列 @assistant-ui 生态条目 #11–#18**（版本锚定 2026-11-21 registry/仓库实测，设计依据见 §10.13；#1–#10 仍为 pi 1.5.2 契约）。
+> 本节登记本设计依赖的全部外部系统行为：外部系统 → 权威文档路径 + 版本锚定 → 关键行为章节/行号 → 我方依赖的行为 → 对应设计章节。供测试 Agent 用例锚点引用与审批点 1b 审查；设计中的事件流/接口契约须与本清单一致。**版本锚定：pi 1.5.2**（`pi --version`；依赖包随附文档，路径 = `node_modules/@earendil-works/pi-coding-agent/docs/`，绝对路径示例 `/home/connor/.nvm/versions/node/v24.19.0/lib/node_modules/@earendil-works/pi-coding-agent/docs/`）。**TASK-009 阶段①起增列 @assistant-ui 生态条目 #11–#18**（版本锚定 2026-11-21 registry/仓库实测，设计依据见 §10.13）；**TASK-009 切换批次增列 #19–#23**（版本锚定 2026-11-22 registry/npm tarball/随包源码实测，设计依据见 §10.14；#1–#10 仍为 pi 1.5.2 契约）。
 
 | # | 外部系统 / 行为 | 权威文档（pi 1.5.2 随附） | 关键章节 / 行号 | 我方依赖的行为（一句话） | 对应设计章节 |
 |---|---|---|---|---|---|
@@ -724,6 +907,11 @@ FR 追溯表（§10.1）将在实现交付时新增 FR-CHAT-11 行（状态、�
 | 16 | 官方测试床 examples/with-vscode | github.com/assistant-ui/assistant-ui（main 分支：examples/with-vscode） | `src/fixtures/route.ts`（`ai` `createUIMessageStream`/`createUIMessageStreamResponse`；帧型 start-step/text-start/text-delta/text-end/reasoning-*/tool-input-available/tool-output-*/source-url/file/data-*/error/finish-step；`req.signal` 中止观测）；`src/fixtures/request.ts`（ChatRequest 解析：取最后 user 消息）；`src/webviews.ts`（renderWebviewHtml scriptType classic + bodyAttributes boot + serveWebviewHost 接线）；`webview/zod-jitless.ts`；`test/`（@vscode/test-electron probes 模式，Readiness 视图跑 fetch bridge/abort/CSP/theme 等探针） | 路线 A 帧协议与请求解析权威样例、宿主接线形态、测试床参照 | §10.13 D2/D7/D8 |
 | 17 | `ai@7.0.153`（UIMessage 流写入器） | npm（@assistant-ui/vscode devDeps `ai ^7.0.153` 实证；满足 @assistant-ui/ai-sdk peer `^7.0.101`） | `createUIMessageStream`/`createUIMessageStreamResponse`（官方测试床 fixtures/route.ts 实证用法）＝ AssistantChatTransport 消费协议的生产侧 | 路线 A Response 构造（帧写入器） | §10.13 D2/D6 |
 | 18 | VS Code 默认主题调色板（FR-AUI-04 主题审计 fixture 基值） | github.com/microsoft/vscode `extensions/theme-defaults/themes/dark_modern.json` / `light_modern.json`（随 VS Code 发布；采样用 `--vscode-*` 基值快照入库 `test/fixtures/` 并注明来源+版本） | 主题 JSON `colors` 表 | `--vscode-*` 变量在浅/深主题的具体取值来源（审计脚本代入 token 链计算联动差异与 WCAG 对比度） | §10.13 D8 |
+| 19 | `@assistant-ui/react-markdown@0.14.26`（Markdown 渲染组件） | npm tarball 全量导出面（registry.npmjs.org/@assistant-ui/react-markdown/-/react-markdown-0.14.26.tgz，2026-11-22 核读） | `dist/index.d.ts`：`MarkdownTextPrimitive`（props = react-markdown `Options` 减 components/children + `components.SyntaxHighlighter/CodeHeader` + `componentsByLanguage` + `smooth` + `defer`（useDeferredValue 渐进解析：流式中间态可跳过、终稿必渲染）+ `preprocess`）；`dist/code-fence.d.ts`：`SyntaxHighlighterProps={node, components:{Pre,Code}, language, code}`、`CodeHeaderProps`、`parseLanguageClass`；依赖 `react-markdown ^10.1.0`（**无 Shiki**——Shiki 仅经 `@assistant-ui/react-streamdown` 引入，本设计不引入该包）；peer `react ^18\|\|^19`、`@assistant-ui/react ^0.15.0` | 文本 part 的 Markdown 渲染与代码高亮挂接契约（SyntaxHighlighter 插槽、defer 渐进解析） | §10.14 D2/D7 |
+| 20 | `react-markdown@10.1.0` + `remark-gfm@4.0.1` + `remark-breaks@4.0.0`（Markdown 解析链） | npm registry（版本核值 2026-11-22）；react-markdown README | react-markdown：**不解析 raw HTML**（rehype-raw 未引入即无 HTML 注入通道，字符串 children 构造性转义）；默认 `urlTransform` 过滤危险协议（javascript: 等）；`remarkPlugins` 挂载面。remark-gfm：GFM 表格/删除线/任务列表（FR-CHAT-02 表格要素）。remark-breaks：单换行 → `<br>`（对齐旧 marked `breaks:true` 行为） | XSS 口径（NFR-03）；FR-CHAT-02 全要素（表格/换行）等价依据 | §10.14 D2 |
+| 21 | `@assistant-ui/core@0.3.37` `fromThreadMessageLike` 消费契约（实现级，#D-06 消费端契约直接锚点） | node_modules 随包 `dist/runtime/utils/thread-message-like.js`（2026-11-22 核读；同 #12 tarball 源码级先例） | assistant role：`status` 仅 assistant 合法（user 带 status **throw**）；空/纯空白 text part **丢弃**、reasoning 同；tool-call 展开保留 `result`/`isError`/`argsText`（args 由 argsText `parsePartialJsonObject`）；`metadata.custom` 透传（`custom: metadata?.custom ?? {}`）；user role 的 tool-call/reasoning part **throw**；`createdAt` 缺省 `new Date()` | 映射扩容的字段保真契约（工具卡数据经 result 透传、aborted/errorMessage 经 metadata.custom、空文本不建块、status 不注入）；真实 runtime 消费测试的期望锚点 | §10.14 D2/D5/D8 |
+| 22 | `@assistant-ui/core` Composer/ExternalStore 运行时接口面 | node_modules 随包 `dist/runtime/api/composer-runtime.d.ts`、`dist/runtimes/external-store/external-store-adapter.d.ts`（2026-11-22 核读） | `ComposerRuntime.setText(text, options?)`（composer-runtime.d.ts L92/L169，ComposerSetTextOptions）；ExternalStoreAdapter：`convertMessage` L51、`onNew(message: AppendMessage)` L164、`onCancel` L182、`isRunning` L67（isRunning→thread.isRunning 直通） | Composer 文本注入（file_ref 光标插入 / input_prefill 预填）与发送/取消 handler 契约 | §10.14 D3/D5 |
+| 23 | highlight.js 11.12.0 `lib/common` 语言集（FR-CHAT-02 高亮语言集定值来源） | node_modules 随包 `lib/common.js` `registerLanguage` 清单（2026-11-22 核读；既有依赖零新增） | 36 语言：bash, c, cpp, csharp, css, diff, go, graphql, ini, java, javascript, json, kotlin, less, lua, makefile, markdown, objectivec, perl, php, php-template, plaintext, python, python-repl, r, ruby, rust, scss, shell, sql, swift, typescript, vbnet, wasm, xml, yaml | #19(a) 附注「高亮语言集不得窄于旧实现 highlight.js common」的定值清单（= 旧实现同一注册集，同集平移零回归） | §10.14 D2/D7 |
 
 ---
 
