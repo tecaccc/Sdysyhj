@@ -1,0 +1,32 @@
+[PASS] TC-098(a) package.json 无 @assistant-ui/ai-sdk
+[PASS] TC-098(a) package.json 无 ai
+[PASS] TC-098(a) 保留依赖 @assistant-ui/react — =0.15.37
+[PASS] TC-098(a) 保留依赖 @assistant-ui/vscode — =0.0.1
+[PASS] TC-098(a) 保留依赖 react — =19.3.1
+[PASS] TC-098(a) 保留依赖 react-dom — =19.3.1
+[PASS] TC-098(a) package-lock 根包依赖面与 package.json 一致（无 ai/ai-sdk）
+[PASS] TC-098(a) node_modules 实装无 ai/ai-sdk
+[PASS] TC-098(b) 移除：src/lab
+[PASS] TC-098(b) 移除：webview/lab
+[PASS] TC-098(b) 移除：test/integration/lab-slice-a.test.ts
+[PASS] TC-098(b) 移除：test/integration/lab-slice-b.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-route.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-store.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-store-mapping.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-budget.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-isolation.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-csp.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-theme.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-versions.test.ts
+[PASS] TC-098(b) 移除：test/tooling/lab-metrics.mjs
+[PASS] TC-098(b) 移除：test/tooling/lab-metrics-driver.ts
+[PASS] TC-098(b) 实现/构建面路线 A 词面零命中（chatRoute/sliceA/sliceB/useChatRuntime/fetch-bridge/ai-sdk） — 零命中
+[PASS] TC-098(b) 测试面词面命中均处删除断言上下文（非残留载体） — 仅删除断言提及，无残留载体
+[PASS] TC-098(b) esbuild 入口 = 3 项 — src/extension.ts,webview/main.ts,webview/ui/main.tsx
+[PASS] TC-098(b) 入口集合精确 = src/extension.ts / webview/ui/main.tsx / webview/main.ts — src/extension.ts,webview/main.ts,webview/ui/main.tsx
+[PASS] TC-098(b) 产物集合精确 = dist/extension.js / media/chat.js / media/main.js — dist/extension.js,media/main.js,media/chat.js
+[PASS] TC-098(c) 静态面：ready 回放含 config — chatController ready 回放
+[PASS] TC-098(c) 静态面：ready 回放含 model_info — chatController ready 回放
+[PASS] TC-098(c) 静态面：ready 回放含 usage_info — chatController ready 回放
+[PASS] TC-098(c) 静态面：ready 回放含 run_state — chatController ready 回放
+[PASS] TC-098(c) 静态面：ready 回放含 history_loaded — chatController ready 回放

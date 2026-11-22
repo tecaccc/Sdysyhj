@@ -1,0 +1,4 @@
+[PASS][TC-135] (b) 外部修改 ≤5s 内提示（2.5s 轮询口径） — 检出耗时=2478ms
+[PASS][TC-135] (b) 陈旧状态拦截：prompt 不发 RPC、无 user_message 事件 — sent=1 事件=0
+[PASS][TC-135] (b) 刷新按钮动作 → refresh_session（设计 D3）
+[PASS][TC-135] (a) 单活动会话：无并行多会话标签结构

@@ -1,0 +1,66 @@
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic' }`
+
+ RUN  v5.1.0 /tmp/v10
+
+stdout | suite-dom.test.tsx
+
+[DOM 套件] PASS=114 FAIL=0 NOTE=3
+
+ ❯ suite-dom.test.tsx (15 tests | 3 failed) 26084ms
+   ❯ TC-099 part 化映射消费端契约（构造型剧本） (1)
+     × 三类 part 保真 + 契约陷阱顺从 + aborted/errorMessage 15246ms
+   ❯ TC-129 / 命令菜单全链路 (1)
+     × 数据源/出现与过滤/键盘导航/选中插入/边界 1ms
+   ❯ TC-132/133/135 SESS 系 (1)
+     × 新建会话/重命名/历史计数口径/外部修改拦截 8065ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  suite-dom.test.tsx > TC-099 part 化映射消费端契约（构造型剧本） > 三类 part 保真 + 契约陷阱顺从 + aborted/errorMessage
+Error: waitFor 超时：aborted 标记
+ ❯ waitFor vharness.ts:56:47
+     54|   for (;;) {
+     55|     if (pred()) return;
+     56|     if (Date.now() - start > timeoutMs) throw new Error(`waitFor 超时：${…
+       |                                               ^
+     57|     await new Promise((r) => setTimeout(r, 10));
+     58|   }
+ ❯ suite-dom.test.tsx:228:7
+ ❯ withChain suite-dom.test.tsx:79:5
+ ❯ suite-dom.test.tsx:191:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  suite-dom.test.tsx > TC-129 / 命令菜单全链路 > 数据源/出现与过滤/键盘导航/选中插入/边界
+ReferenceError: getStateData is not defined
+ ❯ suite-dom.test.tsx:581:27
+    579|       inRec("get_commands"), resp("get_commands", { commands: CMDS }),
+    580|       inRec("switch_session", { sessionPath: "/tmp/v10/fixtures/sessio…
+    581|       inRec("get_state"), resp("get_state", getStateData(path.join(wor…
+       |                           ^
+    582|       inRec("get_messages"), resp("get_messages", { messages: [] }),
+    583|       inRec("get_commands"), resp("get_commands", { commands: [] }),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  suite-dom.test.tsx > TC-132/133/135 SESS 系 > 新建会话/重命名/历史计数口径/外部修改拦截
+Error: waitFor 超时：外部修改检出
+ ❯ waitFor vharness.ts:56:47
+     54|   for (;;) {
+     55|     if (pred()) return;
+     56|     if (Date.now() - start > timeoutMs) throw new Error(`waitFor 超时：${…
+       |                                               ^
+     57|     await new Promise((r) => setTimeout(r, 10));
+     58|   }
+ ❯ suite-dom.test.tsx:646:7
+ ❯ withChain suite-dom.test.tsx:79:5
+ ❯ suite-dom.test.tsx:632:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 12 passed (15)
+   Start at  15:57:16
+   Duration  27.70s (tests 95%, import 3%, environment 2%, transform 1%)
+

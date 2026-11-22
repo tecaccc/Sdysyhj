@@ -1,0 +1,31 @@
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic' }`
+
+ RUN  v5.1.0 /tmp/v10
+
+ ❯ suite-dom.test.tsx (15 tests | 1 failed | 14 skipped) 8272ms
+   ❯ TC-132/133/135 SESS 系 (1)
+     × 新建会话/重命名/历史计数口径/外部修改拦截 8261ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  suite-dom.test.tsx > TC-132/133/135 SESS 系 > 新建会话/重命名/历史计数口径/外部修改拦截
+Error: waitFor 超时：外部修改检出
+ ❯ waitFor vharness.ts:56:47
+     54|   for (;;) {
+     55|     if (pred()) return;
+     56|     if (Date.now() - start > timeoutMs) throw new Error(`waitFor 超时：${…
+       |                                               ^
+     57|     await new Promise((r) => setTimeout(r, 10));
+     58|   }
+ ❯ suite-dom.test.tsx:646:7
+ ❯ withChain suite-dom.test.tsx:79:5
+ ❯ suite-dom.test.tsx:632:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  16:05:00
+   Duration  9.76s (tests 86%, import 8%, environment 6%, transform 1%)
+

@@ -1,0 +1,2 @@
+[PASS] TC-108 自动面：默认面板注册显式 retainContextWhenHidden: true — extension.ts 读值=true
+[PASS] TC-108 自动面：两面板注册点均 true（默认 + 经典） — extension.ts 1 处 + chatPanel.ts=true

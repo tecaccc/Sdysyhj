@@ -1,0 +1,119 @@
+静态门禁核验（独立自建断言器）
+通过=117 失败=0
+[PASS] TC-098(a) package.json 无 @assistant-ui/ai-sdk
+[PASS] TC-098(a) package.json 无 ai
+[PASS] TC-098(a) 保留依赖 @assistant-ui/react — =0.15.37
+[PASS] TC-098(a) 保留依赖 @assistant-ui/vscode — =0.0.1
+[PASS] TC-098(a) 保留依赖 react — =19.3.1
+[PASS] TC-098(a) 保留依赖 react-dom — =19.3.1
+[PASS] TC-098(a) package-lock 根包依赖面与 package.json 一致（无 ai/ai-sdk）
+[PASS] TC-098(a) node_modules 实装无 ai/ai-sdk
+[PASS] TC-098(b) 移除：src/lab
+[PASS] TC-098(b) 移除：webview/lab
+[PASS] TC-098(b) 移除：test/integration/lab-slice-a.test.ts
+[PASS] TC-098(b) 移除：test/integration/lab-slice-b.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-route.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-store.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-store-mapping.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-budget.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-isolation.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-csp.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-theme.test.ts
+[PASS] TC-098(b) 移除：test/unit/lab-versions.test.ts
+[PASS] TC-098(b) 移除：test/tooling/lab-metrics.mjs
+[PASS] TC-098(b) 移除：test/tooling/lab-metrics-driver.ts
+[PASS] TC-098(b) 实现/构建面路线 A 词面零命中（chatRoute/sliceA/sliceB/useChatRuntime/fetch-bridge/ai-sdk） — 零命中
+[PASS] TC-098(b) 测试面词面命中均处删除断言上下文（非残留载体） — 仅删除断言提及，无残留载体
+[PASS] TC-098(b) esbuild 入口 = 3 项 — src/extension.ts,webview/main.ts,webview/ui/main.tsx
+[PASS] TC-098(b) 入口集合精确 = src/extension.ts / webview/ui/main.tsx / webview/main.ts — src/extension.ts,webview/main.ts,webview/ui/main.tsx
+[PASS] TC-098(b) 产物集合精确 = dist/extension.js / media/chat.js / media/main.js — dist/extension.js,media/main.js,media/chat.js
+[PASS] TC-105(1) dependencies react == 19.3.1（精确） — 实际=19.3.1
+[PASS] TC-105(1) dependencies react-dom == 19.3.1（精确） — 实际=19.3.1
+[PASS] TC-105(1) dependencies @assistant-ui/react == 0.15.37（精确） — 实际=0.15.37
+[PASS] TC-105(1) dependencies @assistant-ui/vscode == 0.0.1（精确） — 实际=0.0.1
+[PASS] TC-105(1) dependencies @assistant-ui/react-markdown == 0.14.26（精确） — 实际=0.14.26
+[PASS] TC-105(1) dependencies remark-gfm == 4.0.1（精确） — 实际=4.0.1
+[PASS] TC-105(1) dependencies remark-breaks == 4.0.0（精确） — 实际=4.0.0
+[PASS] TC-105(1) dependencies zod == 4.6.7（精确） — 实际=4.6.7
+[PASS] TC-105(1) devDependencies @testing-library/react == 16.3.3（精确） — 实际=16.3.3
+[PASS] TC-105(1) devDependencies @testing-library/dom == 10.4.2（精确） — 实际=10.4.2
+[PASS] TC-105(1) devDependencies jsdom == 31.0.1（精确） — 实际=31.0.1
+[PASS] TC-105(3) 全部依赖零范围前缀 — 全部精确
+[PASS] TC-105(2) 删除断言：无 @assistant-ui/ai-sdk / ai
+[PASS] TC-105(4) 升级评估留痕：节存在（FR-AUI-05①） — 定位=100761
+[PASS] TC-105(4) 三要点齐（breaking 面 + 升级流程 + 退出流程） — @assistant-ui/vscode 0.0.1` 升级风险评估（FR-AUI-05① 留痕）：0.0.x breaking 面 = renderWebviewHtml/serve 接口与 CSP 模板；升级流程 = 精确锁 + ui-csp/ui-budget 回归锁定模板与产物；退出流程 = 版本回退即回旧模板
+[PASS] TC-109(b)(e) 命令 sdysyhj.openChat 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.newSession 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.abort 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.showHistory 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.reportIssue 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.renameSession 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.switchModel 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.switchThinking 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.sendToPi 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.piRuntime 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.piPath 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.thinkingDefault 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.outputTailLines 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.sendMode 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(a) views 首位 = sdysyhj.chatView 且 name=Chat — ["sdysyhj.chatView","sdysyhj.chatViewClassic"]
+[PASS] TC-109(a) openChat 命令存在（打开 chatView）
+[PASS] TC-109(a) 注册接线：openChat → chatView（focus/reveal） — extension.ts 接线扫描
+[PASS] TC-109(a) viewType 承载 = 新 UI（src/ui/chatViewProvider.ts viewType 常量）
+[PASS] TC-109(d) activationEvents 含 onView:sdysyhj.chatView 与 onView:sdysyhj.chatViewClassic — onView:sdysyhj.chatView,onView:sdysyhj.chatViewClassic
+[PASS] TC-110(a) 「Lab」词界匹配零命中（防 label 误命中） — 零命中
+[PASS] TC-110(a) 「实验」字面零命中 — 零命中
+[PASS] TC-110(b) contributes 无 sdysyhj.chatLabView / sdysyhj.openChatLab
+[PASS] TC-110(c) 视图定名：Chat / Chat (Classic) — ["Chat","Chat (Classic)"]
+[PASS] TC-110(c) openChatClassic 标题 = Open Chat (Classic) — Open Chat (Classic)
+[PASS] TC-110(a) 口径自证：contributes 含 label 系字样样本时词界扫描仍零命中（样本数） — label 系样本=0 个，Lab 词界命中=0
+[PASS] TC-108 自动面：默认面板注册显式 retainContextWhenHidden: true — extension.ts 读值=true
+[PASS] TC-108 自动面：两面板注册点均 true（默认 + 经典） — extension.ts 1 处 + chatPanel.ts=true
+[PASS] TC-111(b) chatPanel.ts 删除体 = 机械提取至 hostActions（5 抽样逐字命中） — 命中 5/5：const editor = vscode.window.activeTextEditor; || void vscode.window.showWarningMessage("Sdysyhj：没有可 || void vscode.window.showInformationMessage("Sdysyhj || const picked = await vscode.window.showQuickPick(i || void vscode.window.showInformationMessage("Sdysyhj
+[PASS] TC-111(b) chatPanel 同名委托接线（hostActions 方法面齐） — showHistory,showFilePicker,showModelPicker,showThinkingPicker,showRenameInput,copyOutput,sendToPi
+[PASS] TC-111(b) StartupError 类型迁移至 hostActions（非双源） — hostActions 导出=true
+[PASS] TC-111(b) 改动归组：其他组无人工核阅外的新功能面（注释/接线/方法体碎片除外） — {"viewType组":3,"动作层提取组":70,"其他":79} 其他样本: // ChatPanel：WebviewViewProvider + postMessage 路由。 | // ChatPanel（经典面板，FR-AUI-07③）：WebviewViewProvider + postMessage 路由。 | // 实现冻结承载回退）；vscode 交互动作机械提取至 hostActions.ts（同名委托，行为零变化）。 | bridge: this.bridge, | logger: this.logger, | cwd: this.cwd, | }); | /** 右键“发送到 Pi”（FR-FILE-03）：文件路径或选区作为 prompt 素材预填输入框。 */ | /** 右键“发送到 Pi”（FR-FILE-03）：hostActions 委托（行为零变化）。 */ | if (!target) { | return; | }
+[PASS] TC-111(a) chatViewClassic 注册承载 = 经典面板（chatPanel viewType 常量）
+[PASS] TC-111(a) openChatClassic → chatViewClassic.focus 接线 — extension.ts 接线扫描
+[PASS] TC-106(a) 指令集 = 官方模板八项（无模板外指令） — default-src,script-src,style-src,img-src,media-src,font-src,connect-src,frame-src
+[PASS] TC-106(a) default-src 'none'
+[PASS] TC-106(a) script-src 仅 nonce（无 unsafe-eval/unsafe-inline） — 'nonce-vnonce123'
+[PASS] TC-106(a) style-src = cspSource + nonce — https://test.vscode-cdn.net 'nonce-vnonce123'
+[PASS] TC-106(a) connect-src = cspSource
+[PASS] TC-106(a) img-src/media-src = cspSource+blob:+data:；font-src cspSource+data:；frame-src 'none'
+[PASS] TC-106(a) 零新增：chatViewProvider.renderWebviewHtml 调用面无 CSP 注入参数
+[PASS] TC-106(c) 产物级：zod-jitless 模块先于全部 zod 导入者模块（schema 构建发生面） — zod-jitless.ts sources@52 | webview/ui/zod-jitless.ts sources@52
+[PASS] TC-106(c) jitless 配置真值存在于产物（config({jitless:!0}) 语义） — jitless 出现 1 次
+[PASS] TC-107(a) 默认面板 JS 产物合计 ≤ 4,194,304 — chat.js=1000004，chunk 集=chat.js，合计=1000004
+[PASS] TC-107(b) 宿主增量 ≤ 1,048,576 — 被测=104249 基线=459382 增量=-355133
+[PASS] TC-107(b) 基线实测与参考值 459,382 偏差 ≤±10%（无须留痕） — 基线=459382 参考=459382
+[PASS] TC-107(c) 依赖面无 shiki/@shikijs
+[PASS] TC-107(c) 产物文本无 shiki 命中 — chat.js shiki 命中=0
+[PASS] TC-107(c) 默认面板 metafile inputs 零 shiki — inputs=1187
+[PASS] TC-107(d) 经典面板 metafile inputs 零 react/react-dom/@assistant-ui — inputs=49，命中=零
+[PASS] TC-113(a) 采样 token 链非空且终点 --vscode-*/字面色 — 正文文本: --foreground → --vscode-sideBar-foreground | 正文背景: --background → --vscode-sideBar-background | 用户气泡背景: --primary → --vscode-button-background | 用户气泡文本: --primary-foreground → --vscode-button-foreground | 助手文本: --foreground → --vscode-sideBar-foreground | 输入框背景: --background → --vscode-sideBar-background | 输入框边框: --input → --vscode-input-border
+[PASS] TC-113(b) 浅深两套调色板代入后至少一组采样值变化 — dark={"正文文本":"#CCCCCC","正文背景":"#181818","用户气泡背景":"#0078D4","用户气泡文本":"#FFFFFF","助手文本":"#CCCCCC","输入框背景":"#181818","输入框边框":"#3C3C3C"} light={"正文文本":"#3B3B3B","正文背景":"#F8F8F8","用户气泡背景":"#005FB8","用户气泡文本":"#FFFFFF","助手文本":"#3B3B3B","输入框背景":"#F8F8F8","输入框边框":"#CECECE"}
+[PASS] TC-113(c) 正文对比度 ≥4.5:1（浅深各测） — darkModern 正文对比度 = 11.06:1（#CCCCCC on #181818） | lightModern 正文对比度 = 10.55:1（#3B3B3B on #F8F8F8）
+[PASS] TC-099 锚点行号核对（L47/L57/L62/L112/L134/L169/L31 全部与源码一致） — L47: 命中 — if (role !== "assistant" && status) throw new Error("status is only supported for assistant messages || L57: 命中 — if (!isString(part.text) || !part.text.trim()) return null; || L62: 命中 — if (!text.trim() && !summary?.trim()) return null; || L112: 命中 — custom: metadata?.custom ?? {}, || L134: 命中 — case "tool-call": throw new Error(`Unsupported user message part type: ${type}`); || L169: 命中 — default: throw new Error(`Unknown message role: ${role}`); || L31: 命中 — createdAt: createdAt ?? /* @__PURE__ */ new Date()
+[PASS] TC-099 锚点 L76–95 tool-call 保真（basePart 透传 result/isError、argsText、parsePartialJsonObject、tool-<generated>）
+[PASS] TC-099 锚点 L131–134 user 带 reasoning/tool-call 即抛（范围锚）
+[PASS] TC-116 hljs lib/common registerLanguage 数量 = 36 — 实测=36
+[PASS] TC-116 语言集 == §11 #23 清单（逐项集合相等） — 差集=无
+[PASS] 重定向表：删除 test/unit/lab-route.test.ts
+[PASS] 重定向表：删除 test/integration/lab-slice-a.test.ts
+[PASS] 重定向表：平移 test/unit/lab-store.test.ts → test/unit/ui-store.test.ts（新用例存在） — 新文件 224 行
+[PASS] 重定向表：平移 test/unit/lab-store-mapping.test.ts → test/unit/ui-mapping.test.ts（新用例存在） — 新文件 140 行
+[PASS] 重定向表：平移 test/unit/lab-csp.test.ts → test/unit/ui-csp.test.ts（新用例存在） — 新文件 79 行
+[PASS] 重定向表：平移 test/unit/lab-theme.test.ts → test/unit/ui-theme.test.ts（新用例存在） — 新文件 188 行
+[PASS] 重定向表：平移 test/unit/lab-budget.test.ts → test/unit/ui-budget.test.ts（新用例存在） — 新文件 82 行
+[PASS] 重定向表：平移 test/unit/lab-versions.test.ts → test/unit/ui-versions.test.ts（新用例存在） — 新文件 90 行
+[PASS] 重定向表：平移 test/unit/lab-isolation.test.ts → test/unit/ui-isolation.test.ts（新用例存在） — 新文件 166 行
+[PASS] 重定向表：新增 test/unit/ui-composer.test.ts
+[PASS] 重定向表：新增 test/integration/ui-golden-dom.test.ts
+[PASS] 重定向表：新增 test/integration/ui-dual-panel.test.ts
+[PASS] 重定向表：新增 test/integration/ui-xss.test.ts
+[PASS] TC-098(c) 静态面：ready 回放含 config — chatController ready 回放
+[PASS] TC-098(c) 静态面：ready 回放含 model_info — chatController ready 回放
+[PASS] TC-098(c) 静态面：ready 回放含 usage_info — chatController ready 回放
+[PASS] TC-098(c) 静态面：ready 回放含 run_state — chatController ready 回放
+[PASS] TC-098(c) 静态面：ready 回放含 history_loaded — chatController ready 回放

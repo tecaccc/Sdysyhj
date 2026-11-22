@@ -1,0 +1,4 @@
+[PASS][TC-121] (a) provider 报错 → 聊天区可读错误卡片 + 修复指引 — ⚠ 模型返回错误：rate limited 429
+[PASS][TC-121] (b) extension_error 不进错误卡片、以一次性 toast 呈现 — 扩展错误（/ext/foo）：EXTERR-BOOM same（详情见 Output「Sdysyhj」） | 扩展错误（/ext/bar）：EXTERR-BOOM other（详情见 Output「Sdysyhj」）
+[PASS][TC-121] (c) 同键窗口期去重（/ext/foo ×2 → 1 toast；异键另发） — 扩展错误（/ext/foo）：EXTERR-BOOM same（详情见 Output「Sdysyhj」） | 扩展错误（/ext/bar）：EXTERR-BOOM other（详情见 Output「Sdysyhj」）
+[PASS][TC-121] (c) 日志全量含完整字段（extensionPath/event/error） — 同键日志=2 条

@@ -1,0 +1,6 @@
+[PASS][TC-118] (a) 工具卡含执行状态（成功/失败）
+[PASS][TC-118] (b) #D-04 晚到结果收敛：read 卡终态成功 — tool_execution_end 晚于 message_end
+[PASS][TC-118] (c) 大输出截断保留尾部（尾行 line-22000 保留、首行 BIGOUT-FIRST-LINE 不保留） — 尾行=true 首行=false
+[PASS][TC-118] (c) 截断态标记（outputTruncated→复制全部可见）
+[PASS][TC-118] (c) 复制全部动作存在（截断时可见）
+[PASS][TC-118] (c) 复制全部 → copy_output 取宿主缓存全量（调用记录） — copy_output:tc-3

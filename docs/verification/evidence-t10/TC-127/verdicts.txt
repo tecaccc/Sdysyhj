@@ -1,0 +1,8 @@
+[PASS][TC-127] (d) 回归边界：thinking/工具卡条目不受单气泡判定影响（3 轮 × 2 条 = 6） — =6
+[PASS][TC-127] (a) #16 权威文本到达后该条目就地更新为权威文本
+[PASS][TC-127] (a) 更新前后条目数均 1、不新增条目 — =1
+[PASS][TC-127] (a) 不同时展示两版文本（发送原文已被覆盖）
+[PASS][TC-127] (b) #17 不可关联回声：条目数不因该回声新增（4 = A + B + steer + followUp 各一条） — =4 DOM：08:00ECHO16-AUTH-REWRITTEN | 08:00ECHO17-SENT-TEXT | 08:00STEER-B-X | 08:00FOLLOW-B-Y
+[PASS][TC-127] (b) 文本不错换、不因该回声新增条目 — 垃圾回声出现=false
+[PASS][TC-127] (b) 实时窗口保留发送原文（含 steer/followUp 入队文本）
+[PASS][TC-127] (b) 权威重建后收敛为会话 JSONL 权威文本

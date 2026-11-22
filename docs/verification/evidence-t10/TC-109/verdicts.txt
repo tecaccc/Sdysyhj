@@ -1,0 +1,19 @@
+[PASS] TC-109(b)(e) 命令 sdysyhj.openChat 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.newSession 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.abort 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.showHistory 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.reportIssue 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.renameSession 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.switchModel 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.switchThinking 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(b)(e) 命令 sdysyhj.sendToPi 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.piRuntime 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.piPath 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.thinkingDefault 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.outputTailLines 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(c)(e) 配置 sdysyhj.sendMode 存在且 JSON 与 v0.1.7 逐字段一致 — 一致
+[PASS] TC-109(a) views 首位 = sdysyhj.chatView 且 name=Chat — ["sdysyhj.chatView","sdysyhj.chatViewClassic"]
+[PASS] TC-109(a) openChat 命令存在（打开 chatView）
+[PASS] TC-109(a) 注册接线：openChat → chatView（focus/reveal） — extension.ts 接线扫描
+[PASS] TC-109(a) viewType 承载 = 新 UI（src/ui/chatViewProvider.ts viewType 常量）
+[PASS] TC-109(d) activationEvents 含 onView:sdysyhj.chatView 与 onView:sdysyhj.chatViewClassic — onView:sdysyhj.chatView,onView:sdysyhj.chatViewClassic

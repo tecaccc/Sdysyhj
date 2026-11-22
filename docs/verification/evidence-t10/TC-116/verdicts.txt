@@ -1,0 +1,14 @@
+[PASS] TC-116 hljs lib/common registerLanguage 数量 = 36 — 实测=36
+[PASS] TC-116 语言集 == §11 #23 清单（逐项集合相等） — 差集=无
+[PASS][TC-116] (a) h1/h2/ul/ol/li
+[PASS][TC-116] (a) GFM 表格 table/thead/tbody/tr/td
+[PASS][TC-116] (a) 任务列表复选项
+[PASS][TC-116] (a) 删除线 del
+[PASS][TC-116] (a) pre>code 与行内 code
+[PASS][TC-116] (a) https 链接 a[href^=https:]
+[PASS][TC-116] (a) 单换行渲染 <br> — remark-breaks 对齐旧 breaks:true
+[PASS][TC-116] (b) 36 语言代码块逐一带 language-<名> 类（清单逐项） — 缺失=无
+[PASS][TC-116] (b) 语法高亮 token 结构（span）覆盖 36 集（plaintext 空语法豁免） — 无 span：plaintext（hljs plaintext 注册为空语法，输出纯文本属其正常渲染）
+[PASS][TC-116] (c) 集外（haskell）无高亮 token、纯代码展示 — 类=language-haskell hljs
+[PASS][TC-116] (c) 集外内容转义展示：< > 为文本节点不生成元素
+[PASS][TC-116] (d) <b>x</b> 以文本形态呈现（不生成 b 元素）

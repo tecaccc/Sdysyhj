@@ -1,0 +1,12 @@
+[PASS][TC-102] (c) 时点① user 文本 = 发送原文
+[PASS][TC-102] (a) 渲染消息条数 = 2（澄清 #12：1 user + 1 assistant） — 实际=2
+[PASS][TC-102] (b) assistant 文本逐字 == fixture message_end 权威文本 — ack: GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assi
+[PASS][TC-102] (c) user 文本 == fixture user 权威文本 — GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assistant + settled)
+[PASS][TC-102] (c) 无双版并存（发送原文恰出现一次） — =1
+[PASS][TC-102] (d) 全量回放无截断（4 delta 拼接 == 终稿） — fixture 三方内证
+[PASS][TC-103] (c) 总数 = 6（3 user + 3 assistant） — 实际=6
+[PASS][TC-103] (a) user 条目 = 3 — =3
+[PASS][TC-103] (a) 3 条 user 文本逐条 == fixture 回声文本 — GOLDEN-STEER-FOLLOWUP main prompt (streaming run for mid-run injection) | GOLDEN-ST sentinel steer (sent later, delivered at next turn boundary) | GOLDEN-FU sentinel follow-up (sent first, delivered after agent stops)
+[PASS][TC-103] (b) 3 条 assistant 文本逐条一致 — ack: GOLDEN-STEER-FOLLOWUP main prompt (streaming run for mid-run | ack: GOLDEN-ST sentinel steer (sent later, delivered at next turn | ack: GOLDEN-FU sentinel follow-up (sent first, delivered after ag
+[PASS][TC-103] (a) 投递序 = 主 prompt → steer → follow-up（发送序 F 先 S 后，两序均不丢不错换） — 投递位置序=0,2,1（user 文本序：0=主 1=steer 2=follow-up）
+[PASS][TC-103] (d) queue_update 快照经通道透出 — 数据面由桥事件记录佐证

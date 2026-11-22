@@ -1,0 +1,7 @@
+[PASS][TC-129] (a)① 数据源 = get_commands 全集，每项含名称与描述
+[PASS][TC-129] (b)② `/` 开头显示菜单
+[PASS][TC-129] (b)② `/` 后实时过滤（大小写不区分子串，/ZEB → skill-zebra）
+[PASS][TC-129] (b)② 过滤后无匹配菜单隐藏
+[PASS][TC-129] (c)③ Enter 选中不触发发送（prompt 零命中） — ready,request_commands
+[PASS][TC-129] (d)④ 选中写入 `/`+命令名并关闭菜单、焦点保持输入框 — value=/review
+[PASS][TC-129] (e)⑤ get_commands 返回空不显示菜单

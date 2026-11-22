@@ -1,0 +1,31 @@
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic' }`
+
+ RUN  v5.1.0 /tmp/v10
+
+ ❯ suite-dom.test.tsx (15 tests | 1 failed | 14 skipped) 15524ms
+   ❯ TC-099 part 化映射消费端契约（构造型剧本） (1)
+     × 三类 part 保真 + 契约陷阱顺从 + aborted/errorMessage 15496ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  suite-dom.test.tsx > TC-099 part 化映射消费端契约（构造型剧本） > 三类 part 保真 + 契约陷阱顺从 + aborted/errorMessage
+Error: waitFor 超时：aborted 标记
+ ❯ waitFor vharness.ts:56:47
+     54|   for (;;) {
+     55|     if (pred()) return;
+     56|     if (Date.now() - start > timeoutMs) throw new Error(`waitFor 超时：${…
+       |                                               ^
+     57|     await new Promise((r) => setTimeout(r, 10));
+     58|   }
+ ❯ suite-dom.test.tsx:228:7
+ ❯ withChain suite-dom.test.tsx:79:5
+ ❯ suite-dom.test.tsx:191:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  15:59:38
+   Duration  17.11s (tests 92%, import 4%, environment 3%, transform 1%)
+

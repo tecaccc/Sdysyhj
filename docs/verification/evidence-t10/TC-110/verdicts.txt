@@ -1,0 +1,6 @@
+[PASS] TC-110(a) 「Lab」词界匹配零命中（防 label 误命中） — 零命中
+[PASS] TC-110(a) 「实验」字面零命中 — 零命中
+[PASS] TC-110(b) contributes 无 sdysyhj.chatLabView / sdysyhj.openChatLab
+[PASS] TC-110(c) 视图定名：Chat / Chat (Classic) — ["Chat","Chat (Classic)"]
+[PASS] TC-110(c) openChatClassic 标题 = Open Chat (Classic) — Open Chat (Classic)
+[PASS] TC-110(a) 口径自证：contributes 含 label 系字样样本时词界扫描仍零命中（样本数） — label 系样本=0 个，Lab 词界命中=0

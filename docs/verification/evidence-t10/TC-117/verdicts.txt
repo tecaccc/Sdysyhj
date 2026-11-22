@@ -1,0 +1,3 @@
+[PASS][TC-117] (a) 默认折叠（未展开）
+[PASS][TC-117] (b) 展开后 thinking 文本 == t1..t4 拼接 — ▸ 💭 thinking…t1t2t3t4
+[PASS][TC-117] (c) 可展开交互元素存在（summary）

@@ -1,0 +1,146 @@
+===== test/unit/lab-store.test.ts（旧，21 断言行）→ test/unit/ui-store.test.ts（新，42 断言行）
+-- 旧断言行样本:
+expect(state.messages).toHaveLength(1);
+expect(textOf(state.messages[0])).toBe("pi 权威文本");
+expect(state.messages).toHaveLength(1);
+expect(textOf(state.messages[0])).toBe("ack: GOLDEN");
+expect(state.messages).toHaveLength(1);
+expect(textOf(state.messages[0])).toBe("终稿v2");
+expect(state.messages.map((m) => m.id)).toEqual(["u1", "a1"]);
+expect(apply([{ kind: "run_state", state: "starting" }]).isRunning).toBe(true);
+expect(apply([{ kind: "run_state", state: "streaming" }]).isRunning).toBe(true);
+expect(apply([{ kind: "run_state", state: "idle" }]).isRunning).toBe(false);
+expect(apply([{ kind: "run_state", state: "aborted" }]).isRunning).toBe(false);
+expect(after).toBe(before);
+expect(textOf(state.messages[0])).toBe(`LAB-XSS probe ${probe}`);
+expect(textOf(state.messages[1])).toBe(`probe reply ${probe}`);
+expect(text).toContain(probe);
+expect(notified).toBe(1);
+expect(store.getSnapshot().messages).toHaveLength(1);
+expect(notified).toBe(1);
+expect(block.text).toBe("初始");
+expect(textOf(state.messages[0])).toBe("终稿");
+expect(finalMessage.blocks[0]).toEqual({ type: "text", text: "终稿" });
+-- 新断言行样本:
+expect(state.messages).toHaveLength(1);
+expect(textOf(state.messages[0])).toBe("pi 权威文本");
+expect(state.messages).toHaveLength(1);
+expect(textOf(state.messages[0])).toBe("ack: GOLDEN");
+expect(state.messages).toHaveLength(1);
+expect(textOf(state.messages[0])).toBe("终稿v2");
+expect(state.messages.map((m) => m.id)).toEqual(["u1", "a1"]);
+expect(apply([{ kind: "run_state", state: "starting" }]).isRunning).toBe(true);
+expect(apply([{ kind: "run_state", state: "streaming" }]).isRunning).toBe(true);
+expect(apply([{ kind: "run_state", state: "idle" }]).isRunning).toBe(false);
+expect(apply([{ kind: "run_state", state: "aborted" }]).isRunning).toBe(false);
+expect(after.messages).toBe(before.messages);
+expect(after.model).toBe("m");
+expect(textOf(state.messages[0])).toBe(`UI-XSS probe ${probe}`);
+expect(textOf(state.messages[1])).toBe(`probe reply ${probe}`);
+expect(text).toContain(probe);
+expect(notified).toBe(1);
+expect(store.getSnapshot().messages).toHaveLength(1);
+expect(notified).toBe(1);
+expect(block.text).toBe("初始");
+expect(textOf(state.messages[0])).toBe("终稿");
+expect(finalMessage.blocks[0]).toEqual({ type: "text", text: "终稿" });
+expect(block).toEqual({
+expect((streaming.messages[0].blocks[0] as { args: string }).args).toBe("{}X");
+expect(state.messages.map(textOf)).toEqual(["原文A", "原文B"]);
+expect(state.totalTokens).toBe(12300);
+expect(state.commands).toHaveLength(1);
+expect(state.models).toHaveLength(1);
+expect(state.insertion).toEqual({ seq: 1, text: "@src/a.ts ", replaceAt: true });
+expect(state.insertion).toEqual({ seq: 2, text: "预填", replaceAt: false });
+expect(state.errors).toHaveLength(1);
+expect(state.toasts).toHaveLength(1);
+expect(state.errors).toHaveLength(0);
+expect(state.toasts).toHaveLength(0);
+expect(state.externalChange).toBe("d");
+expect(state.externalChange).toBeNull();
+expect(store.getSnapshot().messages[0].blocks).toEqual([]);
+expect(notified).toBe(afterNonDelta + 1);
+expect(textOf(store.getSnapshot().messages[0])).toBe("abc");
+expect(textOf(store.getSnapshot().messages[0])).toBe("abcd");
+expect(text.length).toBeGreaterThan(0);
+expect(text.split(",").filter(Boolean)).toHaveLength(600);
+===== test/unit/lab-csp.test.ts（旧，16 断言行）→ test/unit/ui-csp.test.ts（新，16 断言行）
+-- 旧断言行样本:
+expect(meta).not.toBeNull();
+expect(csp.get("default-src")).toEqual(["'none'"]);
+expect(scriptSrc).toHaveLength(1);
+expect(scriptSrc[0]).toMatch(/^'nonce-[A-Za-z0-9+/=_-]+'$/);
+expect(scriptSrc).not.toContain("'unsafe-eval'");
+expect(scriptSrc).not.toContain("'unsafe-inline'");
+expect(csp.get("style-src")).toEqual([CSP_SOURCE, `'nonce-testnonce1234'`]);
+expect(csp.get("connect-src")).toEqual([CSP_SOURCE]);
+expect(csp.get("img-src")).toEqual([CSP_SOURCE, "blob:", "data:"]);
+expect(csp.get("media-src")).toEqual([CSP_SOURCE, "blob:", "data:"]);
+expect(csp.get("font-src")).toEqual([CSP_SOURCE, "data:"]);
+expect(csp.get("frame-src")).toEqual(["'none'"]);
+expect([...csp.keys()].sort()).toEqual(
+expect(html).toContain('<script defer nonce="testnonce1234" src="vscode-webview-resource://test/lab.js"></scri
+expect(html).toContain('data-aui-vscode-surface="sidebar"');
+expect(html).toContain("<title>聊天（实验）</title>");
+-- 新断言行样本:
+expect(meta).not.toBeNull();
+expect(csp.get("default-src")).toEqual(["'none'"]);
+expect(scriptSrc).toHaveLength(1);
+expect(scriptSrc[0]).toMatch(/^'nonce-[A-Za-z0-9+/=_-]+'$/);
+expect(scriptSrc).not.toContain("'unsafe-eval'");
+expect(scriptSrc).not.toContain("'unsafe-inline'");
+expect(csp.get("style-src")).toEqual([CSP_SOURCE, `'nonce-testnonce1234'`]);
+expect(csp.get("connect-src")).toEqual([CSP_SOURCE]);
+expect(csp.get("img-src")).toEqual([CSP_SOURCE, "blob:", "data:"]);
+expect(csp.get("media-src")).toEqual([CSP_SOURCE, "blob:", "data:"]);
+expect(csp.get("font-src")).toEqual([CSP_SOURCE, "data:"]);
+expect(csp.get("frame-src")).toEqual(["'none'"]);
+expect([...csp.keys()].sort()).toEqual(
+expect(html).toContain('<script defer nonce="testnonce1234" src="vscode-webview-resource://test/chat.js"></scr
+expect(html).toContain('data-aui-vscode-surface="sidebar"');
+expect(html).toContain("<title>Chat</title>");
+===== test/unit/lab-budget.test.ts（旧，3 断言行）→ test/unit/ui-budget.test.ts（新，7 断言行）
+-- 旧断言行样本:
+expect(jsOutputs.length).toBeGreaterThanOrEqual(1);
+expect(cssOutputs.length).toBe(1); // theme.css + lab.css 产出存在（CSS 不计入 JS 预算）
+expect(totalJs, `lab webview JS ${totalJs} 字节 > 预算 ${LAB_JS_BUDGET_BYTES}`).toBeLessThanOrEqual(LAB_JS_BUDGET_
+-- 新断言行样本:
+expect(jsOutputs.length).toBeGreaterThanOrEqual(1);
+expect(cssOutputs.length).toBe(1); // theme.css + chat.css 产出存在（CSS 不计入 JS 预算）
+expect(totalJs, `chat webview JS ${totalJs} 字节 > 预算 ${CHAT_JS_BUDGET_BYTES}`).toBeLessThanOrEqual(CHAT_JS_BUDG
+expect(jsOutputs.length).toBeGreaterThanOrEqual(1);
+expect(totalJs, `宿主 bundle ${totalJs} 字节 > 基线+增量 ${limit}`).toBeLessThanOrEqual(limit);
+expect(inputs.length).toBeGreaterThan(0);
+expect(forbidden).toEqual([]);
+===== test/unit/lab-store-mapping.test.ts（旧，9 断言行）→ test/unit/ui-mapping.test.ts（新，20 断言行）
+-- 旧断言行样本:
+expect(like.role).toBe("user");
+expect(like.id).toBe("u1");
+expect(like.createdAt).toEqual(new Date(1700000000000));
+expect(like.content).toEqual([{ type: "text", text: "GOLDEN-PROMPT-BASIC" }]);
+expect(like.role).toBe("assistant");
+expect(like.content).toEqual([
+expect(toThreadMessageLike(base).content).toBe("");
+expect(toThreadMessageLike(ui).content).toEqual([{ type: "text", text: probe }]);
+expect(toThreadMessageLike(ui).content).toEqual([
+-- 新断言行样本:
+expect(like.role).toBe("user");
+expect(like.id).toBe("u1");
+expect(like.createdAt).toEqual(new Date(1700000000000));
+expect(like.content).toEqual([{ type: "text", text: "GOLDEN-PROMPT-BASIC" }]);
+expect(like.role).toBe("assistant");
+expect(like.content).toEqual([
+expect(toThreadMessageLike(base).content).toBe("");
+expect(toThreadMessageLike(ui).content).toEqual([{ type: "text", text: probe }]);
+expect(toThreadMessageLike(ui).content).toEqual([
+expect(p1).toEqual({
+expect(p2.isError).toBe(true);
+expect((p2.result as { status: string }).status).toBe("error");
+expect((p3.result as { status: string }).status).toBe("aborted");
+expect(p3.isError).toBe(false);
+expect(like.metadata?.custom).toEqual({ aborted: true, errorMessage: "炸了" });
+expect(plain.metadata).toBeUndefined();
+expect(toThreadMessageLike(ui).content).toEqual([
+expect(toThreadMessageLike({ ...base, blocks: [{ type: "text", text: " " }], timestamp: 1 }).content).toBe("")
+expect(toThreadMessageLike(ui).content).toEqual([{ type: "text", text: "only" }]);
+expect(like.status).toBeUndefined();

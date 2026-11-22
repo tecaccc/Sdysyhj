@@ -1,0 +1,7 @@
+L47: 命中 — if (role !== "assistant" && status) throw new Error("status is only supported for assistant messages
+L57: 命中 — if (!isString(part.text) || !part.text.trim()) return null;
+L62: 命中 — if (!text.trim() && !summary?.trim()) return null;
+L112: 命中 — custom: metadata?.custom ?? {},
+L134: 命中 — case "tool-call": throw new Error(`Unsupported user message part type: ${type}`);
+L169: 命中 — default: throw new Error(`Unknown message role: ${role}`);
+L31: 命中 — createdAt: createdAt ?? /* @__PURE__ */ new Date()

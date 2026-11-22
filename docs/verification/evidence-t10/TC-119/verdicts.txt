@@ -1,0 +1,4 @@
+[PASS][TC-119] (d) 运行中显示 Stop、隐藏发送
+[PASS][TC-119] (a) Stop 动作产生 abort 调用（RPC abort 已回放） — ready,prompt,abort
+[PASS][TC-119] (b) 中止后运行状态回 idle、UI 恢复可输入
+[PASS][TC-119] (c) 当前助手消息尾部「⏹ 已中止」消息级标记

@@ -1,0 +1,6 @@
+[PASS][TC-126] (a)① 发送即时条目数 = 1
+[PASS][TC-126] (a)②③ 回声后/终稿后 user 恰一条 — =1
+[PASS][TC-126] (b) steer/followUp 插话各恰一条 user 条目
+[PASS][TC-126] (a)① 发送即时条目数 = 1（显示发送原文，不等回声） — 文本含原文=true
+[PASS][TC-126] (b) steer/followUp 插话各恰一条（每发送恰一条） — =4
+[PASS][TC-126] (c) 历史重放不重复（会话 B user 恰一条） — =1

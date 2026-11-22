@@ -1,0 +1,4 @@
+[PASS][TC-122] (a) 状态栏含模型/thinking/运行状态三字段 — mock/mock-small · off · 空闲
+[PASS][TC-122] (a) 会话名字段可见（#session-name）
+[PASS][TC-122] (b) 运行状态流转 idle→streaming 可见 — mock/mock-small · off · 运行中
+[PASS][TC-122] (b) 运行状态回 idle（「已中止」非状态值）

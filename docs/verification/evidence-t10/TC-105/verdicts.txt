@@ -1,0 +1,15 @@
+[PASS] TC-105(1) dependencies react == 19.3.1（精确） — 实际=19.3.1
+[PASS] TC-105(1) dependencies react-dom == 19.3.1（精确） — 实际=19.3.1
+[PASS] TC-105(1) dependencies @assistant-ui/react == 0.15.37（精确） — 实际=0.15.37
+[PASS] TC-105(1) dependencies @assistant-ui/vscode == 0.0.1（精确） — 实际=0.0.1
+[PASS] TC-105(1) dependencies @assistant-ui/react-markdown == 0.14.26（精确） — 实际=0.14.26
+[PASS] TC-105(1) dependencies remark-gfm == 4.0.1（精确） — 实际=4.0.1
+[PASS] TC-105(1) dependencies remark-breaks == 4.0.0（精确） — 实际=4.0.0
+[PASS] TC-105(1) dependencies zod == 4.6.7（精确） — 实际=4.6.7
+[PASS] TC-105(1) devDependencies @testing-library/react == 16.3.3（精确） — 实际=16.3.3
+[PASS] TC-105(1) devDependencies @testing-library/dom == 10.4.2（精确） — 实际=10.4.2
+[PASS] TC-105(1) devDependencies jsdom == 31.0.1（精确） — 实际=31.0.1
+[PASS] TC-105(3) 全部依赖零范围前缀 — 全部精确
+[PASS] TC-105(2) 删除断言：无 @assistant-ui/ai-sdk / ai
+[PASS] TC-105(4) 升级评估留痕：节存在（FR-AUI-05①） — 定位=100761
+[PASS] TC-105(4) 三要点齐（breaking 面 + 升级流程 + 退出流程） — @assistant-ui/vscode 0.0.1` 升级风险评估（FR-AUI-05① 留痕）：0.0.x breaking 面 = renderWebviewHtml/serve 接口与 CSP 模板；升级流程 = 精确锁 + ui-csp/ui-budget 回归锁定模板与产物；退出流程 = 版本回退即回旧模板

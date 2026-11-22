@@ -1,0 +1,1 @@
+[PASS][TC-134] (a) 重放与会话 JSONL 一致（含 usage 权威值）

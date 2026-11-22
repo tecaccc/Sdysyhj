@@ -1,0 +1,4 @@
+[PASS][TC-124] (e) 每条消息时间戳 ^\d{2}:\d{2}$ — 2 个
+[PASS][TC-124] (d) 用户气泡容器存在、助手无气泡容器
+[PASS][TC-124] (d)⑤ 消息子树无 avatar/img
+[PASS][TC-124] (e) 无 User/Assistant 角色文字前缀 — 08:00GOLDEN-PROMPT-B || 08:00ack: GOLDEN-PRO

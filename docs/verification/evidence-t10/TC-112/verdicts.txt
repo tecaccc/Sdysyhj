@@ -1,0 +1,4 @@
+[PASS][TC-112] (b) 经典侧 = 同一 jsdom 基建加载冻结 bundle（media/main.js）DOM 断言 — 经典 .message 计数=2
+[PASS][TC-112] (c) 一致快照：两面板消息条数相等（均 = 2） — 新 UI=2 经典=2
+[PASS][TC-112] (c) 消息文本逐条对位相等 — user=GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assistant + settled) asst=ack: GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assi
+[NOTE][TC-112] 受控回退预案（D9）未触发：经典侧 jsdom 挂载成功 — postedFlow=21

@@ -1,0 +1,10 @@
+[PASS][TC-123] (a)① 每轮流式开始即跟随（默认跟随）
+[PASS][TC-123] (a)① 轮内后续 stream_start 不覆盖用户打断
+[PASS][TC-123] (b)② >40px 打断（100px → 不跟随） — 阈值=40
+[PASS][TC-123] (c)③ ≤40px 恢复跟随
+[PASS][TC-123] (b)② 41px 边界即打断
+[PASS][TC-123] (c)③ 40px 边界即恢复
+[PASS][TC-123] (d)④ idle 不自动滚动
+[PASS][TC-123] (d)④ 跟随态不持久化（新实例默认不跟随）
+[PASS][TC-123] shell 接线：useLayoutEffect 渲染点 + streamStartSeq 重置 + isRunning 门控
+[NOTE][TC-123] jsdom 无布局（scrollHeight=0），滚动几何采样不可在 jsdom 断言；四款语义由产品 FollowState 状态机独立驱动 + shell 接线面断言 + 套件 followState.test.ts 佐证；真机观感 = TC-125 MANUAL

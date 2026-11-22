@@ -1,0 +1,6 @@
+[PASS] TC-111(b) chatPanel.ts 删除体 = 机械提取至 hostActions（5 抽样逐字命中） — 命中 5/5：const editor = vscode.window.activeTextEditor; || void vscode.window.showWarningMessage("Sdysyhj：没有可 || void vscode.window.showInformationMessage("Sdysyhj || const picked = await vscode.window.showQuickPick(i || void vscode.window.showInformationMessage("Sdysyhj
+[PASS] TC-111(b) chatPanel 同名委托接线（hostActions 方法面齐） — showHistory,showFilePicker,showModelPicker,showThinkingPicker,showRenameInput,copyOutput,sendToPi
+[PASS] TC-111(b) StartupError 类型迁移至 hostActions（非双源） — hostActions 导出=true
+[PASS] TC-111(b) 改动归组：其他组无人工核阅外的新功能面（注释/接线/方法体碎片除外） — {"viewType组":3,"动作层提取组":70,"其他":79} 其他样本: // ChatPanel：WebviewViewProvider + postMessage 路由。 | // ChatPanel（经典面板，FR-AUI-07③）：WebviewViewProvider + postMessage 路由。 | // 实现冻结承载回退）；vscode 交互动作机械提取至 hostActions.ts（同名委托，行为零变化）。 | bridge: this.bridge, | logger: this.logger, | cwd: this.cwd, | }); | /** 右键“发送到 Pi”（FR-FILE-03）：文件路径或选区作为 prompt 素材预填输入框。 */ | /** 右键“发送到 Pi”（FR-FILE-03）：hostActions 委托（行为零变化）。 */ | if (!target) { | return; | }
+[PASS] TC-111(a) chatViewClassic 注册承载 = 经典面板（chatPanel viewType 常量）
+[PASS] TC-111(a) openChatClassic → chatViewClassic.focus 接线 — extension.ts 接线扫描

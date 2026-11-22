@@ -1,0 +1,7 @@
+正文文本: --foreground → --vscode-sideBar-foreground
+正文背景: --background → --vscode-sideBar-background
+用户气泡背景: --primary → --vscode-button-background
+用户气泡文本: --primary-foreground → --vscode-button-foreground
+助手文本: --foreground → --vscode-sideBar-foreground
+输入框背景: --background → --vscode-sideBar-background
+输入框边框: --input → --vscode-input-border

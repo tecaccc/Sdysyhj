@@ -1,0 +1,7 @@
+[PASS][TC-101] (a) DOM 无新增 script 元素
+[PASS][TC-101] (a) 无 on* 事件属性注入元素
+[PASS][TC-101] (a) 探针以文本节点形态逐字存在
+[PASS][TC-101] (b) 预埋哨兵未被改写、探针无副作用
+[PASS][TC-101] (c) raw HTML 不解析（无 img 元素，转义文本呈现）
+[PASS][TC-101] (d) 危险协议过滤：无 javascript: href — ,https://example.com/a,,https://example.com/a
+[PASS][TC-101] (d) https 链接渲染且 rel=noopener noreferrer — <a href="https://example.com/a" rel="noopener noreferrer">ok</a>

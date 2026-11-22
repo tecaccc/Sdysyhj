@@ -1,0 +1,4 @@
+[PASS][TC-127] (c) success:false 受理前拒绝：单条保留（=1） — =1
+[PASS][TC-127] (c) disposition:handled：无 run 无回声、单条不变量保持（累计=2） — =2
+[PASS][TC-127] (c) 不污染后续关联：AFTER-RUN 回声与本条绑定（3 条、文本不错换） — =3
+[PASS][TC-127] (c) 拒绝/handled 无错误错增（无额外 user 条目）

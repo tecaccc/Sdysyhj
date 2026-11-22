@@ -1,0 +1,4 @@
+[PASS][TC-128] (c) 输入区无独立添加文件按钮（#btn-file 缺席） — btn-send,model-selector
+[PASS][TC-128] (a) 输入 @ 触发文件选择器（insert_file_ref → QuickPick 记录）
+[PASS][TC-128] (b) 选中后路径插入光标处并替换触发用 @（旧面板 insertAtCursor('@'+path+' ',true) 同语义） — value="@src/picked.ts "
+[PASS][TC-128] (b) 触发符不叠加（恰一个 @ 引用前缀） — value="@src/picked.ts "

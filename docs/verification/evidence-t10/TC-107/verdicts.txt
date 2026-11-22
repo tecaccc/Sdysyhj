@@ -1,0 +1,7 @@
+[PASS] TC-107(a) 默认面板 JS 产物合计 ≤ 4,194,304 — chat.js=1000004，chunk 集=chat.js，合计=1000004
+[PASS] TC-107(b) 宿主增量 ≤ 1,048,576 — 被测=104249 基线=459382 增量=-355133
+[PASS] TC-107(b) 基线实测与参考值 459,382 偏差 ≤±10%（无须留痕） — 基线=459382 参考=459382
+[PASS] TC-107(c) 依赖面无 shiki/@shikijs
+[PASS] TC-107(c) 产物文本无 shiki 命中 — chat.js shiki 命中=0
+[PASS] TC-107(c) 默认面板 metafile inputs 零 shiki — inputs=1187
+[PASS] TC-107(d) 经典面板 metafile inputs 零 react/react-dom/@assistant-ui — inputs=49，命中=零

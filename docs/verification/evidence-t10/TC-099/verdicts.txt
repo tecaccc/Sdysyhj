@@ -1,0 +1,14 @@
+[PASS] TC-099 锚点行号核对（L47/L57/L62/L112/L134/L169/L31 全部与源码一致） — L47: 命中 — if (role !== "assistant" && status) throw new Error("status is only supported for assistant messages || L57: 命中 — if (!isString(part.text) || !part.text.trim()) return null; || L62: 命中 — if (!text.trim() && !summary?.trim()) return null; || L112: 命中 — custom: metadata?.custom ?? {}, || L134: 命中 — case "tool-call": throw new Error(`Unsupported user message part type: ${type}`); || L169: 命中 — default: throw new Error(`Unknown message role: ${role}`); || L31: 命中 — createdAt: createdAt ?? /* @__PURE__ */ new Date()
+[PASS] TC-099 锚点 L76–95 tool-call 保真（basePart 透传 result/isError、argsText、parsePartialJsonObject、tool-<generated>）
+[PASS] TC-099 锚点 L131–134 user 带 reasoning/tool-call 即抛（范围锚）
+[PASS][TC-099] (a) text part 文本逐字
+[PASS][TC-099] (b) reasoning 折叠块存在
+[PASS][TC-099] (c) 工具名渲染（read/bash）
+[PASS][TC-099] (c) 参数摘要渲染（a.ts / seq 1 20） — argsText/args 解析摘要
+[PASS][TC-099] (c) 失败态 isError：bash 卡失败 marker 可见
+[PASS][TC-099] (d) 空文本块不产生空白气泡/空段落 — p 元素=1；消息条目数=2
+[PASS][TC-099] (d) 消息条目数不因空块增加（run1 = 2 条） — =2
+[PASS][TC-099] (f) metadata.custom.errorMessage → 消息级「⚠ …」提示
+[PASS][TC-099] (f) metadata.custom.aborted → 「⏹ 已中止」消息级标记
+[PASS][TC-099] (e) status 不注入：全程无 L47 类转换异常 — 零异常
+[PASS][TC-099] (f) 无 L131–134/L169 类 throw

@@ -1,0 +1,87 @@
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic' }`
+
+ RUN  v5.1.0 /tmp/v10
+
+stdout | suite-dom.test.tsx
+
+[DOM 套件] PASS=112 FAIL=1 NOTE=3
+[FAIL][TC-128] (b) 选中后路径插入光标处并替换触发用 @ — value=@src/picked.ts 
+
+ ❯ suite-dom.test.tsx (15 tests | 4 failed) 41207ms
+   ❯ TC-099 part 化映射消费端契约（构造型剧本） (1)
+     × 三类 part 保真 + 契约陷阱顺从 + aborted/errorMessage 5216ms
+   ❯ TC-122/130/131 状态四字段 + 模型选择器 + 用量 (1)
+     × 字段可见/流转 + 三入口终接 + 用量口径 15151ms
+   ❯ TC-129 / 命令菜单全链路 (1)
+     × 数据源/出现与过滤/键盘导航/选中插入/边界 10118ms
+   ❯ TC-132/133/135 SESS 系 (1)
+     × 新建会话/重命名/历史计数口径/外部修改拦截 8076ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  suite-dom.test.tsx > TC-099 part 化映射消费端契约（构造型剧本） > 三类 part 保真 + 契约陷阱顺从 + aborted/errorMessage
+Error: waitFor 超时：copy_output
+ ❯ waitFor vharness.ts:56:47
+     54|   for (;;) {
+     55|     if (pred()) return;
+     56|     if (Date.now() - start > timeoutMs) throw new Error(`waitFor 超时：${…
+       |                                               ^
+     57|     await new Promise((r) => setTimeout(r, 10));
+     58|   }
+ ❯ suite-dom.test.tsx:216:38
+ ❯ withChain suite-dom.test.tsx:79:5
+ ❯ suite-dom.test.tsx:191:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  suite-dom.test.tsx > TC-122/130/131 状态四字段 + 模型选择器 + 用量 > 字段可见/流转 + 三入口终接 + 用量口径
+Error: waitFor 超时：展示更新
+ ❯ waitFor vharness.ts:56:47
+     54|   for (;;) {
+     55|     if (pred()) return;
+     56|     if (Date.now() - start > timeoutMs) throw new Error(`waitFor 超时：${…
+       |                                               ^
+     57|     await new Promise((r) => setTimeout(r, 10));
+     58|   }
+ ❯ suite-dom.test.tsx:462:7
+ ❯ withChain suite-dom.test.tsx:79:5
+ ❯ suite-dom.test.tsx:435:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  suite-dom.test.tsx > TC-129 / 命令菜单全链路 > 数据源/出现与过滤/键盘导航/选中插入/边界
+Error: waitFor 超时：二次拉取（空集）
+ ❯ waitFor vharness.ts:56:47
+     54|   for (;;) {
+     55|     if (pred()) return;
+     56|     if (Date.now() - start > timeoutMs) throw new Error(`waitFor 超时：${…
+       |                                               ^
+     57|     await new Promise((r) => setTimeout(r, 10));
+     58|   }
+ ❯ suite-dom.test.tsx:605:7
+ ❯ withChain suite-dom.test.tsx:79:5
+ ❯ suite-dom.test.tsx:581:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  suite-dom.test.tsx > TC-132/133/135 SESS 系 > 新建会话/重命名/历史计数口径/外部修改拦截
+Error: waitFor 超时：外部修改检出
+ ❯ waitFor vharness.ts:56:47
+     54|   for (;;) {
+     55|     if (pred()) return;
+     56|     if (Date.now() - start > timeoutMs) throw new Error(`waitFor 超时：${…
+       |                                               ^
+     57|     await new Promise((r) => setTimeout(r, 10));
+     58|   }
+ ❯ suite-dom.test.tsx:640:7
+ ❯ withChain suite-dom.test.tsx:79:5
+ ❯ suite-dom.test.tsx:627:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)
+   Start at  15:49:43
+   Duration  42.67s (tests 97%, import 2%, environment 1%)
+

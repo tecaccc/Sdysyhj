@@ -1,0 +1,4 @@
+[PASS][TC-115] (a) 终稿文本逐字 == d1..d8 拼接（零丢失）
+[PASS][TC-115] (b) 流式中间态：≥2 次 DOM 文本增长 — 增长序列长度=9：94,128,130,132,134,136,138,140
+[PASS][TC-115] (c) 运行状态流转 idle→streaming→idle — idle→starting→streaming→idle
+[PASS][TC-115] (d) 首增量距发送 <2s — 首增量=9ms

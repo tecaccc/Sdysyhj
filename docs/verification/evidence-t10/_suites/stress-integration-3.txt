@@ -1,0 +1,19 @@
+
+> sdysyhj@0.1.7 verify:integration
+> vitest run test/integration
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:3:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.1.0 /tmp/verify-s234
+
+
+ Test Files  9 passed (9)
+      Tests  41 passed (41)
+   Start at  16:10:31
+   Duration  8.15s (tests 55%, import 25%, environment 18%, transform 1%)
+
+    Isolate  9 workers spawned · ~641ms startup each (spawn + environment, per file)
+             at least ~1.28s faster with isolate: false — reuses workers across files instead of one per file
+

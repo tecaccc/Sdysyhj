@@ -1,0 +1,84 @@
+改动行合计 152
+{"viewType组":3,"动作层提取组":70,"其他":79}
+其他组全量（供人工核阅）：
+-// ChatPanel：WebviewViewProvider + postMessage 路由。
++// ChatPanel（经典面板，FR-AUI-07③）：WebviewViewProvider + postMessage 路由。
++// 实现冻结承载回退）；vscode 交互动作机械提取至 hostActions.ts（同名委托，行为零变化）。
++      bridge: this.bridge,
++      logger: this.logger,
++      cwd: this.cwd,
++    });
+-  /** 右键“发送到 Pi”（FR-FILE-03）：文件路径或选区作为 prompt 素材预填输入框。 */
++  /** 右键“发送到 Pi”（FR-FILE-03）：hostActions 委托（行为零变化）。 */
+-    if (!target) {
+-      return;
+-    }
+-    let text = `@${rel}`;
+-    if (editor && editor.document.uri.fsPath === target.fsPath && !editor.selection.isEmpty) {
+-      text += `\n\n选区（L${startLine}-L${endLine}）：\n\`\`\`\n${selection}\n\`\`\``;
+-    }
+-  // ---------- 面板操作（命令入口复用） ----------
++  // ---------- 面板操作（命令入口复用；hostActions 同名委托） ----------
+-    if (sessions.length === 0) {
+-      return;
+-    }
+-      label: `$(comment-discussion) ${s.title}`,
+-      description: `${new Date(s.modifiedAt).toLocaleString()} · ${s.messageCount} 条消息`,
+-      detail: s.name ? s.path : undefined,
+-      sessionPath: s.path,
+-    }));
+-      placeHolder: "选择会话切换（上下文将完整恢复）",
+-      matchOnDescription: true,
+-      matchOnDetail: true,
+-    });
+-    if (!picked) return;
+-      await this.bridge.switchSession(picked.sessionPath);
+-    }, "切换会话失败");
+-      if (models.length === 0) {
+-        return;
+-      }
+-        models.map((m) => ({
+-          label: m.id,
+-          description: `${m.provider}${m.name ? ` · ${m.name}` : ""}${m.reasoning ? " · reasoning" 
+-          model: m,
+-        })),
+-        { placeHolder: "选择模型（随会话持久化）" }
+-      );
+-      if (!picked) return;
+-      await this.bridge.setModel(picked.model.provider, picked.model.id);
+-    }, "切换模型失败");
+-        { label: "$(sync) 循环切换", level: "__cycle__" as string },
+-        ...levels.map((l) => ({ label: l, level: l })),
+-      ];
+-      if (!picked) return;
+-      if (picked.level === "__cycle__") {
+-        await this.bridge.cycleThinkingLevel();
+-      } else {
+-        await this.bridge.setThinkingLevel(picked.level);
+-      }
+-    }, "切换 thinking 等级失败");
+-      prompt: "会话名称",
+-      value: current,
+-      placeHolder: "例如：重构鉴权模块",
+-    });
+-    if (name === undefined) return;
+-      await this.bridge.renameSession(name.trim());
+-    }, "重命名会话失败");
+-        if (text !== undefined) {
+-        } else {
+-        }
+-  /** @file 文件选择器（FR-FILE-02）：当前工作区内选文件，路径插入 prompt。 */
++  /** @file 文件选择器（FR-FILE-02）：hostActions 委托。 */
+-    });
+-      placeHolder: "选择要引用的文件（@file）",
+-      matchOnDescription: true,
+-    });
+-    if (!picked) return;
+-  }
+-    try {
+-      await fn();
+-    } catch (err) {
+-      this.logger.error(`${label}：${message}`);
+-    }
+
+机械提取抽样命中 5/5

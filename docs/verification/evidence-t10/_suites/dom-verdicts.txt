@@ -1,0 +1,132 @@
+[PASS][TC-098(c)] 通道透出 config ≥1
+[PASS][TC-098(c)] 通道透出 model_info ≥1
+[PASS][TC-098(c)] 通道透出 usage_info ≥1
+[PASS][TC-098(c)] 通道透出 run_state ≥1
+[PASS][TC-098(c)] 通道透出 history_loaded ≥1
+[PASS][TC-126] (a)① 发送即时条目数 = 1
+[PASS][TC-102] (c) 时点① user 文本 = 发送原文
+[PASS][TC-100] (a) 通道含 user_message/stream_start/text_delta/message_final（按到达序非空） — model_info,usage_info,history_loaded,config,model_info,usage_info,run_state,history_loaded,user_message,run_state,run_state,message_final,stream_start,usage_info,text_delta,text_delta,text_delta,text_delta,usage_info,message_final,run_state
+[PASS][TC-102] (a) 渲染消息条数 = 2（澄清 #12：1 user + 1 assistant） — 实际=2
+[PASS][TC-102] (b) assistant 文本逐字 == fixture message_end 权威文本 — ack: GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assi
+[PASS][TC-126] (a)②③ 回声后/终稿后 user 恰一条 — =1
+[PASS][TC-102] (c) user 文本 == fixture user 权威文本 — GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assistant + settled)
+[PASS][TC-102] (c) 无双版并存（发送原文恰出现一次） — =1
+[PASS][TC-102] (d) 全量回放无截断（4 delta 拼接 == 终稿） — fixture 三方内证
+[PASS][TC-124] (e) 每条消息时间戳 ^\d{2}:\d{2}$ — 2 个
+[PASS][TC-124] (d) 用户气泡容器存在、助手无气泡容器
+[PASS][TC-124] (d)⑤ 消息子树无 avatar/img
+[PASS][TC-124] (e) 无 User/Assistant 角色文字前缀 — 08:00GOLDEN-PROMPT-B || 08:00ack: GOLDEN-PRO
+[PASS][TC-100] (c) 防自证结构：注入 = 子进程 JSONL（自建 replay CLI），无直写渲染路径 — harness 仅经 postMessage 通道与 DOM 查询；未调用 store.dispatch/innerHTML/组件 props
+[NOTE][TC-100] 首增量耗时 — 104ms（含发送→settled 全程）
+[PASS][TC-103] (c) 总数 = 6（3 user + 3 assistant） — 实际=6
+[PASS][TC-103] (a) user 条目 = 3 — =3
+[PASS][TC-103] (a) 3 条 user 文本逐条 == fixture 回声文本 — GOLDEN-STEER-FOLLOWUP main prompt (streaming run for mid-run injection) | GOLDEN-ST sentinel steer (sent later, delivered at next turn boundary) | GOLDEN-FU sentinel follow-up (sent first, delivered after agent stops)
+[PASS][TC-103] (b) 3 条 assistant 文本逐条一致 — ack: GOLDEN-STEER-FOLLOWUP main prompt (streaming run for mid-run | ack: GOLDEN-ST sentinel steer (sent later, delivered at next turn | ack: GOLDEN-FU sentinel follow-up (sent first, delivered after ag
+[PASS][TC-103] (a) 投递序 = 主 prompt → steer → follow-up（发送序 F 先 S 后，两序均不丢不错换） — 投递位置序=0,2,1（user 文本序：0=主 1=steer 2=follow-up）
+[PASS][TC-103] (d) queue_update 快照经通道透出 — 数据面由桥事件记录佐证
+[PASS][TC-126] (b) steer/followUp 插话各恰一条 user 条目
+[PASS][TC-099] (a) text part 文本逐字
+[PASS][TC-099] (b) reasoning 折叠块存在
+[PASS][TC-117] (a) 默认折叠（未展开）
+[PASS][TC-117] (b) 展开后 thinking 文本 == t1..t4 拼接 — ▸ 💭 thinking…t1t2t3t4
+[PASS][TC-117] (c) 可展开交互元素存在（summary）
+[PASS][TC-099] (c) 工具名渲染（read/bash）
+[PASS][TC-099] (c) 参数摘要渲染（a.ts / seq 1 20） — argsText/args 解析摘要
+[PASS][TC-118] (a) 工具卡含执行状态（成功/失败）
+[PASS][TC-118] (b) #D-04 晚到结果收敛：read 卡终态成功 — tool_execution_end 晚于 message_end
+[PASS][TC-099] (c) 失败态 isError：bash 卡失败 marker 可见
+[PASS][TC-118] (c) 大输出截断保留尾部（尾行 line-22000 保留、首行 BIGOUT-FIRST-LINE 不保留） — 尾行=true 首行=false
+[PASS][TC-118] (c) 截断态标记（outputTruncated→复制全部可见）
+[PASS][TC-118] (c) 复制全部动作存在（截断时可见）
+[PASS][TC-118] (c) 复制全部 → copy_output 取宿主缓存全量（调用记录） — copy_output:tc-3
+[PASS][TC-099] (d) 空文本块不产生空白气泡/空段落 — p 元素=1；消息条目数=2
+[PASS][TC-099] (d) 消息条目数不因空块增加（run1 = 2 条） — =2
+[PASS][TC-099] (f) metadata.custom.errorMessage → 消息级「⚠ …」提示
+[PASS][TC-099] (f) metadata.custom.aborted → 「⏹ 已中止」消息级标记
+[PASS][TC-127] (d) 回归边界：thinking/工具卡条目不受单气泡判定影响（3 轮 × 2 条 = 6） — =6
+[PASS][TC-099] (e) status 不注入：全程无 L47 类转换异常 — 零异常
+[PASS][TC-099] (f) 无 L131–134/L169 类 throw
+[PASS][TC-101] (a) DOM 无新增 script 元素
+[PASS][TC-101] (a) 无 on* 事件属性注入元素
+[PASS][TC-101] (a) 探针以文本节点形态逐字存在
+[PASS][TC-101] (b) 预埋哨兵未被改写、探针无副作用
+[PASS][TC-101] (c) raw HTML 不解析（无 img 元素，转义文本呈现）
+[PASS][TC-101] (d) 危险协议过滤：无 javascript: href — ,https://example.com/a,,https://example.com/a
+[PASS][TC-101] (d) https 链接渲染且 rel=noopener noreferrer — <a href="https://example.com/a" rel="noopener noreferrer">ok</a>
+[PASS][TC-115] (a) 终稿文本逐字 == d1..d8 拼接（零丢失）
+[PASS][TC-115] (b) 流式中间态：≥2 次 DOM 文本增长 — 增长序列长度=9：94,128,130,132,134,136,138,140
+[PASS][TC-115] (c) 运行状态流转 idle→streaming→idle — idle→starting→streaming→idle
+[PASS][TC-115] (d) 首增量距发送 <2s — 首增量=9ms
+[PASS][TC-116] (a) h1/h2/ul/ol/li
+[PASS][TC-116] (a) GFM 表格 table/thead/tbody/tr/td
+[PASS][TC-116] (a) 任务列表复选项
+[PASS][TC-116] (a) 删除线 del
+[PASS][TC-116] (a) pre>code 与行内 code
+[PASS][TC-116] (a) https 链接 a[href^=https:]
+[PASS][TC-116] (a) 单换行渲染 <br> — remark-breaks 对齐旧 breaks:true
+[PASS][TC-116] (b) 36 语言代码块逐一带 language-<名> 类（清单逐项） — 缺失=无
+[PASS][TC-116] (b) 语法高亮 token 结构（span）覆盖 36 集（plaintext 空语法豁免） — 无 span：plaintext（hljs plaintext 注册为空语法，输出纯文本属其正常渲染）
+[PASS][TC-116] (c) 集外（haskell）无高亮 token、纯代码展示 — 类=language-haskell hljs
+[PASS][TC-116] (c) 集外内容转义展示：< > 为文本节点不生成元素
+[PASS][TC-116] (d) <b>x</b> 以文本形态呈现（不生成 b 元素）
+[PASS][TC-119] (d) 运行中显示 Stop、隐藏发送
+[PASS][TC-119] (a) Stop 动作产生 abort 调用（RPC abort 已回放） — ready,prompt,abort
+[PASS][TC-119] (b) 中止后运行状态回 idle、UI 恢复可输入
+[PASS][TC-119] (c) 当前助手消息尾部「⏹ 已中止」消息级标记
+[PASS][TC-121] (a) provider 报错 → 聊天区可读错误卡片 + 修复指引 — ⚠ 模型返回错误：rate limited 429
+[PASS][TC-121] (b) extension_error 不进错误卡片、以一次性 toast 呈现 — 扩展错误（/ext/foo）：EXTERR-BOOM same（详情见 Output「Sdysyhj」） | 扩展错误（/ext/bar）：EXTERR-BOOM other（详情见 Output「Sdysyhj」）
+[PASS][TC-121] (c) 同键窗口期去重（/ext/foo ×2 → 1 toast；异键另发） — 扩展错误（/ext/foo）：EXTERR-BOOM same（详情见 Output「Sdysyhj」） | 扩展错误（/ext/bar）：EXTERR-BOOM other（详情见 Output「Sdysyhj」）
+[PASS][TC-121] (c) 日志全量含完整字段（extensionPath/event/error） — 同键日志=2 条
+[PASS][TC-122] (a) 状态栏含模型/thinking/运行状态三字段 — mock/mock-small · off · 空闲
+[PASS][TC-122] (a) 会话名字段可见（#session-name）
+[PASS][TC-122] (b) 运行状态流转 idle→streaming 可见 — mock/mock-small · off · 运行中
+[PASS][TC-122] (b) 运行状态回 idle（「已中止」非状态值）
+[PASS][TC-131] (a)(b) 用量展示 token 数值 + 百分比（12345→45600 覆盖，45600/200000=23%） — 45.6k / 200k (23%)
+[PASS][TC-131] (c) 新助手消息用量刷新（45600 覆盖 12345） — 45.6k / 200k (23%)
+[PASS][TC-130] (a) 底部常显当前模型名 — mock/mock-small▾
+[PASS][TC-130] (a) 点击弹出可用模型列表（mock-small/mock-large）
+[PASS][TC-130] (a) 选中即切换（set_model RPC）并同步展示 — 展示=mock/mock-large
+[PASS][TC-130] (b) 三入口同步：状态栏（入口①）model_info 链路更新 — mock/mock-large · off · 空闲
+[PASS][TC-126] (a)① 发送即时条目数 = 1（显示发送原文，不等回声） — 文本含原文=true
+[PASS][TC-127] (a) #16 权威文本到达后该条目就地更新为权威文本
+[PASS][TC-127] (a) 更新前后条目数均 1、不新增条目 — =1
+[PASS][TC-127] (a) 不同时展示两版文本（发送原文已被覆盖）
+[PASS][TC-127] (b) #17 不可关联回声：条目数不因该回声新增（4 = A + B + steer + followUp 各一条） — =4 DOM：08:00ECHO16-AUTH-REWRITTEN | 08:00ECHO17-SENT-TEXT | 08:00STEER-B-X | 08:00FOLLOW-B-Y
+[PASS][TC-127] (b) 文本不错换、不因该回声新增条目 — 垃圾回声出现=false
+[PASS][TC-127] (b) 实时窗口保留发送原文（含 steer/followUp 入队文本）
+[PASS][TC-126] (b) steer/followUp 插话各恰一条（每发送恰一条） — =4
+[PASS][TC-127] (b) 权威重建后收敛为会话 JSONL 权威文本
+[PASS][TC-126] (c) 历史重放不重复（会话 B user 恰一条） — =1
+[PASS][TC-134] (a) 重放与会话 JSONL 一致（含 usage 权威值）
+[PASS][TC-128] (c) 输入区无独立添加文件按钮（#btn-file 缺席） — btn-send,model-selector
+[PASS][TC-128] (a) 输入 @ 触发文件选择器（insert_file_ref → QuickPick 记录）
+[PASS][TC-128] (b) 选中后路径插入光标处并替换触发用 @（旧面板 insertAtCursor('@'+path+' ',true) 同语义） — value="@src/picked.ts "
+[PASS][TC-128] (b) 触发符不叠加（恰一个 @ 引用前缀） — value="@src/picked.ts "
+[PASS][TC-129] (a)① 数据源 = get_commands 全集，每项含名称与描述
+[PASS][TC-129] (b)② `/` 开头显示菜单
+[PASS][TC-129] (b)② `/` 后实时过滤（大小写不区分子串，/ZEB → skill-zebra）
+[PASS][TC-129] (b)② 过滤后无匹配菜单隐藏
+[PASS][TC-129] (c)③ Enter 选中不触发发送（prompt 零命中） — ready,request_commands
+[PASS][TC-129] (d)④ 选中写入 `/`+命令名并关闭菜单、焦点保持输入框 — value=/review
+[PASS][TC-129] (e)⑤ get_commands 返回空不显示菜单
+[PASS][TC-132] (a) 新建会话动作存在
+[PASS][TC-132] (a) 新建会话 → new_session RPC（旧会话由 pi 原生落盘保留，JSONL 文件断言面在宿主 sessionStore 套件佐证）
+[PASS][TC-132] (b) 重命名 → set_session_name + session_name 事件同步状态栏
+[PASS][TC-135] (b) 外部修改 ≤5s 内提示（2.5s 轮询口径） — 检出耗时=2478ms
+[PASS][TC-135] (b) 陈旧状态拦截：prompt 不发 RPC、无 user_message 事件 — sent=1 事件=0
+[PASS][TC-135] (b) 刷新按钮动作 → refresh_session（设计 D3）
+[PASS][TC-135] (a) 单活动会话：无并行多会话标签结构
+[PASS][TC-123] (a)① 每轮流式开始即跟随（默认跟随）
+[PASS][TC-123] (a)① 轮内后续 stream_start 不覆盖用户打断
+[PASS][TC-123] (b)② >40px 打断（100px → 不跟随） — 阈值=40
+[PASS][TC-123] (c)③ ≤40px 恢复跟随
+[PASS][TC-123] (b)② 41px 边界即打断
+[PASS][TC-123] (c)③ 40px 边界即恢复
+[PASS][TC-123] (d)④ idle 不自动滚动
+[PASS][TC-123] (d)④ 跟随态不持久化（新实例默认不跟随）
+[PASS][TC-123] shell 接线：useLayoutEffect 渲染点 + streamStartSeq 重置 + isRunning 门控
+[NOTE][TC-123] jsdom 无布局（scrollHeight=0），滚动几何采样不可在 jsdom 断言；四款语义由产品 FollowState 状态机独立驱动 + shell 接线面断言 + 套件 followState.test.ts 佐证；真机观感 = TC-125 MANUAL
+[PASS][TC-112] (b) 经典侧 = 同一 jsdom 基建加载冻结 bundle（media/main.js）DOM 断言 — 经典 .message 计数=2
+[PASS][TC-112] (c) 一致快照：两面板消息条数相等（均 = 2） — 新 UI=2 经典=2
+[PASS][TC-112] (c) 消息文本逐条对位相等 — user=GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assistant + settled) asst=ack: GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assi
+[NOTE][TC-112] 受控回退预案（D9）未触发：经典侧 jsdom 挂载成功 — postedFlow=21

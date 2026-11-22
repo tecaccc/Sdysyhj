@@ -1,0 +1,10 @@
+=== ENV（核验 Agent 证据头，2026-11-22） ===
+git describe/tags: ready-for-verify-r9 / tags: ready-for-verify ready-for-verify-r2 ready-for-verify-r3 ready-for-verify-r4 ready-for-verify-r5 ready-for-verify-r6 ready-for-verify-r7 ready-for-verify-r8 ready-for-verify-r9 v0.1.1 v0.1.2 v0.1.3 v0.1.4 v0.1.5 v0.1.6 v0.1.7 
+被测提交: 19588eb243d3e4ac348f597549821b808f0910bd（deliverable=19588eb，checkout ready-for-verify-r9）
+git status --porcelain: （空）
+OS: Linux 5.14.0-687.15.1.el9_8.x86_64 x86_64
+Node: v24.19.0 / npm: 11.17.0
+日期(UTC): 2026-11-22T08:11:27Z
+临时 HOME: /tmp/verify-home（隔离 ~/.pi/agent）
+基线: tag v0.1.7 检出重建于 /tmp/base-v017（git archive v0.1.7；dist/extension.js=459,382B）
+自建脚本: /tmp/v10/{static-gates.mjs,vharness.ts,replay-pi.mjs,suite-dom.test.tsx}（断言器自建；vitest 5.1.0 + jsdom 31 仅作执行环境）

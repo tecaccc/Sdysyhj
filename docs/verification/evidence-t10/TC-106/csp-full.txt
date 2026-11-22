@@ -1,0 +1,1 @@
+default-src 'none'; script-src 'nonce-vnonce123'; style-src https://test.vscode-cdn.net 'nonce-vnonce123'; img-src https://test.vscode-cdn.net blob: data:; media-src https://test.vscode-cdn.net blob: data:; font-src https://test.vscode-cdn.net data:; connect-src https://test.vscode-cdn.net; frame-src 'none'

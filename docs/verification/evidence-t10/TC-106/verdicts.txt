@@ -1,0 +1,9 @@
+[PASS] TC-106(a) 指令集 = 官方模板八项（无模板外指令） — default-src,script-src,style-src,img-src,media-src,font-src,connect-src,frame-src
+[PASS] TC-106(a) default-src 'none'
+[PASS] TC-106(a) script-src 仅 nonce（无 unsafe-eval/unsafe-inline） — 'nonce-vnonce123'
+[PASS] TC-106(a) style-src = cspSource + nonce — https://test.vscode-cdn.net 'nonce-vnonce123'
+[PASS] TC-106(a) connect-src = cspSource
+[PASS] TC-106(a) img-src/media-src = cspSource+blob:+data:；font-src cspSource+data:；frame-src 'none'
+[PASS] TC-106(a) 零新增：chatViewProvider.renderWebviewHtml 调用面无 CSP 注入参数
+[PASS] TC-106(c) 产物级：zod-jitless 模块先于全部 zod 导入者模块（schema 构建发生面） — zod-jitless.ts sources@52 | webview/ui/zod-jitless.ts sources@52
+[PASS] TC-106(c) jitless 配置真值存在于产物（config({jitless:!0}) 语义） — jitless 出现 1 次

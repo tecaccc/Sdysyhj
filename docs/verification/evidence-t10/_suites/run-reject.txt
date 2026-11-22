@@ -1,0 +1,10 @@
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic' }`
+
+ RUN  v5.1.0 /tmp/v10
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:12:53
+   Duration  2.64s (tests 46%, import 29%, environment 21%, transform 3%)
+

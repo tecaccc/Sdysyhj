@@ -1,0 +1,4 @@
+[PASS][TC-130] (a) 底部常显当前模型名 — mock/mock-small▾
+[PASS][TC-130] (a) 点击弹出可用模型列表（mock-small/mock-large）
+[PASS][TC-130] (a) 选中即切换（set_model RPC）并同步展示 — 展示=mock/mock-large
+[PASS][TC-130] (b) 三入口同步：状态栏（入口①）model_info 链路更新 — mock/mock-large · off · 空闲

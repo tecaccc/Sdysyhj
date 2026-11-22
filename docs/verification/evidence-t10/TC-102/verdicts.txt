@@ -1,0 +1,6 @@
+[PASS][TC-102] (c) 时点① user 文本 = 发送原文
+[PASS][TC-102] (a) 渲染消息条数 = 2（澄清 #12：1 user + 1 assistant） — 实际=2
+[PASS][TC-102] (b) assistant 文本逐字 == fixture message_end 权威文本 — ack: GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assi
+[PASS][TC-102] (c) user 文本 == fixture user 权威文本 — GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assistant + settled)
+[PASS][TC-102] (c) 无双版并存（发送原文恰出现一次） — =1
+[PASS][TC-102] (d) 全量回放无截断（4 delta 拼接 == 终稿） — fixture 三方内证
