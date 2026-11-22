@@ -1,10 +1,10 @@
 # Sdysyhj 测试用例基线（docs/test-cases.md）
 
-> 产出：测试 Agent（写用例阶段，TASK-001；v0.3 追加：TASK-005；v0.4 追加：TASK-006；v0.5 追加：TASK-008；v0.5.1 补遗：审批点 2 第一轮退回，澄清 #17；v0.6 追加：TASK-009 阶段①）｜ 状态：**待审批点 2 裁决** ｜ 版本：v0.6（2026-11-21 修订）
+> 产出：测试 Agent（写用例阶段，TASK-001；v0.3 追加：TASK-005；v0.4 追加：TASK-006；v0.5 追加：TASK-008；v0.5.1 补遗：审批点 2 第一轮退回，澄清 #17；v0.6 追加：TASK-009 阶段①；v0.7 追加：TASK-009 切换批次）｜ 状态：**待审批点 2 裁决** ｜ 版本：v0.7（2026-11-22 修订）
 >
-> **依据（三源，规范第一部分 §5 第 7 条，v0.5 起生效）**：① 需求基线 docs/requirements.md（TC-001~TC-046 依据 v0.2，TC-047~TC-052 依据 v0.3，TC-053~TC-061 依据 v0.4，TC-062~TC-076 依据 v0.5（其中 TC-076 判据另依 v0.5.1 澄清 #17），TC-077~TC-097 依据 v0.6（§4.6 FR-AUI-01~06 + §5 阶段①不做项 + §8 第 7 条出口门禁 + 澄清 #12/#18））；② 设计基线**冻结快照**：TC-062~TC-076 引用 docs/technical-design.md @ commit `7f4e586`（TASK-008 审批点 1b 通过时冻结；其 §1、§3.4、§3.5、§4.1、§6、§10.12、§11），TC-077~TC-097 引用 @ commit `42f5e86`（TASK-009 审批点 1b 通过时冻结；其 §6 实验面板行、§10.13 D1–D9、§11 外部契约依赖清单 #11–#18）；③ 各快照 §11「外部契约依赖清单」登记的外部权威文档（TC-062~TC-076：**pi 1.5.2 随附 docs/**，绝对路径示例 `/home/connor/.nvm/versions/node/v24.19.0/lib/node_modules/@earendil-works/pi-coding-agent/docs/`，引用 json.md / rpc.md / rpc-commands.md / extensions.md；TC-077~TC-097 另引 **@assistant-ui 生态外部权威**：`@assistant-ui/vscode@0.0.1` npm README（`npm view @assistant-ui/vscode@0.0.1 readme`）与 npm tarball 源码（registry tarball `src/`，含 protocol.ts/host/router.ts/host/html.ts/webview/fetch.ts/theme.css）、官方指南 assistant-ui.com/docs/guides/vscode、`@assistant-ui/react` 官方文档（external-store 等）、React 官方文档、官方测试床 github.com/assistant-ui/assistant-ui examples/with-vscode、microsoft/vscode `extensions/theme-defaults/themes/*.json`——版本以设计 §11 #11–#18 锚定为准）+ **golden fixture**（`test/fixtures/golden/`，TASK-008 落地的真实 pi 事件序列转录，设计 §10.13 D8 登记的外部期望源）。**涉及外部系统行为的期望（事件序列/返回结构/时序契约）只锚定上述权威源的章节/示例/源码路径（或 golden trace），不以我方 mock 行为为期望来源**（规范第一部分 §5 第 6 条）。
+> **依据（三源，规范第一部分 §5 第 7 条，v0.5 起生效）**：① 需求基线 docs/requirements.md（TC-001~TC-046 依据 v0.2，TC-047~TC-052 依据 v0.3，TC-053~TC-061 依据 v0.4，TC-062~TC-076 依据 v0.5（其中 TC-076 判据另依 v0.5.1 澄清 #17），TC-077~TC-097 依据 v0.6（§4.6 FR-AUI-01~06 + §5 阶段①不做项 + §8 第 7 条出口门禁 + 澄清 #12/#18）**，TC-098~TC-137 依据 v0.7（§4 判定载体注记 + §4.6 FR-AUI-02/03/04/05/07/08 修订版与新增 + §5 切换批次不做项 + §8 第 7 条切换批次出口门禁 + §12 #5/#12/#16/#17/#18/#19 + §3 术语表）**）；② 设计基线**冻结快照**：TC-062~TC-076 引用 docs/technical-design.md @ commit `7f4e586`（TASK-008 审批点 1b 通过时冻结；其 §1、§3.4、§3.5、§4.1、§6、§10.12、§11），TC-077~TC-097 引用 @ commit `42f5e86`（TASK-009 审批点 1b 通过时冻结；其 §6 实验面板行、§10.13 D1–D9、§11 外部契约依赖清单 #11–#18），TC-098~TC-137 引用 @ commit `fab4190`（TASK-009 切换批次审批点 1b 通过时冻结；其 §10.14 D1–D10、§6 新 UI 消费端契约行、§11 外部契约依赖清单 #19–#23）；③ 各快照 §11「外部契约依赖清单」登记的外部权威文档（TC-062~TC-076：**pi 1.5.2 随附 docs/**，绝对路径示例 `/home/connor/.nvm/versions/node/v24.19.0/lib/node_modules/@earendil-works/pi-coding-agent/docs/`，引用 json.md / rpc.md / rpc-commands.md / extensions.md；TC-077~TC-097 另引 **@assistant-ui 生态外部权威**：`@assistant-ui/vscode@0.0.1` npm README（`npm view @assistant-ui/vscode@0.0.1 readme`）与 npm tarball 源码（registry tarball `src/`，含 protocol.ts/host/router.ts/host/html.ts/webview/fetch.ts/theme.css）、官方指南 assistant-ui.com/docs/guides/vscode、`@assistant-ui/react` 官方文档（external-store 等）、React 官方文档、官方测试床 github.com/assistant-ui/assistant-ui examples/with-vscode、microsoft/vscode `extensions/theme-defaults/themes/*.json`——版本以设计 §11 #11–#18 锚定为准）+ **golden fixture**（`test/fixtures/golden/`，TASK-008 落地的真实 pi 事件序列转录，设计 §10.13 D8 登记的外部期望源）；TC-098~TC-137 另引**切换批次外部锚点**（设计 §11 #19–#23 锚定版本，2026-11-22 随包源码/清单核读）：`@assistant-ui/core@0.3.37` 随包源码 `node_modules/@assistant-ui/core/dist/runtime/utils/thread-message-like.js`（**#D-06 消费端锚点**，throw/丢弃/保真语义行号锚定）、`@assistant-ui/react-markdown@0.14.26` 导出面（MarkdownTextPrimitive / SyntaxHighlighterProps / code-fence）、`react-markdown@10.1.0` + `remark-gfm@4.0.1` + `remark-breaks@4.0.0`（raw HTML 不解析 / GFM 表格 / 单换行 `<br>`）、`highlight.js@11.12.0` `lib/common.js` registerLanguage 清单（36 语言）、`@assistant-ui/core` Composer/ExternalStore 接口面（`ComposerRuntime.setText` / ExternalStoreAdapter）、pi 1.5.2 随附 docs（json.md / rpc.md / rpc-commands.md / extensions.md，#1–#10 既有）。**涉及外部系统行为的期望（事件序列/返回结构/时序契约）只锚定上述权威源的章节/示例/源码路径（或 golden trace），不以我方 mock 行为为期望来源**（规范第一部分 §5 第 6 条）。
 > **参考**：DevelopmentGuidelines/development-guidelines.md 第一部分 §5（用例编写规范）、第二部分（原 agent-workflow）§6（产物契约）、§4（自测命令约定 `npm run verify:unit` / `npm run verify:integration`）。注：该规范文档仅存本地（不入库）。
-> **盲写声明**：本用例为全新上下文盲写产物；**盲写的对象是实现，不是契约**（规范第一部分 §2.2）——未读取 src/、webview/、test/（**唯一例外：`test/fixtures/golden/` 下 fixture 文件本身**——设计基线 §10.13 D8 登记的外部期望源，属依据侧而非实现侧）、media/、package.json、docs/verification/、node_modules 及 docs/technical-design.md 工作树副本（研发现期可能仍在修改，TASK-008 依据读取 `7f4e586`、TASK-009 依据读取 `42f5e86` 冻结快照导出件）；v0.5 新增用例（TC-062~TC-076，TC-076 为 v0.5.1 补遗）与 v0.6 新增用例（TC-077~TC-097）均按三源推导，不迁就实现（v0.6 的 @assistant-ui 生态外部契约读数为 2026-11-21 registry/npm tarball/官方站点快照，以设计 §11 #11–#18 锚定版本为准）。
+> **盲写声明**：本用例为全新上下文盲写产物；**盲写的对象是实现，不是契约**（规范第一部分 §2.2）——未读取 src/、webview/、test/（**唯一例外：`test/fixtures/golden/` 下 fixture 文件本身**——设计基线登记的外部期望源，属依据侧而非实现侧）、media/、项目 package.json、docs/verification/、docs/technical-design.md 工作树副本（研发现期可能仍在修改，TASK-008 依据读取 `7f4e586`、TASK-009 阶段①依据读取 `42f5e86`、TASK-009 切换批次依据读取 `fab4190` 冻结快照导出件）；node_modules 仅读取外部契约锚点指定的随包源码/清单/导出面与依赖版本号（`thread-message-like.js`、highlight.js `lib/common.js`、`@assistant-ui/react-markdown` 导出面、pi 随附 docs）——属「盲实现、不盲契约」的契约面（规范第一部分 §2.2），非实现侧；v0.5 新增用例（TC-062~TC-076，TC-076 为 v0.5.1 补遗）与 v0.6 新增用例（TC-077~TC-097）均按三源推导，不迁就实现（v0.6 的 @assistant-ui 生态外部契约读数为 2026-11-21 registry/npm tarball/官方站点快照，以设计 §11 #11–#18 锚定版本为准）；v0.7 新增用例（TC-098~TC-137）同按三源推导（外部契约读数为 2026-11-22 随包源码/清单核读，以设计 §11 #19–#23 锚定版本为准），实现并行中互不可见）。
 > **写权限声明**：本阶段仅写 docs/test-cases.md 一个文件；无任何 git 写操作（只读 git 命令与 `git show` 冻结快照导出除外）。
 
 ---
@@ -68,6 +68,8 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 > **golden 回放场景（v0.5 增补，设计基线 §6 + §10.12 D8）**：**GOLDEN-BASIC**（基本 prompt 剧本：prompt → user 回声 → assistant 流式 → agent_settled）与 **GOLDEN-MIX**（运行中 steer + follow_up 混合注入，含 `queue_update` 与乱序投递序列）——两者为**真实 pi 1.5.2 录制的事件序列静态转录**（golden trace 文件随实现交付入库，含录制命令/pi 版本/脱敏与归一化声明；核验时由验证剧本按 FR 追溯表定位）。回放场景的期望源 = 录制的真实事件序列本身（golden trace），非我方 mock 行为——用于防「自建 mock 自证」（规范 §4.3）。
 >
 > **golden fixture 落位更新（v0.6，TASK-009 阶段①）**：TASK-008 已交付 golden fixture 落位 `test/fixtures/golden/`（`golden-prompt-basic.jsonl`（GOLDEN-BASIC）/ `golden-steer-followup.jsonl`（GOLDEN-MIX）/ `README.md`（录制命令、双录一致、归一化与乱序实证声明））；TASK-009 阶段①用例（TC-077~TC-097）的回放期望值直接由 fixture 文件逐行推导（设计 §10.13 D8 登记的外部期望源），fixture 文件本身属盲写许可读取面（见文件头盲写声明）。
+>
+> **切换批次用例数据源（v0.7，TASK-009 切换批次）**：等价域用例（TC-115~TC-136）沿用既有 MOCK-* 场景（确定性行为不变，判定载体平移至新 UI 消费端 DOM，见「FR-AUI 切换批次共用约定」）；LAB-XSS 剧本随设计 §10.14 D10 改名 **UI-XSS**（语义不变：user 回声与 assistant 回复均含 `<script>`/`<img onerror>` 探针文本，事件形状对照 json.md「Event sequence」L30–46 转印）；回放期望值由 golden fixture 逐行推导（TC-102：2 = 1 user + 1 assistant；TC-103：6 = 3 user + 3 assistant）。
 
 ### 0.4 判定等级
 
@@ -899,6 +901,444 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 - **依据锚点（三源）**：FR-AUI-06①②③；设计 §10.13 D7（度量方法、报告承载与结构、≥5 次中位、三组归类）+ D9（门禁处置：如实记录失败即有效产出、允许证伪）；外部契约 §11 #16（官方测试床 probes 模式——度量方法参照）+ golden fixture（时延度量数据源：TC-085/TC-087 回放剧本）。
 - **说明**：(c) 措辞中性的语义复核并入核验报告观察项（结构扫描为自动判定面）。
 
+### FR-AUI 切换批次共用约定（TASK-009 切换批次，TC-098~TC-137 共用）
+
+（v0.7 新增章节，TASK-009 切换批次；对应需求基线 v0.7 §4 判定载体注记 + §4.6 FR-AUI-02/03/04/05/07/08（FR-AUI-01/06 使命结束，历史条款不再产生新判定项）+ §5 切换批次不做项 + §8 第 7 条切换批次出口门禁 + 澄清 #5/#12/#16/#17/#18/#19；设计依据 = 冻结快照 `fab4190`（TASK-009 切换批次审批点 1b 通过时冻结）的 §10.14（D1–D10）+ §6 新 UI 消费端契约行 + §11 #19–#23。）
+
+**观察契约（TC-098~TC-137 共用，判定面依设计 §10.14 D8）**：
+
+- **消费端契约判定面（#D-06 制度化，硬约束）**：切换批次全部「渲染可见」判定一律以**真实 `@assistant-ui/react` ExternalStoreRuntime + 组件消费**后的 **DOM 断言**为准——链路 = golden/mock 回放（fake-pi 子进程注入）→ RpcClient → PiBridge → 宿主 postMessage 泵 → webview store → 真实 `AssistantRuntimeProvider` + `useExternalStoreRuntime` + 组件渲染 → DOM 断言（jsdom 31 + @testing-library/react 16，文件级 `// @vitest-environment jsdom` 注解，范围限新 UI 相关测试文件，设计 D8 有意偏离「无 DOM 纪律」先例之已批准项）。**禁 store 层驱动绕开**：不得以 store 状态断言、自建解码器、或直接调用映射函数的输出作为等价/回放判定的门禁面（#D-06 根因 = 断言面与真实消费面分歧无从暴露）——store/映射层断言仅作辅助证据，门禁面必须是真实 runtime 消费后的 DOM。
+- **消费端锚点（#D-06 期望源，行号锚定）**：`@assistant-ui/core@0.3.37` 随包源码 `node_modules/@assistant-ui/core/dist/runtime/utils/thread-message-like.js`（§11 #21）——L47 `if (role !== "assistant" && status) throw new Error("status is only supported for assistant messages")`（user 带 status 即抛）；L57 assistant 空/纯空白 text part 丢弃（`return null`，L105 filter 后不建 part）、L62 reasoning 空文本且无 summary 丢弃；L76–95 tool-call part 保真（`result`/`isError` 随 basePart 透传、`argsText` 保留、args = `parsePartialJsonObject(argsText)`、toolCallId 缺省 `tool-<generated>`）；L112 `custom: metadata?.custom ?? {}`（metadata.custom 透传）；L131–134 user 带 tool-call/reasoning part 即抛 `Unsupported user message part type`；L169 未知 role 抛 `Unknown message role`；L31 createdAt 缺省 `new Date()`。**期望的转换行为（保真/丢弃/throw）只来自该源码语义 + golden fixture，不以我方映射实现或我方 mock 为期望源**（规范第一部分 §5 第 6 条）。
+- **回放注入点（FR-AUI-02③ 防自证，沿用阶段①口径）**：注入位 = 宿主侧 PiBridge 适配层之下（fake-pi 子进程 `FAKE_PI_REPLAY` 既有注入位）；回放数据须穿越「子进程 JSONL → RPC 帧解析 → PiBridge 事件翻译 → postMessage 泵 → store → 真实 runtime 消费渲染」全链路；测试不直接向 webview DOM/store 写渲染结果。
+- **等价判定口径（FR-AUI-08③）**：既有验收标准语义与文本不变、判定载体平移（§4 判定载体注记）——判定方式 = 既有验证套件面重指向新 UI（既有 SC 场景在默认面板载体执行）+ golden 回放端到端（TC-102/TC-103）+ 双面板一致快照（TC-112）兜底；既有 TC-001~TC-076 验收语义继续有效，其新 UI 载体判定由本节等价域 TC 承载。NFR TC（TC-036~TC-044）场景经默认面板执行即自动落在新 UI 载体，不另立等价 TC。
+- **MANUAL 判定四值与自动兜底映射**：TC-108（FR-AUI-05②④ 真机层）、TC-111（FR-AUI-07③ 切换冒烟）、TC-114（FR-AUI-04③ 主题截图）、TC-125（FR-CHAT-10/09/06 真机观感与 Composer 交互）按核验判定四值记 **MANUAL**（遗留不计 FAIL，对应 FR 以自动兜底 TC 为门禁）；兜底映射：TC-108 → TC-106 + 本 TC 自动注册断言、TC-111 → TC-109/TC-110/TC-112、TC-114 → TC-113、TC-125 → TC-124/TC-123/TC-120/TC-129；全部真机项可在一次真机会话内执行（设计 D8 汇总口径）。
+- **口径披露（用例侧，非歧义）**：① FR-AUI-05③ 宿主增量基线 = FR 文本「v0.1.7 构建产物 dist/extension.js（实测 459,382 字节）」——执行口径缺省 = tag `v0.1.7` 检出同命令构建产物为基线（与 §3 第 12 条 v0.1.6 裁决同构：以发版标签构建产物为锚），实测值作校验参考（见 §3 第 13 条上报）；② FR-AUI-07②「Lab」字样清零扫描 = 词界匹配 `(?<![A-Za-z])Lab(?![A-Za-z])` + 「实验」字面子串匹配，扫描面限 package.json `contributes` 结构化字符串字段（定义源/文档排除，哨兵纪律）——防 `label`/`Label` 词内误命中；③ FR-CHAT-10 五子条自动面分工：①② CSS 钉值断言（样式文本/构建产物解析）、③④⑤ jsdom 结构断言（#19(a) 全维持口径），观感归 TC-125 MANUAL；④ 消息数口径 = 澄清 #12（user+assistant 合计），golden 期望值逐行推导（TC-102：2 = 1+1；TC-103：6 = 3+3）。
+
+### FR-AUI-02 路线 B 单实现（修订，切换批次）（P0（切换批次））
+
+#### TC-098 ｜ FR-AUI-02①（P0（切换批次））｜ 路线 A 淘汰 + 路线 B 单实现（依赖/构建/代码面移除断言 + postMessage 协议承载保留）｜ 自动
+- **前置条件**：ENV-SETUP；FR 追溯表（定位新 UI 实现位置与构建配置）。
+- **操作步骤**：`npm run verify:unit`（场景 SC-098；套件未覆盖时按 §0.5 以临时脚本执行同一断言）：
+  - (a) 路线 A 依赖消失：package.json JSON 解析断言 dependencies/devDependencies 无 `@assistant-ui/ai-sdk`、无 `ai`（#D-06 裁决随批次移除路线 A 专属消费者）；`@assistant-ui/react`/`@assistant-ui/vscode`/`react`/`react-dom` 保留（版本面归 TC-105）。
+  - (b) 路线 A 切片与对照组移除（设计 D1/D10 移除清单，FR 追溯表定位路径断言）：fetch-bridge 宿主路由、双切片开关、度量入口、路线 A 测试载体全部不存在；构建入口集 = 宿主 + 新默认 webview（`media/chat.js`）+ 经典 webview（`media/main.js`）三项，无第四入口。
+  - (c) 路线 B 承载保留：webview↔宿主 postMessage 协议全集处理保留——回放驱动下通道透出 ready 回放 superset 事件类别（config / model_info / usage_info / run_state / history_loaded，设计 D1）各 ≥1 次到达面板侧（通道观测断言）。
+  - (d) 既有套件回归：`npm run verify:unit && npm run verify:integration` 全绿（已删除的路线 A 测试载体除外）。
+- **期望结果**：(a)-(d) 全部成立。
+- **判定方式**：PASS = 全成立；FAIL = 任一依赖/切片残留、协议事件缺失或套件红（附 package.json 解析输出/路径清单/通道观测为证据）。
+- **依据锚点（三源）**：FR-AUI-02①（#D-06 裁决：路线 A 真机无法回复消息、随批次移除并关闭、不再修复）；设计 §10.14 D1（移除清单与构建入口收敛）+ D7（依赖变更）+ D10（冻结面）；外部契约 §11 #14（`@assistant-ui/react@0.15.37` ExternalStoreRuntime 消费契约面）。
+- **说明**：#D-06（路线 A 消费端契约盲区）随路线 A 移除关闭；v0.6 路线 A 判定项（TC-080(a)/TC-085/TC-087 路线 A 面等）自本批次起判「已移除/不适用」（历史条款），不复执行。
+
+#### TC-099 ｜ FR-AUI-02② + FR-AUI-08②（P0（切换批次））｜ part 化映射消费端契约（真实 runtime 消费下三类 part 保真 + 转换契约陷阱顺从）｜ 自动（#D-06 制度化核心）
+- **前置条件**：ENV-SETUP；构造型回放剧本（MOCK-THINK + MOCK-TOOLS(-FAIL) 组合 + 空文本块/aborted/errorMessage 注入变体，事件形状对照 json.md「Event sequence」L30–46 转印）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-099：剧本经真实链路渲染，消费端 DOM 断言 (a)-(f)）：
+  - (a) text part → Markdown 文本渲染，文本逐字 == 注入文本（结构化断言）；
+  - (b) thinking → reasoning 折叠块存在（默认折叠；展开/流式全语义归 TC-117）；
+  - (c) toolcall → 工具卡全要素经 tool-call part 透传（消费锚点 L76–95）：工具名、参数摘要（argsText/args 解析）、result（status/summary/output/outputTruncated）、失败态 isError（status="error"）各渲染值 == 剧本注入值（DOM 断言）；
+  - (d) 空文本块不建 part（L57 丢弃语义顺从）：空块注入不产生空白气泡/空段落，消息条目数不因空块增加；
+  - (e) status 不注入（L47 throw 语义规避）：全程无转换异常（无 `status is only supported for assistant messages` 类 throw），消息渲染完整；
+  - (f) metadata.custom 透传（L112）：`aborted` → 消息尾部「已中止」消息级标记渲染、`errorMessage` → 消息级「⚠ …」提示渲染（DOM 断言）；映射全程无 `Unsupported user message part type`（L131–134）/ `Unknown message role`（L169）类 throw。
+- **期望结果**：(a)-(f) 全部成立。
+- **判定方式**：PASS = 场景绿且 (a)-(f) 全成立；FAIL = 任一要素缺失/错值/转换异常（附 DOM 快照与异常栈为证据）。
+- **依据锚点（三源）**：FR-AUI-02② + FR-AUI-08②；设计 §10.14 D2（映射扩容表）+ D5（aborted/errorMessage）+ D8（消费端契约验证面）；外部契约 §11 #21（`thread-message-like.js` L47/L57/L62/L76–95/L112/L131–134/L169 throw/丢弃/保真语义）+ #14（part 型 text/reasoning/tool-call）+ #1（json.md 事件形状）。
+- **说明**：判定约束 = 共用约定「禁 store 层驱动绕开」；store/映射函数输出断言仅作辅助证据。
+
+#### TC-100 ｜ FR-AUI-02③（P0（切换批次））｜ 回放传输真实性（防自证）：注入点低于 PiBridge、数据经 postMessage 全链达消费端 DOM ｜ 自动
+- **前置条件**：ENV-SETUP；GOLDEN-BASIC。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-100：golden 回放注入 = fake-pi 子进程（`FAKE_PI_REPLAY`）；观测面 = 宿主→面板通道输出 + 消费端 DOM）：
+  - (a) 通道事件序列完整（含 user/assistant 消息数据，按到达序非空）；
+  - (b) 消费端 DOM 渲染 == fixture 逐行推导（断言面同 TC-102）；
+  - (c) 防自证结构约束：注入点位于 PiBridge 之下，渲染结果不经任何直写路径（测试不触 store dispatch/组件 props/innerHTML 系 API；核验剧本按 FR 追溯表确认注入位落位与观测面）。
+- **期望结果**：(a)-(c) 全部成立。
+- **判定方式**：PASS = 全成立；FAIL = 事件缺失/渲染与 fixture 不符/存在直写渲染路径（附通道观测与注入点定位为证据）。
+- **依据锚点（三源）**：FR-AUI-02③；设计 §10.14 D8（注入点 = PiBridge 之下 fake-pi 子进程、真实 runtime 消费断言）；外部契约 §11 #1（json.md「Event sequence」L30–46）+ golden fixture 本体。
+
+#### TC-101 ｜ FR-AUI-02④（P0（切换批次），NFR-03 交叉）｜ XSS 探针真实渲染 DOM 断言（UI-XSS 回放：无新增 script / 哨兵无副作用 / raw HTML 不解析）｜ 自动
+- **前置条件**：ENV-SETUP；UI-XSS 剧本（§0.3 v0.7 注：原 LAB-XSS 改名，设计 D10，语义不变）：user 回声与 assistant 回复均含探针 `<script>window.__XSS_PROBE=1</script>` 与 `<img src=x onerror="window.__XSS_PROBE=2">`；预埋哨兵（面板加载时预置全局哨兵变量，值固定，执行时核对）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-101：UI-XSS 经真实链路渲染，消费端 DOM 断言）：
+  - (a) DOM 无新增 `script` 元素、无带 `on*` 事件属性的注入元素（探针以文本节点形态存在，文本逐字 == 探针原文）；
+  - (b) 预埋哨兵值未被改写、无探针副作用（探针脚本未执行——`window.__XSS_PROBE` 为 undefined 类等价断言）；
+  - (c) raw HTML 不解析（react-markdown 10.1.0 无 rehype-raw 通道，§11 #20）：`<img …>` 不生成 img 元素（以文本/转义形态呈现）；
+  - (d) 危险协议过滤：`[x](javascript:…)` 渲染后 href 无 `javascript:` 协议（默认 urlTransform）；渲染出的 `a[href]` 含 `rel="noopener noreferrer"`（设计 D2）。
+- **期望结果**：(a)-(d) 全部成立。
+- **判定方式**：PASS = 全成立；FAIL = 任一探针残留可执行注入/哨兵被改写/raw HTML 被解析（附 DOM 快照为证据）。
+- **依据锚点（三源）**：FR-AUI-02④（+NFR-03 交叉；「DOM 无新增 script/哨兵无副作用」自本批次由 MANUAL 升格自动判定——设计 D2）；设计 §10.14 D2（XSS 口径：react-markdown 构造性转义 + urlTransform + DOMPurify 唯一 sink）；外部契约 §11 #20（react-markdown 不解析 raw HTML、默认 urlTransform 过滤危险协议）+ #15（React「JSX Prevents Injection Attacks」构造性转义）+ #1（json.md 事件形状）。
+- **说明**：唯一受控 HTML sink（SyntaxHighlighter 输出经 DOMPurify.sanitize 后入 DOM）由 (a)(b) 覆盖断言 + 源码禁令扫描（`webview/ui` 源码 innerHTML 系 API 仅该 sink 白名单，扫描面按 FR 追溯表定位）辅助；真机 devtools 层归 TC-108 MANUAL。
+
+### FR-AUI-03 golden fixture 回放数据源（修订，切换批次）（P0（切换批次））
+
+#### TC-102 ｜ FR-AUI-03①（P0（切换批次））｜ golden-prompt-basic 端到端全量回放：真实 runtime DOM 断言（消息数 = 2 逐行推导 / 文本逐字 / user 单条三时点）｜ 自动
+- **前置条件**：ENV-SETUP；GOLDEN-BASIC（`test/fixtures/golden/golden-prompt-basic.jsonl`，期望源 = fixture 本体）。
+- **期望值推导（fixture 逐行，共 31 行 = 8 行注释 + 23 条记录）**：user `message_end` ×1（L20/记录 #12，文本 `"GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assistant + settled)"`）+ assistant `message_end` ×1（L28/记录 #20，文本 `"ack: GOLDEN-PROMPT-BASIC sentinel prompt (single run: echo + assi"`）→ **渲染消息数 = 2（1 user + 1 assistant，澄清 #12 口径；system 回声 L17/L18 不计入）**；assistant 终稿三方内证一致：4 个 `text_delta`（L23–26：`"ack: GOLDEN-PROMPT-B"+"ASIC sentinel prompt"+" (single run: echo +"+" assi"`）拼接 == `text_end` content（L27）== `message_end` content（L28）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-102：注入与链路同 TC-100；发送一条 user prompt（文本 = fixture 主 prompt 哨兵原文）→ 全量回放至 settled → 消费端 DOM 断言）。
+- **期望结果**：(a) 渲染消息条数 = 2（DOM 计数）；(b) assistant 消息文本逐字 == fixture `message_end` 权威文本（结构化断言，非视觉比对）；(c) user 气泡条目数 = 1 且文本 == fixture user 文本，在三个判定时点（发送后即时 / user 回声后 / 本轮终稿后）各采样一次均为 1（FR-CHAT-11① 联动）；(d) 全量回放完成（settled 后无丢帧/截断，文本完整）。
+- **判定方式**：PASS = 退出码 0 且 (a)-(d) 全成立；FAIL = 条数 ≠2 / 文本不一致 / 任一时点 user 计数 ≠1 / 丢帧截断。
+- **依据锚点（三源）**：FR-AUI-03① + FR-AUI-08③（golden 回放兜底层）；设计 §10.14 D5（三时点判定）+ D8（端到端 golden 链路）；外部契约 §11 #21（消费端转换语义）+ #1（json.md L30–46 user 回声序列）+ golden fixture 本体（逐行推导如上）。
+
+#### TC-103 ｜ FR-AUI-03②（P1（切换批次））｜ golden-steer-followup 全量回放：steer/followUp 插话序列完整不丢不错换 ｜ 自动（P1 尽力）
+- **前置条件**：ENV-SETUP；GOLDEN-MIX（`test/fixtures/golden/golden-steer-followup.jsonl`）。
+- **期望值推导（fixture 逐行，共 70 行 = 8 行注释 + 62 条记录）**：user `message_end` ×3（L20 主 prompt → L46 steer 回声 → L59 follow-up 回声）+ assistant `message_end` ×3（L41/L54/L67）→ **消息数 = 6（3 user + 3 assistant，澄清 #12 口径）**；发送序 = prompt（L13）→ follow_up（L24）→ steer（L27），投递回声序 = 主 prompt → steer → follow-up（乱序实证，fixture README）；`queue_update` ×4（L25/L28/L44/L57）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-103：按录制时序驱动三命令（prompt → follow_up → steer），消费端 DOM 断言）。
+- **期望结果**：(a) user 条目 = 3、文本逐条 == fixture 回声文本（发送序 F 先 S 后、投递序 S 先 F 后，两序均不丢不错换）；(b) assistant 条目 = 3、文本逐条一致；(c) 总数 = 6；(d) 队列快照事件经通道透出且随注入/消费更新（数据面不丢；队列 UI 断言归 TC-120）。
+- **判定方式**：PASS = (a)-(d) 全成立；FAIL = 任一注入消息丢失/计数 ≠6/文本不一致/错换。
+- **依据锚点（三源）**：FR-AUI-03②（P1 尽力）；设计 §10.14 D8；外部契约 §11 #4/#5（rpc-commands.md L46–92 steer/follow_up 注入时机）+ #8（json.md L121–122 queue_update 快照）+ golden fixture 本体（含 README 乱序实证）。
+
+#### TC-104 ｜ FR-AUI-03③（P0（切换批次））｜ 方法约束：golden-driver 确定性回放（无人值守/可重复/离线）｜ 自动
+- **前置条件**：ENV-SETUP；GOLDEN-BASIC + GOLDEN-MIX。
+- **操作步骤**：① 无人值守：TC-102/TC-103 场景以固定命令执行、退出码判定（无人工步骤）；② 可重复：同环境连跑 ≥2 次，判定结果与关键观测（消息数/文本/序列）逐次一致；③ 离线：断网/代理拒绝环境下全绿（数据源 = 仓库内静态 fixture，不接真实 pi / 真实 provider）。
+- **期望结果**：(a) 无人值守退出码 0；(b) 重复结果一致；(c) 断网全绿。
+- **判定方式**：PASS = (a)-(c) 全成立；FAIL = 需人工介入/结果漂移/依赖外网。
+- **依据锚点（三源）**：FR-AUI-03③；设计 §10.14 D8 + §6（golden fixture 回放层）；外部契约 golden fixture `test/fixtures/golden/README.md`（无脚本分支/无时钟/零网络/双录一致才落盘）。
+
+### FR-AUI-05 风险门禁判定证据（修订，切换批次）（P0（切换批次））
+
+#### TC-105 ｜ FR-AUI-05①（P0（切换批次））｜ 依赖精确版本锁定（修订清单）+ 0.0.x 升级风险评估留痕 ｜ 自动
+- **前置条件**：ENV-SETUP；基线提交（确定依赖差集）。
+- **操作步骤**：node JSON 解析断言（套件场景 SC-105 或 §0.5 临时脚本）：
+  1. 锁定清单（设计 D7）逐项存在且版本精确（匹配 `^\d+\.\d+\.\d+$`，无 `^`/`~`/`>=` 前缀）：dependencies `react` 19.3.1、`react-dom` 19.3.1、`@assistant-ui/react` 0.15.37、`@assistant-ui/vscode` 0.0.1、`@assistant-ui/react-markdown` 0.14.26、`remark-gfm` 4.0.1、`remark-breaks` 4.0.0、`zod` 4.6.7；devDependencies `@testing-library/react` 16.3.3、`@testing-library/dom` 10.4.2、`jsdom` 31.0.1。
+  2. 删除断言：package.json 无 `@assistant-ui/ai-sdk`、无 `ai`（与 TC-098(a) 交叉）。
+  3. FR 口径扫描：`@assistant-ui/*` 作用域与 react/react-dom 一律精确版本；清单外新增依赖亦零范围前缀。
+  4. 升级评估留痕（FR-AUI-05① 后半）：交付物（FR 追溯表 / 设计偏差清单）含 `@assistant-ui/vscode` 0.0.x 升级风险评估（0.0.x 无 semver 兼容承诺、breaking 面、升级与退出流程）——结构化断言（节存在 + 三要点齐）。
+- **期望结果**：(1)-(4) 全部成立。
+- **判定方式**：PASS = 全成立；FAIL = 任一依赖缺失/带前缀/清单不符/删除项残留/评估缺失（附解析输出）。
+- **依据锚点（三源）**：FR-AUI-05①；设计 §10.14 D7（锁定清单与 2026-11-22 核值）；外部契约 §11 #14/#15（react 19.3.1 与 peer）+ #19（react-markdown 0.14.26）+ #20（remark-gfm 4.0.1/remark-breaks 4.0.0）。
+
+#### TC-106 ｜ FR-AUI-05②（P0（切换批次））｜ CSP 指令集断言（默认面板 strict 基线、script-src 仅 nonce）+ 回放运行时证据 + zod jitless 前置 ｜ 自动
+- **前置条件**：ENV-SETUP；FR 追溯表（定位默认面板 HTML 生成入口）。
+- **操作步骤**：`npm run verify:unit`（场景 SC-106：以 stub webview（`{cspSource, asWebviewUri}` 形状）真实调用 HTML 生成入口，解析 CSP meta 断言）：
+  - (a) 指令集 = 官方 strict 模板逐指令（`default-src 'none'`；`script-src` 仅 nonce，无 `'unsafe-eval'`/`'unsafe-inline'`；`style-src` cspSource+nonce；`img-src` cspSource blob: data:；`media-src`/`font-src`/`connect-src`(=cspSource)/`frame-src 'none'` 族），无模板外指令（FR ②「新增指令须逐一登记并保持最小化」：设计 D7 零新增口径——产物 CSP ⊆ 模板即「未新增」判定）；
+  - (b) 回放运行时证据：TC-102/TC-103 在该 CSP 基线下 PASS（zod 校验路径无 eval 运行时异常）；
+  - (c) zod jitless 前置：默认面板 webview 产物中 jitless 配置（`config({jitless:true})` 语义）先于任何 zod schema 构建出现（产物文本顺序断言，不与源文件命名耦合）。
+- **期望结果**：(a)-(c) 全部成立。
+- **判定方式**：PASS = 全成立；FAIL = unsafe-eval/unsafe-inline 命中、模板外指令、回放异常、jitless 前置缺失（附解析出的 CSP 全文为证据）。
+- **依据锚点（三源）**：FR-AUI-05②；设计 §10.14 D2（zod-jitless 三件套平移）+ D7；外部契约 §11 #11（README「Webview HTML and Content Security Policy」：strict 模板、`'unsafe-eval'` is never added）+ #12（tarball `src/host/html.ts` createWebviewCsp 指令集）+ #13（指南 zod-jitless 片段与 CSP 节）。
+- **说明**：真机 devtools 零 CSP violation 层 = TC-108 MANUAL。
+
+#### TC-107 ｜ FR-AUI-05③（P0（切换批次））｜ bundle 预算 v0.7 口径：默认面板 JS ≤4 MiB / 宿主增量 ≤1 MiB（v0.1.7 基线）/ Shiki 不进产物 / 经典面板依赖图无 React·assistant-ui ｜ 自动
+- **前置条件**：ENV-SETUP；基线 = **tag `v0.1.7` 检出同命令构建产物**（FR 文本「基线 = v0.1.7 构建产物 dist/extension.js，实测 459,382 字节」；执行口径见共用约定披露①/§3 第 13 条）；基线构建 + 被测构建。
+- **操作步骤**（字节级断言，fs.stat/metafile 口径）：
+  - (a) 默认面板 webview JS 产物合计（入口 + 全部代码分割 chunk，含打包入 bundle 的依赖运行时；**不含** source map 与 .css）≤ **4,194,304 字节**（推导：4 MiB = 4 × 1,048,576；FR 定值理由：全链预计 2–3 MiB 量级、阶段①最小切片实测 1,157,591 字节、Shiki 全量 ≈15 MiB 自然违规）；
+  - (b) 宿主 bundle 增量 = 被测 `dist/extension.js` 字节 − 基线构建同产物字节 ≤ **1,048,576 字节**（1 MiB；基线实测参考值 459,382 字节——基线构建实测与参考值偏差 >±10% 须留痕说明）；
+  - (c) Shiki 约束：`shiki`/`@shikijs/*` 不出现在默认面板产物依赖图（metafile inputs 断言；FR 文本：若进入产物必须限语言集或代码分割并计入 (a) 同一预算——高亮方案 = highlight.js common 同集平移（设计 D2），预期零命中）；
+  - (d) 经典面板依赖图：单独构建经典 webview 入口，metafile inputs 零 `react`/`react-dom`/`@assistant-ui/**` 命中（回退可用保证，FR-AUI-05③ 末句）。
+- **期望结果**：(a)-(d) 全部成立（附字节清单/依赖图清单）。
+- **判定方式**：PASS = 全成立；FAIL = 超预算或依赖图命中（判据不因任何回退放宽——处置记设计偏差留痕后重测）。
+- **依据锚点（三源）**：FR-AUI-05③（v0.7 口径）；设计 §10.14 D7（预算核算表：默认面板预估 ≈1.3–1.8 MiB ≤ 4 MiB、hljs common ≈0.26 MiB 计入）；外部契约 §11 #23（highlight.js 11.12.0 `lib/common` 36 语言注册清单）+ #13（指南「Bundle both sides」：Shiki 全 bundle ≈15 MB、NODE_ENV define）。
+
+#### TC-108 ｜ FR-AUI-05②④（P0（切换批次））｜ retainContextWhenHidden 注册断言（自动）+ 真机层 checklist（真实 CSP 零 violation / 隐藏再显示 DOM 保留）｜ 自动 + UI 手工 checklist（核验四值 MANUAL；兜底 = TC-106 + 本 TC 注册断言）
+- **自动面**：默认面板（新 UI）注册 options 显式 `retainContextWhenHidden: true`（FR 追溯表定位注册点结构断言；FR-AUI-05④「如设计裁决取其他值须在交付物记录理由」——非 true 且无登记理由即 FAIL）。
+- **手工 checklist 项（真机，设计 D8 汇总）**：
+  1. 默认面板在真实 CSP 下完成一次 golden 回放渲染；Webview Developer Tools 控制台**零 CSP violation**（含 zod `new Function` 探测类——指南明示 strict CSP 会报告此类除非 jitless 前置生效）。
+  2. 回放完成后隐藏面板（切到其他视图/收起容器）再显示：已渲染消息 DOM 仍存在（不重建、不丢失、无整页重载痕迹）。
+  3. 证据存 `evidence/TC-108/`（证据类型：控制台输出记录（零 violation）+ 隐藏前/显示后截图 ×2 + DOM 快照）。
+- **期望结果**：自动面成立；checklist 2/2。
+- **判定方式**：PASS = 自动面成立且 checklist 2/2；MANUAL 遗留不计 FAIL（对应 FR 以 TC-106 + 注册断言为门禁）；FAIL = 注册值无理由偏离 / CSP violation / 消息丢失重建。
+- **依据锚点（三源）**：FR-AUI-05②（真机层）+ FR-AUI-05④；设计 §10.14 D1（显式声明 retainContextWhenHidden: true）+ D8（MANUAL 清单）；外部契约 §11 #13（指南「Content Security Policy」zod 探测 violation 与「Hidden views」隐藏销毁/保活语义）。
+
+### FR-AUI-07 切换与旧面板退役（P0（切换批次））
+
+#### TC-109 ｜ FR-AUI-07①④（P0（切换批次））｜ 切默认 + 对外契约零变更：viewType / 命令 / 配置 contributes 结构断言 ｜ 自动
+- **前置条件**：ENV-SETUP；FR 追溯表（定位新 UI 注册承载）。
+- **操作步骤**：`npm run verify:unit`（场景 SC-109：结构化解析 package.json 与注册点，断言 (a)-(e)）：
+  - (a) 切默认：`contributes.views` 含 `sdysyhj.chatView`（name "Chat"）且为容器**首位**条目；`sdysyhj.openChat` 存在且打开该视图（注册接线断言）；该 viewType 注册承载 = 新 UI 实现（FR 追溯表确认，默认面板产物 `media/chat.js`，设计 D1）；
+  - (b) 命令零变更：既有 9 项命令逐项 id 存在且不变——`sdysyhj.openChat` / `newSession` / `abort` / `showHistory` / `reportIssue` / `renameSession` / `switchModel` / `switchThinking` / `sendToPi`（FR-AUI-07④ 明文清单；允许新增 `openChatClassic`）；
+  - (c) 配置零变更：既有 5 项配置键逐项存在且键名不变——`sdysyhj.piRuntime` / `piPath` / `thinkingDefault` / `outputTailLines` / `sendMode`；
+  - (d) activationEvents 含 `onView:sdysyhj.chatView` 与 `onView:sdysyhj.chatViewClassic`（均惰性，设计 D1）；
+  - (e) 既有文档/脚本引用面不受影响：contributes 中既有命令/配置的 id 字符串与 0.1.7 基线逐项一致（diff 断言——「既有文档/脚本引用不失效」的结构面）。
+- **期望结果**：(a)-(e) 全部成立。
+- **判定方式**：PASS = 全成立；FAIL = viewType/命令/配置任一变更或默认承载非新 UI（附 manifest 解析输出为证据）。
+- **依据锚点（三源）**：FR-AUI-07①④；设计 §10.14 D1（contributes 迁移方案：9 命令 5 配置逐项零变更、视图序、运行接线）；外部契约 §11 #13（指南「Add to an existing extension」——增量接入不改既有扩展契约面）。
+- **说明**：运行时「用户无感切换」观感归 TC-111 MANUAL 冒烟；sendToPi/input_prefill 目标 = 新 UI 面板由 FR 追溯表确认（设计 D1），右键发送全链归 TC-136。
+
+#### TC-110 ｜ FR-AUI-07②（P0（切换批次））｜ 「实验/Lab」命名清零 + 定名断言（澄清 #19(b)）｜ 自动
+- **前置条件**：ENV-SETUP。
+- **操作步骤**：`npm run verify:unit`（场景 SC-110：JSON 解析 package.json，递归取 `contributes` 全部字符串字段值断言）：
+  - (a) 「实验」字面子串零命中；「Lab」按词界匹配 `(?<![A-Za-z])Lab(?![A-Za-z])` 零命中（防 `label`/`Label` 词内误命中——共用约定披露②）；
+  - (b) 移除断言：contributes 无 `sdysyhj.chatLabView`、无 `sdysyhj.openChatLab`（0.1.7 实验入口随本批次移除，#19(b) 主案）；
+  - (c) 定名断言：视图名 = "Chat"（`sdysyhj.chatView`）与 "Chat (Classic)"（`sdysyhj.chatViewClassic`）；命令 `sdysyhj.openChatClassic` 标题 = "Open Chat (Classic)"。
+- **期望结果**：(a)-(c) 全部成立。
+- **判定方式**：PASS = 全成立；FAIL = 任一字样命中/实验入口残留/定名不符（附 contributes 字符串清单为证据）。
+- **依据锚点（三源）**：FR-AUI-07② + 澄清 #19(b)（命名定值）；设计 §10.14 D1（contributes 全文清零与定名冻结）；外部契约：无（纯我方 manifest 结构断言，期望源 = FR/设计文本）。
+- **说明**：若总调度改判 #19(b) 备选方案（`openChatLab` 保留为隐藏弃用别名转发 `openChatClassic`、0.2.x 随经典面板删除），(b) 断言改为「别名存在 + 转发接线 + 删除预告留痕」——改判须留痕，本 TC 不自行放宽。
+
+#### TC-111 ｜ FR-AUI-07③（P0（切换批次））｜ 双面板可切换 + 经典面板行为冻结 ｜ 自动 + UI 手工 checklist（核验四值 MANUAL；兜底 = TC-109/TC-110/TC-112）
+- **自动面**：(a) 双注册结构：`sdysyhj.chatViewClassic` 注册承载 = 经典面板（FR 追溯表），`sdysyhj.openChatClassic` → `chatViewClassic.focus` 接线断言；(b) 行为冻结口径 = **行为冻结非字节冻结**（设计 D3）：既有回归套件零放宽全绿（`npm run verify:unit && npm run verify:integration`）+ 双面板一致快照（TC-112）；宿主改动收敛断言：经典面板宿主接线文件 git diff 归组核对 ≈ viewType/标题常量迁移 + 宿主动作层机械提取两处（设计 D3）。
+- **手工 checklist 项**：同一工作区依次执行 `sdysyhj.openChat` → `sdysyhj.openChatClassic` → `sdysyhj.openChat`：两面板分别打开无错误（无错误通知/空白面板/控制台异常）、可来回切换（0.1.8 全程用户自救入口可用，#19(c)）。证据存 `evidence/TC-111/`（证据类型：截图 ×2（两面板）+ 命令执行与控制台输出记录）。
+- **期望结果**：自动面成立；checklist 通过。
+- **判定方式**：PASS = 全成立；MANUAL 遗留不计 FAIL（对应 FR 以 TC-109/110/112 为门禁）；FAIL = 注册缺失/套件红/切换报错（附 diff 归组与截图）。
+- **依据锚点（三源）**：FR-AUI-07③ + 澄清 #19(c)（0.1.8 全程可切回、行为冻结、0.2.x 前删除——删除判定 = contributes 无 chatViewClassic/openChatClassic，属下一批次，不在本批次判定）；设计 §10.14 D3（行为冻结口径与 hostActions 机械提取）+ D9；外部契约 §11 #13（视图打开行为辅助锚）。
+
+#### TC-112 ｜ FR-AUI-03④ + FR-AUI-07③（P0（切换批次））｜ 双面板行为一致快照：同一 golden 回放两面板消费端断言逐条相等 ｜ 自动
+- **前置条件**：ENV-SETUP；GOLDEN-BASIC。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-112：同一 golden 回放分别驱动两面板消费端）：
+  - (a) 新 UI 侧 = 真实 runtime DOM 断言（TC-102 断言面）；
+  - (b) 经典面板侧 = 同一 jsdom 基建加载经典面板 HTML 模板 + 冻结 bundle（`media/main.js`，vscode stub 模式，设计 D9）DOM 断言消息条数与文本；预登记受控回退：若经典 bundle jsdom 挂载成本超预期，经典侧降级为数据层断言 + 真机 MANUAL 对照——须设计偏差留痕、不静默降级，核验核对留痕；
+  - (c) 一致快照：两面板渲染消息条数相等（均 = 2）且消息文本逐条相等（user/assistant 对位一致，结构化断言）。
+- **期望结果**：(a)-(c) 全部成立。
+- **判定方式**：PASS = 全成立；FAIL = 任一断言面缺失/两面板结果不等/回退未留痕（附双侧断言输出为证据）。
+- **依据锚点（三源）**：FR-AUI-03④ + FR-AUI-07③；设计 §10.14 D9（双载体 jsdom 对比、受控回退预登记）；外部契约 golden fixture 本体（期望值推导同 TC-102：2 = 1 user + 1 assistant）。
+
+### FR-AUI-04 主题映射验证（载体平移，切换批次）（P0（切换批次））
+
+#### TC-113 ｜ FR-AUI-04①②（P0（切换批次））｜ 主题审计平移至默认面板：token 链非空终点 --vscode-* / 浅深联动 / WCAG ≥4.5:1 ｜ 自动
+- **前置条件**：ENV-SETUP；默认面板样式资源（新 UI 样式入口 + `@assistant-ui/vscode/theme.css` 映射——FR 追溯表定位）；VS Code 默认主题调色板 fixture（Dark Modern / Light Modern `colors` 基值快照，来源 microsoft/vscode `extensions/theme-defaults/themes/*.json`——设计 §11 #18）。
+- **操作步骤**：`npm run verify:unit`（场景 SC-113：TC-089 同一审计断言面平移至默认面板采样点）：(a) 采样 token 链非空且终点 `--vscode-*`（正文文本/背景、用户气泡背景/文本、助手文本、输入框背景/边框）；(b) 浅深两套调色板代入 token 链解析具体 RGB，至少一组采样值变化（主题联动生效）；(c) 正文文本 vs 其背景相对亮度对比度 ≥ **4.5:1**（WCAG 相对亮度公式脚本，浅深各测）。
+- **期望结果**：(a)(b)(c) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = token 链断裂/两主题采样全同/任一对比度 <4.5:1（附解析链与计算值为证据）。
+- **依据锚点（三源）**：FR-AUI-04①②；设计 §10.14 D6（FR-AUI-04 验证面平移：ui-theme 静态审计 + 真机截图 checklist）；外部契约 §11 #11（README「Theme」：shadcn token→`--vscode-*` 映射）+ #18（theme-defaults 调色板基值）。
+
+#### TC-114 ｜ FR-AUI-04③（P0（切换批次））｜ 浅/深主题截图人工核对无样式丢失 ｜ UI 手工 checklist（核验四值 MANUAL；兜底 TC-113）
+- **操作步骤**（手工 checklist 项）：真机默认面板完成一次回放渲染（含用户消息与助手回复）；在 VS Code Color Theme 分别切换浅色（Light Modern）与深色（Dark Modern）：各截一张面板截图，人工核对无样式丢失（元素错位/背景缺失/文本不可见任一即 FAIL）。证据存 `evidence/TC-114/`（证据类型：截图 ×2（注明主题名））。
+- **期望结果**：两档均无样式丢失。
+- **判定方式**：PASS = 2/2 无样式丢失且证据齐全；MANUAL 遗留不计 FAIL（兜底 TC-113）；FAIL = 任一档样式丢失。
+- **依据锚点（三源）**：FR-AUI-04③ + 澄清 #19(a)（shadcn 默认视觉仅在既有 FR 未约束处采纳）；设计 §10.14 D6（截图 checklist 平移）；外部契约 §11 #11（webview 随用户切换 colour theme 重新配色）+ #13（指南「Follow the VS Code theme」）。
+
+### FR-AUI-08 功能等价域（判定载体平移，TC-115~TC-136）
+
+（v0.7 新增；FR-AUI-08①③：§4.1–4.5 全部 FR 判定载体平移至新 UI，验收标准语义与文本不变（§4 判定载体注记）；等价判定 = 既有验收标准在新 UI 载体逐条执行 + golden 回放（TC-102/TC-103）+ 双面板一致快照（TC-112）兜底。以下逐能力 TC 均按消费端契约判定面执行（共用约定：真实 runtime DOM 断言、禁 store 层驱动绕开）；既有 TC-001~TC-076 验收语义不变，其断言口径在新 UI 载体上等价执行。）
+
+#### FR-CHAT-01 等价：流式对话
+
+#### TC-115 ｜ FR-CHAT-01（P0）+ FR-AUI-08②（P0（切换批次））｜ 新 UI 流式 delta 级增量渲染（等价域）｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-STREAM（d1..d8）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-115：发送 prompt "stream-check-eq"，消费端 DOM 断言）。
+- **期望结果**：(a) 终稿文本逐字 == d1..d8 拼接（零丢失）；(b) 流式中间态存在：回放过程中观测到 ≥2 次 DOM 文本增长（delta 级增量渲染；Markdown defer 中间态跳过不影响——判据挂渲染 commit 点，设计 D4）；(c) 运行状态流转 idle→streaming→idle（run_state 事件 + 状态栏联动，澄清 #11）；(d) 首增量距发送 < 2s（沿用 TC-001(d) 预算）。
+- **判定方式**：PASS = (a)-(d) 全成立；FAIL = 丢 delta/无增量渲染迹象/状态流转断裂。
+- **依据锚点（三源）**：FR-CHAT-01 + FR-AUI-08②③；设计 §10.14 D4（delta 合批缓冲零丢失、rAF 冲刷）+ D2（defer 渐进解析）；外部契约 §11 #14（「Streaming responses」原地变更 assistant 消息）+ #1（json.md text_delta 序列）。
+- **说明**：NFR-01 ≥600 delta 大流量代理判据（TC-036）经默认面板执行即新 UI 载体（共用约定）。
+
+#### FR-CHAT-02 等价：Markdown 渲染 + 代码高亮
+
+#### TC-116 ｜ FR-CHAT-02（P0）+ FR-AUI-08②（P0（切换批次））｜ Markdown 全要素 + 高亮语言集 ≥36（hljs common 口径）+ 集外回退转义 ｜ 自动
+- **前置条件**：ENV-SETUP；fixture markdown（H1/H2、有序+无序列表、GFM 表格、任务列表、删除线、单换行、36 语言代码块各一（语言 tag = §11 #23 清单逐项）、集外语言代码块（如 `haskell`）、`https` 链接、行内代码、raw HTML 探针 `<b>x</b>`）。
+- **期望值推导（语言数）**：highlight.js 11.12.0 `lib/common.js` `registerLanguage` 清单 = **36**（§11 #23；bash, c, cpp, csharp, css, diff, go, graphql, ini, java, javascript, json, kotlin, less, lua, makefile, markdown, objectivec, perl, php, php-template, plaintext, python, python-repl, r, ruby, rust, scss, shell, sql, swift, typescript, vbnet, wasm, xml, yaml）——断言口径 = 语言集不得窄于该清单（#19(a) 附注定值，与旧实现逐字同一注册集）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-116：fixture 渲染 DOM 断言）：
+  - (a) 全要素结构：h1/h2、ul/ol/li、table/thead/tbody/tr/td、任务列表复选项、del、`pre>code`、`a[href^="https:"]`、行内 `code`；单换行渲染为 `<br>`（对齐旧 marked `breaks:true`，设计 D2）；
+  - (b) 语言集覆盖：36 语言代码块逐一带语法高亮 token 结构（code 内嵌套 span 元素类等价断言，`language-<名>` 类名保持）；
+  - (c) 集外语言回退：集外语言代码块无高亮 token、内容为纯代码**转义**展示（文本逐字 == 源码、`<`/`>` 以文本节点呈现不生成元素——与旧实现未收录语言行为同构，不构成回退）；
+  - (d) raw HTML 不解析：`<b>x</b>` 以文本形态呈现（不生成 b 元素——§11 #20 无 rehype-raw 通道）。
+- **期望结果**：(a)-(d) 全成立。
+- **判定方式**：PASS = 全成立（语言覆盖以 36 逐项清单判定）；FAIL = 任一要素缺失/语言集窄于清单/集外语言被解释或高亮/HTML 被解析。
+- **依据锚点（三源）**：FR-CHAT-02 + FR-AUI-08②③ + 澄清 #19(a) 附注（语言集边界与集外回退转义）；设计 §10.14 D2（MarkdownTextPrimitive + remarkGfm/remarkBreaks + hljs SyntaxHighlighter 同集平移、集外回退纯代码转义）；外部契约 §11 #19（@assistant-ui/react-markdown 0.14.26 导出面：MarkdownTextPrimitive / SyntaxHighlighterProps / code-fence）+ #20（react-markdown 10.1.0 不解析 raw HTML；remark-gfm 表格/任务列表/删除线；remark-breaks 单换行 `<br>`）+ #23（36 语言清单，随包 `lib/common.js` registerLanguage 核读）。
+
+#### FR-CHAT-03 等价：thinking 折叠
+
+#### TC-117 ｜ FR-CHAT-03（P0）+ FR-AUI-08②（P0（切换批次））｜ thinking 默认折叠 + 展开后流式 ｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-THINK（t1..t4 → d1..d3）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-117：回放 + 触发展开操作，DOM 断言）。
+- **期望结果**：(a) 默认折叠：reasoning 折叠块存在且内容区默认不可见；(b) 展开后 thinking 文本 == t1..t4 拼接（流式期增量渲染至终稿，零丢失）；(c) 折叠块为可展开块（交互元素存在——展开动作以 DOM 事件派发判定）；(d) thinking 折叠块功能标签不受 FR-CHAT-10⑤ 约束（不计入角色标记断言，#19(a)⑤）。
+- **判定方式**：PASS = (a)-(d) 全成立；FAIL = 不折叠/展开无内容/文本不一致。
+- **依据锚点（三源）**：FR-CHAT-03 + FR-AUI-08②③；设计 §10.14 D2（thinking→reasoning part、Reasoning 折叠组件）；外部契约 §11 #21（reasoning 空文本丢弃语义 L62——空 thinking 不建块顺从）+ #14（part 型 reasoning）。
+
+#### FR-CHAT-04 等价：工具调用卡片
+
+#### TC-118 ｜ FR-CHAT-04（P0）+ FR-AUI-08②（P0（切换批次））｜ 工具卡全要素（名称/参数摘要/状态收敛/展开输入输出/bash 摘要/大输出截断保留尾部 + 复制全部）｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-TOOLS（read 成功 20 行 / edit 成功 / bash `seq 1 20000` ≈100KB 成功）+ MOCK-TOOLS-LATE（#D-04 晚到回归）+ MOCK-TOOLS-FAIL（bash 失败 marker `E2E-TOOLFAIL-MARKER`）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-118a/b/c：三剧本各经真实链路渲染，DOM 断言）：
+  - (a) 全要素：每张工具卡含工具名、关键参数摘要、执行状态（进行中/成功/失败）、可展开输入输出（展开动作 DOM 事件派发后输入/输出区可见）；bash 卡展示命令与输出摘要；
+  - (b) 状态收敛（#D-04 回归）：工具执行结果晚于携带工具卡的助手消息到达时（MOCK-TOOLS-LATE），卡片状态由「进行中」收敛为「成功/失败」；MOCK-TOOLS-FAIL 中 bash 卡状态 = 失败（isError 语义经 tool-call part 透传，TC-099(c) 契约面）且失败 marker 可见；
+  - (c) 大输出截断：bash 大输出（≈100KB）展示为截断 + **保留尾部**（默认 200 行口径，澄清 #2 / `sdysyhj.outputTailLines` 默认 200）；「复制全部」动作经 `copy_output` 取宿主缓存全量（调用记录断言 + 剪贴板落盘 == 完整输出）。
+- **期望结果**：(a)-(c) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 要素缺失/状态不收敛/截断无保留尾部/复制全量不完整。
+- **依据锚点（三源）**：FR-CHAT-04 + FR-AUI-08②③ + 澄清 #2（截断阈值口径）；设计 §10.14 D2（ToolFallback 工具卡：result{status,summary,output,outputTruncated}、copy_output 取宿主缓存全量）；外部契约 §11 #21（tool-call part result/isError/argsText 透传 L76–95）+ #1（json.md message_update/工具结果事件序列）。
+
+#### FR-CHAT-05 等价：中止运行
+
+#### TC-119 ｜ FR-CHAT-05（P0）+ FR-AUI-08②（P0（切换批次））｜ 中止：Stop/命令面板 abort + UI 恢复可输入 + 「已中止」消息级标记 ｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-SLOW（600 delta 慢速）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-119a：流式中以发送区 Stop 动作（取消控件 DOM 事件）触发中止；SC-119b：以命令面板 `sdysyhj.abort` 触发）。
+- **期望结果**：(a) 两次均产生 abort RPC 调用记录（对应 RPC `abort`）；(b) 中止后运行状态回到 idle、UI 恢复可输入（澄清 #11：「已中止」为消息级标记非运行状态）；(c) 当前助手消息尾部渲染「已中止」消息级标记（metadata.custom.aborted 链路，TC-099(f) 契约面）；(d) 运行中显示 Stop、隐藏发送（设计 D3 同构）。
+- **判定方式**：PASS = (a)-(d) 全成立；FAIL = 无调用/状态不回 idle/无标记/按钮态错误。
+- **依据锚点（三源）**：FR-CHAT-05 + FR-AUI-08②③ + 澄清 #11（运行状态口径）；设计 §10.14 D2（aborted→消息级标记）+ D3（ComposerPrimitive.Cancel → post abort）；外部契约 §11 #22（ExternalStoreAdapter `onCancel` handler 契约）+ #2（rpc.md「Run lifecycle」L60–71）。
+
+#### FR-CHAT-06 等价：steer / follow-up
+
+#### TC-120 ｜ FR-CHAT-06（P1）+ FR-AUI-08②（P0（切换批次））｜ 运行中插话：steer/followUp 模式切换与排队注入 ｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-QUEUE-MIX（长运行剧本 + steer/follow_up 注入）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-120：运行中继续输入并按模式发送，DOM + 协议记录断言）：
+  - (a) 运行中输入区可继续输入（非禁用态），placeholder 提示运行中语义（设计 D3 同构）；
+  - (b) 模式切换控件存在（steer/follow-up），切换后发送对应 `steer`/`follow_up` RPC 调用（调用记录）；默认模式随 config `sendMode`（config 事件透传）；
+  - (c) 注入消息经同一 user 消息路径渲染且单条（与 TC-126(b) 交叉：插话用户消息条目数 = 1/发送）。
+- **期望结果**：(a)-(c) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 运行中输入被禁/模式不生效/调用错命令/插话多条。
+- **依据锚点（三源）**：FR-CHAT-06 + FR-AUI-08②③；设计 §10.14 D3（steer/followUp 模式切换与发送语义）+ D5（插话同一 user_message 路径）；外部契约 §11 #4/#5（rpc-commands.md L46–92：steer run 中排队、follow_up 停后注入）+ #6（set_steering_mode/set_follow_up_mode 口径）。
+
+#### FR-CHAT-07 等价：错误展示
+
+#### TC-121 ｜ FR-CHAT-07（P0）+ FR-AUI-08②（P0（切换批次））｜ 错误卡片 + extension_error toast 边界（澄清 #14）｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-ERROR（provider 429）/ MOCK-CRASH（子进程 exit(1)）/ 空 HOME（未配置凭证）；extension_error 注入剧本（#14 场景）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-121a/b/c：三路错误注入 + extension_error 边界，DOM + 日志断言）：
+  - (a) provider 报错 / 子进程崩溃 / 未配置凭证均在聊天区渲染可读错误信息 + 修复指引（错误卡片，DOM 断言含可行动建议语义）；
+  - (b) `extension_error` **不进**聊天区错误卡片（#14 边界）：以非阻断 toast 呈现（一次性），完整字段（extensionPath/event/error）写入 Output Channel 日志；
+  - (c) 同错误（相同 extensionPath + error）窗口期去重展示、日志仍全量（#14）。
+- **期望结果**：(a)-(c) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 错误不可读/无指引/extension_error 入聊天区/日志丢字段。
+- **依据锚点（三源）**：FR-CHAT-07 + FR-AUI-08②③ + 澄清 #14（extension_error 展示通道边界）；设计 §10.14 D3（错误卡片/toast 重写，error/toast 协议复用）；外部契约 §11 #1（json.md 事件序列——错误事件形状）+ #2（rpc.md lifecycle 异常路径）。
+
+#### FR-CHAT-08 等价：状态指示
+
+#### TC-122 ｜ FR-CHAT-08（P0）+ FR-AUI-08②（P0（切换批次））｜ 状态栏四字段展示与状态流转 ｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-MODELS + MOCK-SLOW。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-122：DOM 断言顶部状态区）。
+- **期望结果**：(a) 四字段可见：当前模型、thinking 等级、运行状态、会话名（model_info/run_state/session_name 事件驱动）；(b) 运行状态流转 idle→streaming→idle（澄清 #11：取值 idle/streaming，error/restarting 为瞬态；「已中止」非状态值）；(c) 状态栏点击可切换行为归 FR-MOD-01/02 判定（澄清 #6），本 TC 不判交互。
+- **判定方式**：PASS = (a)(b) 全成立；FAIL = 字段缺失/状态流转断裂。
+- **依据锚点（三源）**：FR-CHAT-08 + FR-AUI-08②③ + 澄清 #6/#11；设计 §10.14 D3（头部状态行重写，协议复用）；外部契约 §11 #2（rpc.md run lifecycle 状态口径）。
+
+#### FR-CHAT-09 等价：流式输出自动跟随（四款）
+
+#### TC-123 ｜ FR-CHAT-09（P1）+ FR-AUI-08②（P0（切换批次））｜ 跟随四款逐款判定（默认跟随 / 40px 打断 / 回底恢复 / 瞬时状态边界）｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-SLOW（600 delta，可控步进）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-123a-d：滚动容器 `scrollHeight/clientHeight/scrollTop` 采样断言，口径同 TC-047~050）：
+  - (a) ① 默认跟随：每轮流式开始即处于跟随态（每轮重置，轮内后续消息不覆盖用户打断——设计 D4 roundStarted 口径不变），跟随期间每次增量渲染后视口底缘距滚动底端 ≤40px；
+  - (b) ② 打断：用户向上滚动离开底部（>40px）即停止自动跟随，后续增量渲染不推动滚动位置（scrollTop 保持用户所选位置）；
+  - (c) ③ 恢复：滚回底部（≤40px）恢复自动跟随，后续增量满足 (a)；
+  - (d) ④ 边界：跟随态不写会话文件、无消息级标记、不跨插件重启持久化（会话 JSONL/重放断言）；运行状态 idle 时不自动滚动；会话载入/切换的一次性初始定位不属本条（断言排除项）。
+- **期望结果**：(a)-(d) 四款逐款成立。
+- **判定方式**：PASS = 四款全成立；FAIL = 任一款语义不符（附滚动位置采样序列为证据）。
+- **依据锚点（三源）**：FR-CHAT-09①②③④ + FR-AUI-08②③；设计 §10.14 D4（FollowState 纯状态机零改动复用 + useLayoutEffect 渲染点等价；预登记回退 = rAF 再锚定，语义不放宽）；外部契约 §11 #14（「Streaming responses」原地变更口径）。
+- **说明**：跟随观感 = TC-125 MANUAL（兜底本 TC）。
+
+#### FR-CHAT-10 等价：聊天面板视觉规范（五子条，#19(a) 全维持口径）
+
+#### TC-124 ｜ FR-CHAT-10①–⑤（P1）+ FR-AUI-08②（P0（切换批次））｜ 五子条自动判定（CSS 钉值 + jsdom 结构断言）｜ 自动
+- **前置条件**：ENV-SETUP；golden 回放渲染（含 user/assistant/thinking/工具卡各形态）；默认面板样式文本（FR 追溯表定位）。
+- **操作步骤**：`npm run verify:unit`（CSS 钉值断言）+ `npm run verify:integration`（jsdom 文件级注解，场景 SC-124：DOM/结构断言）：
+  - (a) ① 内容列居中：消息区与输入区（含底部模型选择器与上下文用量行）共享同一内容列，`max-width: 960px` 且左右外边距 auto（CSS 显式钉值断言——shadcn 默认宽度不采纳，#19(a)①）；
+  - (b) ② 输入框圆角：输入框容器 `border-radius: 8px`（显式钉值，#19(a)②）；
+  - (c) ③ 发送图标化：发送按钮无文字子节点（图标图形），可访问性名称（aria-label 或 title）= 「发送」（#19(a)③：覆盖 assistant-ui 默认英文 aria 文案）；
+  - (d) ④ 消息布局：用户消息右对齐且由气泡容器包裹（背景色 + 圆角）；助手消息左对齐且无气泡包裹（无独立背景/边框）；消息子树无 avatar/img 头像元素（#19(a)④⑤ 禁 avatar）；
+  - (e) ⑤ 时间替代角色标记：每条用户/助手消息含时间戳且匹配 `^\d{2}:\d{2}$`（24 小时制、本地时区）；消息行无 User/Assistant 角色文字前缀（thinking 折叠块与工具卡功能标签除外，#19(a)⑤）。
+- **期望结果**：(a)-(e) 五子条全成立。
+- **判定方式**：PASS = 五子条全成立；FAIL = 任一子条不符（附 CSS 解析值与 DOM 快照为证据）。
+- **依据锚点（三源）**：FR-CHAT-10①–⑤ + FR-AUI-08②③ + 澄清 #19(a)（全部维持既有口径逐子条裁决）；设计 §10.14 D6（五子条落地：.content-col 960px / composer-shell 8px / Send aria「发送」/ 禁 avatar / formatHHmm）；外部契约 §11 #19（组件挂接面）+ #21（createdAt 语义 L31）。
+
+#### TC-125 ｜ FR-CHAT-10（P1）+ FR-CHAT-09（P1）+ FR-CHAT-06（P1）（真机观感汇总）｜ 视觉观感 / 流式跟随观感 / Composer 交互细节 ｜ UI 手工 checklist（核验四值 MANUAL；兜底 = TC-124/TC-123/TC-120/TC-129）
+- **操作步骤**（手工 checklist 项，设计 D8 汇总，一次真机会话执行）：
+  1. 视觉观感：五子条观感核对（内容列居中留白相等、用户右气泡/助手左无气泡、时间戳 HH:mm、发送按钮图形与可访问性名称「发送」）；
+  2. 流式跟随观感：长回复流式中默认跟随、上滚打断不回拽、回底恢复（录屏 ≥15s）；
+  3. Composer 交互细节：IME 组合输入不误发（isComposing）、`@` 防抖触发、命令菜单打开时焦点保持与键盘导航不发送；
+  4. 证据存 `evidence/TC-125/`（证据类型：截图 + 录屏）。
+- **期望结果**：checklist 全项符合。
+- **判定方式**：PASS = 全项符合且证据齐全；MANUAL 遗留不计 FAIL（兜底 TC-124/TC-123/TC-120/TC-129 全 PASS 为门禁）；FAIL = 观感回退/交互破坏。
+- **依据锚点（三源）**：FR-CHAT-10 + FR-CHAT-09 + FR-CHAT-06（观感/交互层）+ FR-AUI-08②；设计 §10.14 D8（MANUAL 清单：跟随观感、Composer 交互细节）+ D10 风险③（IME/@ 防抖/焦点保持）；外部契约 §11 #14（官方文档 external-store 交互面）。
+
+#### FR-CHAT-11 等价：用户消息单次展示（五款）
+
+#### TC-126 ｜ FR-CHAT-11①②③（P0）+ FR-AUI-08②（P0（切换批次））｜ 单气泡不变量：三时点恰一条 / steer·followUp 同口径 / 历史重放不重复 ｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-STREAM（含 user 回声）；MOCK-QUEUE-MIX；GOLDEN-BASIC/GOLDEN-MIX（回放兜底）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-126a-c：消费端 DOM 计数断言）：
+  - (a) ① 单条恒成立：发送后即时（不等待 pi 确认回声）条目数 = 1；user 回声（user 角色 `message_end`，json.md L36–40）到达后、本轮助手终稿渲染完成后两个判定时点各采样一次仍均为 1；同文本多次独立发送 N 次 → N 条（不跨发送合并）；
+  - (b) ② steer/followUp 同口径：运行中插话每条用户消息各判定时点条目数 = 1（与 TC-120(c) 交叉）；
+  - (c) ③ 历史重放不重复：面板重开 / 会话切换（`history_loaded` 全量替换为唯一重建入口，设计 D5）后每条用户消息条目数 = 1，重放内容与会话 JSONL 一致（澄清 #5）；golden 回放兜底（TC-102：user 计数 1；TC-103：user 计数 3 逐条对应）。
+- **期望结果**：(a)-(c) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 任一时点条目数 >1/跨发送合并/重放重复（附 DOM 计数采样为证据）。
+- **依据锚点（三源）**：FR-CHAT-11①②③ + FR-AUI-08②③ + 澄清 #5/#12；设计 §10.14 D5（user_message→push 单条、history_loaded 全量替换、一 UiMessage→一 ThreadMessage 无合并）；外部契约 §11 #1（json.md「Event sequence」L30–46 user 回声必发）+ #7（extensions.md L752–770 回声覆盖面）+ golden fixture 本体。
+
+#### TC-127 ｜ FR-CHAT-11④⑤（P0）+ FR-AUI-08②（P0（切换批次））｜ 文本保真：#16 就地更新 / #17 保守分支 / ⑤回归边界 ｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-ECHO-REWRITE（回声文本 ≠ 发送原文，#16 场景）；MOCK-QUEUE-MIX 不可关联回声分支（#17 场景）；MOCK-REJECT / MOCK-HANDLED（拒绝/handled 路径）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-127a-d）：
+  - (a) #16 就地更新：回声可关联时，pi 权威文本到达前显示发送原文、到达后**该条目文本就地更新**为权威文本——更新前后条目数均为 1、不新增条目、不同时展示两版文本（同 id 就地覆盖幂等语义，设计 D5）；
+  - (b) #17 保守分支：回声不可关联（多通道不可判定）时，各条目恒 1 条、文本不错换、不因该回声新增条目，实时窗口保留发送原文；经会话切换/刷新/面板重开权威重建后文本收敛为会话 JSONL 权威文本；
+  - (c) 拒绝/handled 路径：`success:false`（受理前拒绝）与 `disposition:"handled"` 不产生用户消息错增/错换（单条不变量保持）；
+  - (d) ⑤ 回归边界：助手消息（thinking 折叠、工具卡）条目数与内容展示不受单气泡判定影响（TC-117/TC-118 交叉）。
+- **期望结果**：(a)-(d) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 双文本并存/条目新增/错换/权威重建不收敛（附 DOM 文本采样序列为证据）。
+- **依据锚点（三源）**：FR-CHAT-11④⑤ + FR-AUI-08②③ + 澄清 #16（pi 权威文本单条就地更新）/#17（不可关联回声保守分支）；设计 §10.14 D5（就地覆盖幂等键 = 消息 id、#17 无事件被动保留、权威重建收敛）；外部契约 §11 #3（rpc-commands.md prompt disposition started/queued/handled）+ #1（回声语义）。
+
+#### FR-FILE-02 等价：`@` 文件引用
+
+#### TC-128 ｜ FR-FILE-02（P0）+ FR-AUI-08②（P0（切换批次））｜ `@` 触发选择器唯一入口 + 光标插入 + 输入区无添加文件按钮 ｜ 自动
+- **前置条件**：ENV-SETUP；工作区含可选文件集。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-128）：
+  - (a) 触发：输入 `@`（前一字符为行首/空白，触发谓词口径同旧实现）弹出文件选择器（宿主 QuickPick 调用记录 `insert_file_ref`），可过滤；
+  - (b) 插入：选中后文件路径插入输入框**光标处**并替换触发用 `@`（ComposerRuntime.setText 全文重写语义，§11 #22；输入上下文保持）；
+  - (c) 唯一入口：输入区 DOM 无独立「添加文件」按钮或等价固定入口元素（FR-FILE-02 修订句 DOM 断言面）；`@` 选择器为输入区唯一文件引用入口；FR-FILE-03 右键发送入口不受影响（归 TC-136）。
+- **期望结果**：(a)-(c) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 不触发/插入错位/存在添加文件按钮。
+- **依据锚点（三源）**：FR-FILE-02（v0.4 修订句）+ FR-AUI-08②③；设计 §10.14 D3（fileRefTrigger 纯函数 + hostActions QuickPick + setText 替换 `@` 语义）；外部契约 §11 #22（`ComposerRuntime.setText`，composer-runtime.d.ts L92/L169）。
+
+#### FR-CMD-03 等价：`/` 命令补全菜单
+
+#### TC-129 ｜ FR-CMD-03①–⑤（P1）+ FR-AUI-08②（P0（切换批次））｜ `/` 命令菜单全链路（数据源/出现与过滤/键盘导航/选中插入/边界）｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-CMD（4 项固定命令全集；可配置空集/调用失败）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-129a-e，逐条对应验收标准①–⑤）：
+  - (a) ① 数据源 = `get_commands` 返回的命令全集（扩展命令/prompt 模板/skills），菜单每项展示名称与描述（DOM 断言）；
+  - (b) ② 出现条件：输入框文本 `/` 开头显示菜单、非 `/` 不显示；`/` 后文本实时过滤（名称/描述子串匹配、不区分大小写——MOCK-CMD 含 `ExPlain`/`zebra` 大小写与子串区分用例）；过滤后无匹配则菜单隐藏；
+  - (c) ③ 键盘导航：↑/↓ 移动高亮项、Enter 选中高亮项、Esc 关闭菜单，二者均不触发发送（prompt 调用记录零命中）；
+  - (d) ④ 选中行为：选中命令（`/` + 命令名）写入输入框（替换原 `/` 起始过滤文本）并关闭菜单、焦点保持在输入框；鼠标点击菜单项等价于键盘选中；
+  - (e) ⑤ 边界：`get_commands` 不可用或返回空时不显示菜单，`/` 开头文本仍可直接发送透传（调用记录含命令文本）。
+- **期望结果**：(a)-(e) 五款逐款成立。
+- **判定方式**：PASS = 五款全成立；FAIL = 任一款不符。
+- **依据锚点（三源）**：FR-CMD-03①–⑤ + FR-AUI-08②③；设计 §10.14 D3（CommandMenuState/filterCommands 纯逻辑零改动复用 + React 菜单组件同构接线）；外部契约 §11 #3（rpc-commands.md prompt 透传/skill 展开语义）。
+
+#### FR-MOD 等价：模型选择器与上下文用量
+
+#### TC-130 ｜ FR-MOD-01③ + FR-MOD-03（P1）+ FR-AUI-08②（P0（切换批次））｜ 底部模型选择器 + 三入口同步 + 会话内持久 ｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-MODELS（`get_available_models` → ["mock-small","mock-large"]）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-130）：
+  - (a) 入口③：输入区底部常显当前模型名；点击弹出可用模型列表（DOM 断言）；选中即切换（`set_model` 调用记录）并同步更新展示；
+  - (b) 三入口同步：入口③切换后状态栏（入口①）与命令面板（入口②）展示同步（FR-MOD-01 任一入口切换后其余入口同步，model_info 事件链）；
+  - (c) 持久（FR-MOD-03）：切换结果随会话保留，模拟插件重启后状态栏与底部模型选择器反映切换。
+- **期望结果**：(a)-(c) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 不同步/不持久/协议调用缺失。
+- **依据锚点（三源）**：FR-MOD-01③ + FR-MOD-03 + FR-AUI-08②③；设计 §10.14 D3（底部模型选择器重写、request_models/models_list/set_model 协议复用、终接同一 setModel）；外部契约 §11 #3（rpc-commands.md 模型命令族）。
+
+#### TC-131 ｜ FR-MOD-04（P1）+ FR-AUI-08②（P0（切换批次））｜ 上下文用量指示（权威取值/百分比/刷新时机/占位）｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-USAGE（`get_state` 返回 `contextWindow=200000`；会话 A 两条助手消息 totalTokens=12345/45600、会话 B =15000；可触发一次 compaction 事件）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-131a-d 逐条对应验收标准①–⑤）：
+  - (a) ①② 取值：token 数值 = 最近一条助手消息 `usage.totalTokens`（`message_update` Usage）；上下文窗口 = `get_state` `contextWindow`；
+  - (b) ③ 展示：token 数值 + 百分比（= ①÷②×100 四舍五入取整；数值允许千分位或 k 缩写，解析容差 ≤1% 口径沿用 TC-060）；
+  - (c) ④ 刷新时机：新助手消息用量刷新（45600 覆盖 12345）；切换会话后按新会话最近一条取值（15000）；当前会话无助手消息显示 "—" 占位；
+  - (d) ⑤ 回归边界：compaction 相关 toast 行为不变（不属本 FR 断言范围，核对无回归）。
+- **期望结果**：(a)-(d) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 取值错/百分比错/不刷新/占位缺失。
+- **依据锚点（三源）**：FR-MOD-04①–⑤ + FR-AUI-08②③；设计 §10.14 D3（formatContextUsage 纯函数复用、usage_info 协议复用）；外部契约 §11 #1（json.md `message_update` Usage 结构）。
+
+#### FR-SESS 等价：会话管理系
+
+#### TC-132 ｜ FR-SESS-01 + FR-SESS-04（P0/P1）+ FR-AUI-08②（P0（切换批次））｜ 新建会话（旧会话落盘）+ 手动重命名 ｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-STREAM。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-132）：
+  - (a) 新建会话动作（头部按钮/命令）→ 旧会话 JSONL 落盘保留（文件断言）+ 面板进入新会话；
+  - (b) 重命名（FR-SESS-04）→ `set_session_name` 调用记录 + 状态栏会话名同步（session_name 事件）。
+- **期望结果**：(a)(b) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 旧会话丢失/命名不生效。
+- **依据锚点（三源）**：FR-SESS-01/04 + FR-AUI-08②③；设计 §10.14 D3（头部新会话/重命名，协议复用）；外部契约 §11 #3（rpc-commands.md `set_session_name`）。
+
+#### TC-133 ｜ FR-SESS-02（P0）+ FR-AUI-08②（P0（切换批次））｜ 历史列表（标题/时间/消息数（#12 口径）/点击切换）｜ 自动
+- **前置条件**：ENV-SETUP；3 个既有会话（消息数分别为 4/10/18——计算说明同 TC-017：N 次发送 → N user + N assistant）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-133：打开历史列表 DOM 断言 + 切换动作）。
+- **期望结果**：(a) 列表每项含标题、时间、消息数；消息数 = user+assistant 合计（4/10/18 逐项，澄清 #12）；(b) 点击切换到对应会话（切换事件断言）。
+- **判定方式**：PASS = (a)(b) 全成立；FAIL = 字段缺失/计数口径错/切换失败。
+- **依据锚点（三源）**：FR-SESS-02 + FR-AUI-08②③ + 澄清 #12（消息数口径）；设计 §10.14 D3（历史列表/协议复用）；外部契约 §11 #1（json.md 消息/会话语义）。
+
+#### TC-134 ｜ FR-SESS-03（P0）+ FR-AUI-08②（P0（切换批次））｜ 继续会话：上下文完整恢复（含压缩状态）+ 重放与 JSONL 一致（#5）｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-STREAM；会话 A（含压缩状态场景）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-134：切换到会话 A 断言 + 再发一条 prompt 续写）。
+- **期望结果**：(a) 历史重放消息与会话 JSONL 一致（含压缩状态，澄清 #5 等价判据）；(b) 切换后可继续对话、JSONL 连续续写；(c) 用户消息重放单条（TC-126(c) 交叉）。
+- **判定方式**：PASS = (a)-(c) 全成立；FAIL = 上下文丢失/另起会话/重放不一致。
+- **依据锚点（三源）**：FR-SESS-03 + FR-AUI-08②③ + 澄清 #5；设计 §10.14 D5（history_loaded 权威重建）；外部契约 §11 #1（json.md 消息/会话语义）。
+
+#### TC-135 ｜ FR-SESS-06 + FR-SESS-07（P0/P1）+ FR-AUI-08②（P0（切换批次））｜ 单会话工作模式 + 外部修改提示（≤5s 拦截/刷新）｜ 自动
+- **前置条件**：ENV-SETUP；MOCK-STREAM；会话文件外部修改剧本（同 TC-022 口径）。
+- **操作步骤**：`npm run verify:integration`（jsdom 文件级注解，场景 SC-135a/b）：
+  - (a) FR-SESS-06：单活动会话 + 历史切换，无并行多会话标签（DOM/状态断言）；
+  - (b) FR-SESS-07：外部修改（终端 pi 写同一会话）后 ≤5s 内提示刷新（澄清 #7），且阻止陈旧状态继续使用——拦截后续交互直至刷新完成或自动刷新（澄清 #13：仅展示提示但继续受理交互 = FAIL）；刷新按钮动作 → `refresh_session` 调用记录（设计 D3）。
+- **期望结果**：(a)(b) 全成立。
+- **判定方式**：PASS = 全成立；FAIL = 并行会话出现/提示超时/陈旧交互被受理。
+- **依据锚点（三源）**：FR-SESS-06/07 + FR-AUI-08②③ + 澄清 #7（≤5s）/#13（拦截或自动刷新）；设计 §10.14 D3（外部修改横幅 + 刷新按钮重写）；外部契约 §11 #2（rpc.md 会话独占口径）。
+
+#### 等价域复合重指向（宿主侧 / 命令面板层 FR）
+
+#### TC-136 ｜ FR-AUI-08①③（P0（切换批次）；复合 FR-FILE-01/FR-FILE-03/FR-MOD-02/FR-CMD-01/FR-CMD-02/FR-CMD-05）｜ 既有套件载体重指向全绿 + P2 口径不变 ｜ 自动（组合判定）
+- **前置条件**：ENV-SETUP；既有验证套件（TC-001~TC-076 对应逻辑场景）。
+- **操作步骤**：
+  1. 既有套件面重指向新 UI 载体后 `npm run verify:unit && npm run verify:integration` 全绿（FR-AUI-08③ 判定方式首件；对应逻辑场景逐条在新 UI 载体执行：SC-023（FR-FILE-01 工作区绑定：Pi 子进程 cwd = 打开的文件夹、多根取第一）/ SC-026（FR-FILE-03 右键发送：文件路径/选区作为 prompt 素材 + `input_prefill` 预填至**新 UI** 输入区——设计 D1）/ SC-028（FR-MOD-02 thinking 等级切换）/ SC-030（FR-CMD-01 命令面板 5 命令注册：Open Chat / New Session / Abort / Show Session History / Report Issue）/ SC-031（FR-CMD-02 stderr + 协议异常写入 Output Channel）/ SC-035（FR-CMD-05 pi 运行时来源：PATH 优先/内置回退/显式指定））。
+  2. P2 口径不变（FR-AUI-08④）：FR-SESS-05（分支切换）、FR-CMD-04（MCP）维持二期，载体平移不改优先级与范围（矩阵显式列出，不新增判定项）。
+- **期望结果**：(1) 全绿；(2) 口径确认无变更。
+- **判定方式**：PASS = (1) 全绿 + (2) 确认；FAIL = 任一既有场景在新 UI 载体红（附套件输出）。
+- **依据锚点（三源）**：FR-AUI-08①③④；设计 §10.14 D3（input_prefill/sendToPi 目标 = 新 UI 面板）+ D8（回归清单重定向）；外部契约 §11 #2（rpc.md lifecycle）+ #3（rpc-commands.md prompt/get_commands 族）。
+- **说明**：口径披露⑤（共用约定）——宿主侧/命令面板层 FR（FILE-01/FILE-03/MOD-02/CMD-01/CMD-02/CMD-05）判定载体平移的影响面为「面板交互端」，验收语义不变；本 TC 以组合判定承载（每 FR 均有专属逻辑场景逐条判定），如总调度要求逐 FR 独立等价 TC 可再拆分。
+
 ### NFR-01 性能
 
 #### TC-036 ｜ NFR-01 ｜ 10k+ tokens 流式渲染代理断言 ｜ 自动（代理指标）
@@ -1033,55 +1473,71 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 - **判定方式**：PASS = 1–4 全成立；FAIL = 任一门禁要件不成立（阶段①出口不通过；处置依设计 §10.13 D9：不放宽断言、失败证据上报总调度裁决——调整重试/证伪终止迁移/退出）。
 - **依据锚点（三源）**：需求基线 v0.6 §8 第 7 条 + 澄清 #18；设计 §10.13 D9（门禁处置原则：如实记录失败证据即阶段①有效产出，允许「证伪」）；本文件 §2 覆盖矩阵 FR-AUI 行与阶段①出口门禁自检行。
 
-> §8-2 由 TC-001/003/005/007 覆盖；§8-4 由 TC-038（崩溃恢复）+ TC-042（三平台）覆盖；§8-5（P0 逐条勾选）由全部 P0 自动 TC 覆盖；§8-6 由 TC-062/TC-065/TC-066/TC-069/TC-070 直接判定；§8-7（阶段①出口门禁）由 TC-097 组合判定（v0.6）。
+#### TC-137 ｜ §8-7（复合：FR-AUI-02~08 全部 P0（切换批次）子条 + §4.1–4.5 等价域）｜ TASK-009 切换批次出口门禁自检 ｜ 自动（组合判定）
+- **前置条件**：ENV-SETUP；切换批次交付（ready-for-verify 标签检出）；本文件 TC-098~TC-136 各项已执行。
+- **操作步骤**（汇总判定，无新增执行；逐项核对下列门禁要件，需求基线 v0.7 §8 第 7 条）：
+  1. **§4.6 全部「P0（切换批次）」子条逐条通过**（§8-7①）：TC-098/TC-099/TC-100/TC-101（FR-AUI-02①②③④）、TC-102/TC-104（FR-AUI-03①③）、TC-105/TC-106/TC-107/TC-108 自动面（FR-AUI-05①②③④）、TC-109/TC-110（FR-AUI-07①②④）、TC-112（FR-AUI-03④ + FR-AUI-07③ 快照）、TC-113（FR-AUI-04①②）全 PASS；P1 项 TC-103（FR-AUI-03②）尽力、不计门禁（澄清 #18 同构）。
+  2. **功能等价逐条通过**（§8-7②）：等价域 TC-115~TC-136 全 PASS（判定载体 = 新 UI，FR-AUI-08③ 三件套：既有套件重指向 + golden 回放 + 双面板快照兜底）；其中 **FR-CHAT-11 五款**（TC-126(a)(b)(c) / TC-127(a)(b)(c)(d)，含 #16 就地更新与 #17 保守分支）与 **FR-CHAT-10 五子条**（TC-124(a)-(e)，维持既有口径，澄清 #19(a)）逐款判定全过；P2（FR-SESS-05/FR-CMD-04）二期口径不变（FR-AUI-08④）。
+  3. **双面板可切换且行为一致快照**（§8-7③）：TC-111（可切换 + 行为冻结）+ TC-112（一致快照）PASS。
+  4. **对外契约零变更 + 「实验」命名清零**（§8-7④）：TC-109（viewType `sdysyhj.chatView`、9 项既有命令、5 项配置逐项不变）+ TC-110（「实验/Lab」清零 + #19(b) 定名）PASS。
+  5. **MANUAL 项四值处理**：TC-108/TC-111/TC-114/TC-125 的 MANUAL 部分按核验四值记 MANUAL（遗留不计 FAIL），其自动兜底（TC-106 + TC-108 注册断言 / TC-109+TC-110+TC-112 / TC-113 / TC-124+TC-123+TC-120+TC-129）全 PASS。
+  6. **既有 verify 套件回归全绿 + §8 第 1–6 条 MVP 门禁新 UI 载体复验**（§8-7⑤）：TC-098(d)/TC-136(1) 既有套件全绿；§8-1~6 对应判定（TC-045/TC-046/TC-038/TC-042/TC-062 系等）在新 UI 载体复验通过（既有 TC 核验执行按验证计划/核验剧本进行）。
+- **期望结果**：门禁要件 1–6 全部成立。
+- **判定方式**：PASS = 1–6 全成立；FAIL = 任一要件不成立（0.1.8 发版阻塞项；处置不放宽断言、不静默降级——设计 §10.14 D10 回退预案：注册切换原子开关回退 / `sdysyhj.openChatClassic` 用户自救入口全程可用，失败证据上报总调度裁决）。
+- **依据锚点（三源）**：需求基线 v0.7 §8 第 7 条 + 澄清 #18/#19；设计 §10.14 D9/D10（门禁处置与回退预案）；本文件 §2 覆盖矩阵 FR-AUI 修订行 + 等价域行 + §8-7 切换批次行。
+
+> §8-2 由 TC-001/003/005/007 覆盖；§8-4 由 TC-038（崩溃恢复）+ TC-042（三平台）覆盖；§8-5（P0 逐条勾选）由全部 P0 自动 TC 覆盖；§8-6 由 TC-062/TC-065/TC-066/TC-069/TC-070 直接判定；§8-7（阶段①出口门禁，历史）由 TC-097 组合判定（v0.6，使命结束）；§8-7（**切换批次出口门禁**）由 TC-137 组合判定（v0.7）。
 
 ---
 
 ## 2. TC ↔ FR 覆盖矩阵
 
-### 2.1 功能需求（36 条 FR 全集：MVP 30 + 阶段① 6）
+### 2.1 功能需求（38 条 FR 全集：MVP 30 + TASK-009 8——阶段① 6 + 切换批次新增 2）
 
 | FR-id | 摘要 | 优先级 | TC-id | 判定等级 | 状态 |
 |---|---|---|---|---|---|
-| FR-CHAT-01 | 流式对话 | P0 | TC-001, TC-002 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-002） |
-| FR-CHAT-02 | Markdown 渲染 | P0 | TC-003, TC-004 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-004） |
-| FR-CHAT-03 | thinking 折叠 | P0 | TC-005, TC-006 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-006） |
-| FR-CHAT-04 | 工具调用卡片 | P0 | TC-007, TC-008, TC-052 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-008；TC-052 为 #D-04 回归锚点，v0.3 追加） |
-| FR-CHAT-05 | 中止运行 | P0 | TC-009, TC-010 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-010） |
-| FR-CHAT-06 | steer 插话 | P1 | TC-011, TC-012 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（P1 尽力） |
-| FR-CHAT-07 | 错误展示 | P0 | TC-013 | 自动 | ✅ 已覆盖·可自动判定 |
-| FR-CHAT-08 | 状态指示 | P0 | TC-014, TC-015 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-015） |
-| FR-CHAT-09 | 流式输出自动跟随 | P1 | TC-047, TC-048, TC-049, TC-050, TC-051 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（验收标准①②③④逐条对应 TC-047/048/049/050；UI 补充 TC-051；P1 尽力，v0.3 追加） |
-| FR-CHAT-10 | 聊天面板视觉规范 | P1 | TC-053, TC-054, TC-055 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（验收标准①②③→TC-053、④⑤→TC-054，CSS/DOM/正则口径逐条自动断言；UI 补充 TC-055 由 TC-053/TC-054 兜底；v0.4 新增） |
-| FR-CHAT-11 | 用户消息单次展示 | P0 | TC-062, TC-063, TC-064, TC-065, TC-066, TC-067, TC-068, TC-069, TC-070, TC-071, TC-072, TC-073, TC-074, TC-075, TC-076 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（验收标准①含前言计数单位口径→TC-062/063+golden TC-064、②→TC-065/066/067+golden TC-068、③→TC-069/070、④→TC-066/070/071/072/073/076、⑤→TC-074；UI 补充 TC-075 由 TC-062~TC-074、TC-076 兜底；外部行为期望均锚定 pi 权威文档行号；v0.5 新增，TC-076 为 v0.5.1 补遗——澄清 #17） |
-| FR-SESS-01 | 新建会话 | P0 | TC-016 | 自动 | ✅ 已覆盖·可自动判定 |
-| FR-SESS-02 | 历史列表 | P0 | TC-017 | 自动 | ✅ 已覆盖·可自动判定（点击手势以切换事件断言替代） |
-| FR-SESS-03 | 继续会话 | P0 | TC-018, TC-046 | 自动 | ✅ 已覆盖·可自动判定 |
-| FR-SESS-04 | 会话命名 | P1 | TC-019 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力） |
-| FR-SESS-05 | 分支切换 | P2 | TC-020 | 延后 | 📅 二期/延后（显式列出，不计入门禁） |
-| FR-SESS-06 | 单会话工作模式 | P0 | TC-021 | 自动 | ✅ 已覆盖·可自动判定 |
-| FR-SESS-07 | 外部修改提示 | P1 | TC-022 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力） |
-| FR-FILE-01 | 工作区绑定 | P0 | TC-023 | 自动 | ✅ 已覆盖·可自动判定 |
-| FR-FILE-02 | @file 引用（v0.4 修订：@ 唯一入口） | P0 | TC-024, TC-025, TC-061 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-025；TC-061 判定 v0.4 修订句：无添加文件按钮 DOM 断言 + @ 唯一入口保持） |
-| FR-FILE-03 | 右键发送 | P1 | TC-026 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力） |
-| FR-MOD-01 | 切换模型（v0.4 增入口③） | P1 | TC-027, TC-058 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力；TC-058 补底部内联选择器常显/弹出/切换与跨入口同步，v0.4） |
-| FR-MOD-02 | 切换 thinking 等级 | P1 | TC-028 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力） |
-| FR-MOD-03 | 会话内持久（v0.4 展示口径含底部选择器） | P1 | TC-029, TC-059 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力；TC-059 钉入口③重启反映，v0.4） |
-| FR-MOD-04 | 上下文用量指示 | P1 | TC-060 | 自动 | ✅ 已覆盖·可自动判定（验收标准①-⑤ → SC-060a~e 逐条；P1 尽力，v0.4 新增） |
-| FR-CMD-01 | 命令面板 | P0 | TC-030 | 自动（静态） | ✅ 已覆盖·可自动判定 |
-| FR-CMD-02 | 输出日志 | P0 | TC-031 | 自动 | ✅ 已覆盖·可自动判定 |
-| FR-CMD-03 | `/` 命令补全菜单 | P1（v0.4 转正） | TC-032, TC-056, TC-057 | 自动 | ✅ 已覆盖·可自动判定（TC-056 判验收标准①②⑤、TC-057 判③④；TC-032 文本直发透传保留；原 TC-033 延后状态撤销，v0.4） |
-| FR-CMD-04 | MCP | P2 | TC-034 | 延后 | 📅 二期/延后（显式列出，不计入门禁） |
-| FR-CMD-05 | pi 运行时来源 | P0 | TC-035 | 自动 | ✅ 已覆盖·可自动判定 |
-| FR-AUI-01 | 独立实验面板（默认面板零变更） | P0（阶段①） | TC-077, TC-078, TC-079 | 自动 + 真机 MANUAL | ✅ 已覆盖·可自动判定（①③→TC-077 注册结构断言（含 retainContextWhenHidden 注册层，交叉 FR-AUI-05④）+TC-079 真机冒烟 MANUAL（兜底 TC-077）；②→TC-078 冻结面四项断言 + git 归组 + 既有套件全绿回归；v0.6 新增，TASK-009） |
-| FR-AUI-02 | 路线 A/B 双切片最小垂直切片 | P0（阶段①） | TC-080, TC-081, TC-082, TC-083, TC-084, TC-085, TC-086 | 自动 + 真机 MANUAL | ✅ 已覆盖·可自动判定（①②③最小切片→TC-085/TC-086（含 FR-AUI-03① 判定；「基本主题」由 TC-089/TC-090 判定）；④传输真实性→TC-080（注入点低于适配层 + aui-vscode 通道帧观测）；⑤→TC-081 自动兜底（通道文本保真 + 消毒 API 禁令扫描）+TC-082 DOM 层 MANUAL；⑥→TC-083（双切片各独立完成 03① + 共存结构前提）+TC-084 切换冒烟 MANUAL；v0.6 新增） |
-| FR-AUI-03 | golden fixture 回放数据源 | P0（阶段①）；②为 P1（阶段①） | TC-085, TC-086, TC-087, TC-088 | 自动 | ✅ 已覆盖·可自动判定（①→TC-085 路线 A / TC-086 路线 B（期望值由 fixture 逐行推导：消息数 = 2 = user 1 + assistant 1，澄清 #12 口径）；②（P1 尽力）→TC-087 双切片 golden-steer-followup（消息数 = 6 = user 3 + assistant 3，乱序回声序列完整不丢）；③方法约束→TC-088（无人值守/可重复/离线）；v0.6 新增） |
-| FR-AUI-04 | 主题映射验证（--vscode-* 变量） | P0（阶段①） | TC-089, TC-090 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（①②→TC-089 静态解析审计（token 链非空终点 --vscode-* / 浅深联动差异 / WCAG 公式对比度 ≥4.5:1 浅深各测）；③→TC-090 UI 手工 checklist（浅/深截图，证据类型 = 截图），同 FR 自动兜底 = TC-089（①②）；v0.6 新增） |
-| FR-AUI-05 | 风险门禁判定证据 | P0（阶段①） | TC-091, TC-092, TC-093, TC-094, TC-095 | 自动 + 真机 MANUAL | ✅ 已覆盖·可自动判定（①→TC-091 版本锁定 JSON 断言（升级评估留痕交叉 TC-096(d)）；②→TC-092 CSP 指令集 + 回放运行时证据 + jitless 前置 + TC-093 真机零 violation MANUAL；③→TC-094 字节级预算（webview ≤3,145,728 / 宿主增量 ≤1,048,576 / Shiki 不进产物 / 默认依赖图无 React·assistant-ui）；④→TC-077(d) 注册断言自动兜底 + TC-095 隐藏再显示行为层 MANUAL；v0.6 新增） |
-| FR-AUI-06 | 双切片对比报告（阶段①交付物） | P0（阶段①） | TC-096 | 自动 | ✅ 已覆盖·可自动判定（①②③→TC-096 报告结构断言：四维各成节 / 量化维度附命令+输出 / 时延 ≥5 次取中位 / 侵入面三组归类含默认面板冻结文件=空 / 结论中立零预设表述 / 升级评估留痕；v0.6 新增） |
-| §8 第 7 条 | TASK-009 阶段①出口门禁（阶段①自检行） | P0（阶段①，复合） | TC-097 | 自动（组合判定） | ✅ 已覆盖·可自动判定（FR-AUI 全部 P0（阶段①）子条自动 TC 全 PASS + MANUAL 项四值处理与兜底全 PASS + 对比报告交付（TC-096）+ 默认面板零变更回归（TC-078）；P1 项 TC-087 尽力不计门禁（澄清 #18）；v0.6 新增） |
+| FR-CHAT-01 | 流式对话 | P0 | TC-001, TC-002, TC-115 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-002；TC-115 = 新 UI 等价域，v0.7） |
+| FR-CHAT-02 | Markdown 渲染 | P0 | TC-003, TC-004, TC-116 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-004；TC-116 = 新 UI 等价域（语言集 ≥36/集外回退转义），v0.7） |
+| FR-CHAT-03 | thinking 折叠 | P0 | TC-005, TC-006, TC-117 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-006；TC-117 = 新 UI 等价域，v0.7） |
+| FR-CHAT-04 | 工具调用卡片 | P0 | TC-007, TC-008, TC-052, TC-118 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-008；TC-052 为 #D-04 回归锚点，v0.3 追加；TC-118 = 新 UI 等价域（全要素/状态收敛/截断+复制全部），v0.7） |
+| FR-CHAT-05 | 中止运行 | P0 | TC-009, TC-010, TC-119 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-010；TC-119 = 新 UI 等价域，v0.7） |
+| FR-CHAT-06 | steer 插话 | P1 | TC-011, TC-012, TC-120 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（P1 尽力；TC-120 = 新 UI 等价域，v0.7） |
+| FR-CHAT-07 | 错误展示 | P0 | TC-013, TC-121 | 自动 | ✅ 已覆盖·可自动判定（TC-121 = 新 UI 等价域（含 #14 边界），v0.7） |
+| FR-CHAT-08 | 状态指示 | P0 | TC-014, TC-015, TC-122 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-015；TC-122 = 新 UI 等价域，v0.7） |
+| FR-CHAT-09 | 流式输出自动跟随 | P1 | TC-047, TC-048, TC-049, TC-050, TC-051, TC-123 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（验收标准①②③④逐条对应 TC-047/048/049/050；UI 补充 TC-051；TC-123 = 新 UI 等价域四款逐款，v0.7；P1 尽力） |
+| FR-CHAT-10 | 聊天面板视觉规范 | P1 | TC-053, TC-054, TC-055, TC-124, TC-125 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（验收标准①②③→TC-053、④⑤→TC-054，CSS/DOM/正则口径逐条自动断言；UI 补充 TC-055 由 TC-053/TC-054 兜底；TC-124 = 新 UI 等价域五子条逐款（#19(a) 全维持口径）+ TC-125 真机观感 MANUAL（兜底 TC-124 等），v0.7） |
+| FR-CHAT-11 | 用户消息单次展示 | P0 | TC-062, TC-063, TC-064, TC-065, TC-066, TC-067, TC-068, TC-069, TC-070, TC-071, TC-072, TC-073, TC-074, TC-075, TC-076 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（验收标准①含前言计数单位口径→TC-062/063+golden TC-064、②→TC-065/066/067+golden TC-068、③→TC-069/070、④→TC-066/070/071/072/073/076、⑤→TC-074；UI 补充 TC-075 由 TC-062~TC-074、TC-076 兜底；外部行为期望均锚定 pi 权威文档行号；v0.5 新增，TC-076 为 v0.5.1 补遗——澄清 #17；TC-126/TC-127 = 新 UI 等价域五款（含 #16 就地更新/#17 保守分支），v0.7） |
+| FR-SESS-01 | 新建会话 | P0 | TC-016, TC-132 | 自动 | ✅ 已覆盖·可自动判定（TC-132 = 新 UI 等价域（含 FR-SESS-04 重命名），v0.7） |
+| FR-SESS-02 | 历史列表 | P0 | TC-017, TC-133 | 自动 | ✅ 已覆盖·可自动判定（点击手势以切换事件断言替代；TC-133 = 新 UI 等价域，v0.7） |
+| FR-SESS-03 | 继续会话 | P0 | TC-018, TC-046, TC-134 | 自动 | ✅ 已覆盖·可自动判定（TC-134 = 新 UI 等价域（含 #5 重放一致），v0.7） |
+| FR-SESS-04 | 会话命名 | P1 | TC-019, TC-132 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力；TC-132 等价域，v0.7） |
+| FR-SESS-05 | 分支切换 | P2 | TC-020 | 延后 | 📅 二期/延后（显式列出，不计入门禁；载体平移不改二期口径，FR-AUI-08④/TC-136(2)，v0.7） |
+| FR-SESS-06 | 单会话工作模式 | P0 | TC-021, TC-135 | 自动 | ✅ 已覆盖·可自动判定（TC-135 = 新 UI 等价域（含 FR-SESS-07），v0.7） |
+| FR-SESS-07 | 外部修改提示 | P1 | TC-022, TC-135 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力；TC-135 等价域（≤5s 拦截/刷新），v0.7） |
+| FR-FILE-01 | 工作区绑定 | P0 | TC-023, TC-136 | 自动 | ✅ 已覆盖·可自动判定（TC-136 复合重指向 SC-023 新 UI 载体，v0.7） |
+| FR-FILE-02 | @file 引用（v0.4 修订：@ 唯一入口） | P0 | TC-024, TC-025, TC-061, TC-128 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（UI 补充 TC-025；TC-061 判定 v0.4 修订句：无添加文件按钮 DOM 断言 + @ 唯一入口保持；TC-128 = 新 UI 等价域，v0.7） |
+| FR-FILE-03 | 右键发送 | P1 | TC-026, TC-136 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力；TC-136 复合重指向 SC-026（input_prefill 预填新 UI），v0.7） |
+| FR-MOD-01 | 切换模型（v0.4 增入口③） | P1 | TC-027, TC-058, TC-130 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力；TC-058 补底部内联选择器常显/弹出/切换与跨入口同步，v0.4；TC-130 = 新 UI 等价域（入口③+三入口同步+持久），v0.7） |
+| FR-MOD-02 | 切换 thinking 等级 | P1 | TC-028, TC-136 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力；TC-136 复合重指向 SC-028，v0.7） |
+| FR-MOD-03 | 会话内持久（v0.4 展示口径含底部选择器） | P1 | TC-029, TC-059, TC-130 | 自动 | ✅ 已覆盖·可自动判定（P1 尽力；TC-059 钉入口③重启反映，v0.4；TC-130 等价域，v0.7） |
+| FR-MOD-04 | 上下文用量指示 | P1 | TC-060, TC-131 | 自动 | ✅ 已覆盖·可自动判定（验收标准①-⑤ → SC-060a~e 逐条；TC-131 = 新 UI 等价域 SC-131a-d，v0.7；P1 尽力，v0.4 新增） |
+| FR-CMD-01 | 命令面板 | P0 | TC-030, TC-136 | 自动（静态） | ✅ 已覆盖·可自动判定（TC-136 复合重指向 SC-030（5 命令注册），v0.7） |
+| FR-CMD-02 | 输出日志 | P0 | TC-031, TC-136 | 自动 | ✅ 已覆盖·可自动判定（TC-136 复合重指向 SC-031，v0.7） |
+| FR-CMD-03 | `/` 命令补全菜单 | P1（v0.4 转正） | TC-032, TC-056, TC-057, TC-129 | 自动 | ✅ 已覆盖·可自动判定（TC-056 判验收标准①②⑤、TC-057 判③④；TC-032 文本直发透传保留；TC-129 = 新 UI 等价域全链路①–⑤，v0.7；原 TC-033 延后状态撤销，v0.4） |
+| FR-CMD-04 | MCP | P2 | TC-034 | 延后 | 📅 二期/延后（显式列出，不计入门禁；载体平移不改二期口径，FR-AUI-08④/TC-136(2)，v0.7） |
+| FR-CMD-05 | pi 运行时来源 | P0 | TC-035, TC-136 | 自动 | ✅ 已覆盖·可自动判定（TC-136 复合重指向 SC-035，v0.7） |
+| FR-AUI-01 | 独立实验面板（默认面板零变更） | P0（阶段①，已完结） | TC-077, TC-078, TC-079 | 自动 + 真机 MANUAL | ✅ 已覆盖·可自动判定（①③→TC-077 注册结构断言（含 retainContextWhenHidden 注册层，交叉 FR-AUI-05④）+TC-079 真机冒烟 MANUAL（兜底 TC-077）；②→TC-078 冻结面四项断言 + git 归组 + 既有套件全绿回归；v0.6 新增，TASK-009。**v0.7 注：使命结束（历史条款，不再产生新判定项）——本条约束由 FR-AUI-07 切换与退役语义取代** |
+| FR-AUI-02 | 路线 B 单实现（v0.7 修订；历史：路线 A/B 双切片） | P0（切换批次） | TC-098, TC-099, TC-100, TC-101（历史阶段①：TC-080~TC-086） | 自动 | ✅ 已覆盖·可自动判定（①→TC-098 路线 A 淘汰 + 路线 B 单实现（#D-06 关闭）；②→TC-099 part 化映射消费端契约（#D-06 制度化核心）；③→TC-100 传输真实性（注入点低于 PiBridge）；④→TC-101 XSS 真实渲染 DOM 断言（自动升格）；v0.7 新增） |
+| FR-AUI-03 | golden fixture 回放数据源（切换批次验收依据） | P0（切换批次）；②为 P1（切换批次） | TC-102, TC-103, TC-104, TC-112（历史阶段①：TC-085~TC-088） | 自动 | ✅ 已覆盖·可自动判定（①→TC-102 golden-prompt-basic 端到端真实 runtime DOM 断言（消息数 = 2 逐行推导）；②（P1 尽力）→TC-103 golden-steer-followup（消息数 = 6，乱序序列不丢不错换）；③方法约束→TC-104（无人值守/可重复/离线）；④→TC-112 双面板一致快照；v0.7 新增） |
+| FR-AUI-04 | 主题映射验证（--vscode-* 变量） | P0（切换批次） | TC-113, TC-114（历史阶段①：TC-089, TC-090） | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（①②→TC-113 主题审计平移至默认面板（token 链/浅深联动/WCAG ≥4.5:1）；③→TC-114 浅/深截图 UI 手工 checklist（证据类型 = 截图，兜底 TC-113）；v0.7 载体平移新增，验收标准不变） |
+| FR-AUI-05 | 风险门禁判定证据（v0.7 修订：预算新口径） | P0（切换批次） | TC-105, TC-106, TC-107, TC-108（历史阶段①：TC-091~TC-095） | 自动 + 真机 MANUAL | ✅ 已覆盖·可自动判定（①→TC-105 版本锁定 JSON 断言（修订清单：删 ai/ai-sdk + 增 react-markdown 链）+ 升级评估留痕；②→TC-106 CSP 指令集 + 回放运行时证据 + jitless 前置 + TC-108 真机零 violation MANUAL；③→TC-107 字节级预算（默认面板 ≤4,194,304 / 宿主增量 ≤1,048,576（v0.1.7 基线）/ Shiki 不进产物 / 经典面板依赖图无 React·assistant-ui）；④→TC-108 注册断言自动面 + 隐藏再显示 MANUAL；v0.7 新增） |
+| FR-AUI-06 | 双切片对比报告（阶段①交付物） | P0（阶段①，已完结） | TC-096 | 自动 | ✅ 已覆盖·可自动判定（①②③→TC-096 报告结构断言：四维各成节 / 量化维度附命令+输出 / 时延 ≥5 次取中位 / 侵入面三组归类含默认面板冻结文件=空 / 结论中立零预设表述 / 升级评估留痕；v0.6 新增。**v0.7 注：使命结束（历史条款）——本批次不再双切片对比，路线结论 = 路线 B 主线、路线 A 淘汰（#D-06）** |
+| FR-AUI-07 | 切换与旧面板退役（v0.7 新增） | P0（切换批次） | TC-109, TC-110, TC-111, TC-112 | 自动 + 真机 MANUAL | ✅ 已覆盖·可自动判定（①→TC-109 切默认（viewType `sdysyhj.chatView` 沿用 + openChat 接线）；②→TC-110 「实验/Lab」命名清零 + #19(b) 定名断言；③→TC-111 双面板可切换 + 行为冻结（MANUAL 冒烟）+ TC-112 一致快照；④→TC-109 契约零变更（9 命令 5 配置逐项不变）；v0.7 新增） |
+| FR-AUI-08 | 功能等价口径（判定载体平移，v0.7 新增） | P0（切换批次） | TC-115~TC-136 | 自动 + UI 补充 | ✅ 已覆盖·可自动判定（①③→全部等价域 TC 在新 UI 载体逐条执行 + 既有套件重指向（TC-136）+ golden 回放（TC-102/103）+ 双面板快照（TC-112）兜底；②→FR-CHAT-11 五款（TC-126/127）与 FR-CHAT-10 五子条（TC-124）逐款判定 + 各能力等价 TC（TC-115~TC-135）；④→P2 二期口径不变（TC-136(2)）；v0.7 新增） |
+| §8 第 7 条 | TASK-009 阶段①出口门禁（历史自检行，已完结） | P0（阶段①，复合） | TC-097 | 自动（组合判定） | ✅ 已覆盖·可自动判定（FR-AUI 全部 P0（阶段①）子条自动 TC 全 PASS + MANUAL 项四值处理与兜底全 PASS + 对比报告交付（TC-096）+ 默认面板零变更回归（TC-078）；P1 项 TC-087 尽力不计门禁（澄清 #18）；v0.6 新增。v0.7 注：阶段①已闭环，本行不再产生新判定） |
+| §8 第 7 条 | TASK-009 **切换批次**出口门禁（v0.7 新增） | P0（切换批次，复合） | TC-137 | 自动（组合判定） | ✅ 已覆盖·可自动判定（① P0（切换批次）子条逐条（TC-098~TC-114）+ ② 功能等价逐条（TC-115~TC-136，含 FR-CHAT-11 五款/FR-CHAT-10 五子条逐款）+ ③ 双面板切换与一致快照（TC-111/112）+ ④ 契约零变更与命名清零（TC-109/110）+ ⑤ 既有套件回归与 MVP 门禁新 UI 载体复验；P1 项 TC-103 尽力不计门禁；v0.7 新增） |
 
-**FR 计数核对**：CHAT 11 + SESS 7 + FILE 3 + MOD 4 + CMD 5 = **30/30 全部映射**（v0.3 新增 FR-CHAT-09；v0.4 新增 FR-CHAT-10、FR-MOD-04，FR-CMD-03 由 P2 转正 P1；v0.5 新增 FR-CHAT-11）。P0 = 17 条（全部可自动判定）；P1 = 11 条（全部有自动 TC）；P2 = 2 条（整条延后，均显式列出）。另：TASK-009 阶段①新增 FR-AUI-01~06 = **6/6 全部映射**（v0.6；含 §8-7 门禁自检行 TC-097）——P0（阶段①）子条全部具备自动判定 TC（DOM 行为层/真机层 6 项 MANUAL 均有自动兜底），P1（阶段①）1 项（FR-AUI-03②，TC-087 尽力）；阶段①优先级不入 §8-5 MVP P0 门禁（澄清 #18），入 §8-7 阶段①出口门禁。
+**FR 计数核对**：CHAT 11 + SESS 7 + FILE 3 + MOD 4 + CMD 5 = **30/30 全部映射**（v0.3 新增 FR-CHAT-09；v0.4 新增 FR-CHAT-10、FR-MOD-04，FR-CMD-03 由 P2 转正 P1；v0.5 新增 FR-CHAT-11）。P0 = 17 条（全部可自动判定）；P1 = 11 条（全部有自动 TC）；P2 = 2 条（整条延后，均显式列出）。另：TASK-009 阶段①新增 FR-AUI-01~06 = **6/6 全部映射**（v0.6；含 §8-7 门禁自检行 TC-097）——P0（阶段①）子条全部具备自动判定 TC（DOM 行为层/真机层 6 项 MANUAL 均有自动兜底），P1（阶段①）1 项（FR-AUI-03②，TC-087 尽力）；阶段①优先级不入 §8-5 MVP P0 门禁（澄清 #18），入 §8-7 阶段①出口门禁。**v0.7 追加**：TASK-009 切换批次新增 FR-AUI-07/08 = **2/2 全部映射**（TC-109~TC-112 / TC-115~TC-136）；FR-AUI-02/03/04/05 修订版映射 TC-098~TC-108、TC-113/TC-114；FR-AUI 合计 8 条（FR 全集 38 = MVP 30 + TASK-009 8）。等价域 TC-115~TC-136 覆盖 §4.1–4.5 全部 FR 的新 UI 载体判定（逐能力 TC 见矩阵各行；宿主侧/命令面板层 6 条 FR 由复合 TC-136 逐场景承载），P2 两项二期口径不变（FR-AUI-08④）；切换批次出口门禁 = TC-137（§2.1 新增行）。
 
 ### 2.2 非功能需求（NFR 补充矩阵）
 
@@ -1107,6 +1563,8 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 9. **遗留**：11 项需求歧义/缺漏（§3）此前已上报总调度，未自行脑补实现；其中第 1-10 项已由基线 v0.2.1 §12 #1-#10 裁决（既有 TC-001~TC-046 对应断言的收紧不属本次改动范围），第 11 项为备忘性处理（自动兜底 + UI checklist）。本次新增 TC-047~TC-052 未发现新歧义：FR-CHAT-09 验收口径（40px 阈值、每轮流式开始重置、瞬时状态不持久化、idle 例外）均可判定，无上报项。v0.4 新增 TC-053~TC-061 亦未发现阻塞歧义；唯一用例侧判定口径（FR-MOD-04③ token 数值允许千分位/k 缩写并存，k 缩写精度需求未定义——TC-060 以解析容差 ≤1% 判定）已在 TC-060 章节引言披露，如需固化精度请总调度裁决。v0.5 新增 TC-062~TC-076 未发现阻塞歧义，三处用例侧口径披露见 FR-CHAT-11 章节引言（TC-067 两条回声相对次序不判定 / TC-066 不依赖 queue_update 与回声先后次序 / 设计 D2.2 多通道不可判定保守分支与澄清 #16 的张力——已由总调度裁决为澄清 #17（需求基线 v0.5.1 §12），判定用例 TC-076）。
 10. **缺陷回归锚点**：TASK-005 §1 #D-04（FR-CHAT-04 工具卡状态恒“进行中”，P1）由 TC-052 以实现无关时序契约回归判定（工具执行结果晚于携带工具卡的助手消息到达 → 直播路径状态收敛“成功/失败”）；#D-04 修复后的重新核验以 TC-052 PASS 为判定项之一。TASK-008 用户消息重复气泡缺陷（通道 A 批次三条目①，FR-CHAT-11）回归锚点 = TC-062（基本单条三判定时点）/ TC-063（同文本不合并）/ TC-069/TC-070（重放不重复），缺陷修复后的重新核验以之为判定项。
 11. **阶段①出口门禁自检（v0.6，需求 §8 第 7 条 + 澄清 #18）**：§4.6 FR-AUI-01~06 全部「P0（阶段①）」子条均有逐条可判定的自动 TC（见第 2 条）；6 项真机 MANUAL（TC-079/082/084/090/093/095）均有自动兜底且四值处理不计 FAIL；双切片对比报告交付判定 = TC-096；默认面板零变更与既有 MVP 门禁回归 = TC-078；门禁汇总判定 = TC-097（§2.1 矩阵含「§8 第 7 条·阶段①出口门禁」自检行）；阶段①优先级不入 §8-5 MVP 门禁。
+12. **切换批次出口门禁自检（v0.7，需求 §8 第 7 条切换批次口径）**：① §4.6 全部「P0（切换批次）」子条（FR-AUI-02①②③④/03①③④/04①②/05①②③④/07①②③④/08）均有逐条可判定的自动 TC（TC-098~TC-113，判定面 = 消费端真实 runtime DOM 断言 + 静态结构/字节级断言，期望值可推导：golden 消息数 2/6、hljs 语言数 36、预算 4,194,304/1,048,576/459,382 字节）；② 功能等价 = §4.1–4.5 全部 FR 在新 UI 载体逐条可判定（逐能力 TC-115~TC-135 + 复合 TC-136 逐场景，FR-CHAT-11 五款（TC-126/127）与 FR-CHAT-10 五子条（TC-124）逐款）；③ 双面板切换与一致快照 = TC-111/TC-112；④ 契约零变更与命名清零 = TC-109/TC-110；⑤ MANUAL 4 项（TC-108/111/114/125）均有自动兜底且四值处理不计 FAIL；⑥ 门禁汇总判定 = TC-137；P1 项 FR-AUI-03②（TC-103）尽力不计门禁（澄清 #18 同构）。
+13. **#D-06 制度化落地核对（v0.7）**：消费端契约 TC（TC-099/102/103/112/115~127）全部以**真实 ExternalStoreRuntime + 组件消费后的 DOM 断言**为门禁面（共用约定「禁 store 层驱动绕开」显式标注），期望源 = `fromThreadMessageLike` 随包源码 throw/丢弃语义（行号锚定）+ golden fixture，不以我方 mock/映射实现为期望源（规范 §5.6）；外部行为锚点三源齐全（需求 FR + 设计 §10.14/§6 + §11 #19–#23 外部权威）。
 
 ---
 
@@ -1126,6 +1584,7 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 | 10 | FR-MOD-02 | thinking 等级枚举值未定义（§7 显示 "high"） | TC-028 仅断言"可切换+持久"，不断言具体枚举 | 基线补充枚举取值 |
 | 11 | FR-CHAT-05/SESS-02 等 | "点击 Stop/点击"类手势与自动化边界 | 一律给自动兜底（命令/事件/状态断言）+ UI checklist 项 | 无需修改需求，仅备忘核验时 UI 项凭证据判定 |
 | 12 | FR-AUI-05③ / FR-AUI-06③（v0.6） | 宿主 bundle 增量与代码侵入面的「基线」未钉死唯一锚点：设计 §10.13 D7③ 表述为「阶段①实现前的发版标签/提交」——候选 = 阶段①前最后发版标签（v0.1.6）或审批点 1b 提交（`6738d13`），两者 diff 面不同，直接影响字节增量与 `git diff --stat` 数值；另「共享文件增量」中 `docs/technical-design.md`（交付期追溯表+报告）是否计入侵入面统计未明示 | TC-078/TC-094/TC-096 缺省取「阶段①实现前最后发版标签」为基线（与 D6「基线 = 干净检出基线提交的构建产物」口径一致），侵入面统计默认含全部 git 变更文件（按三组归类各归其组，文档与代码不区分） | 总调度裁决钉死唯一基线锚点（建议 = 最后发版标签）与文档类文件是否计入统计；裁决后核验剧本同步 → **已裁决（2026-11-21，审批点 2，总调度）**：① 度量基线一律 = **v0.1.6 发版标签（tag `v0.1.6`，commit `e9fc9d8`）**——阶段①下一版为 0.1.7，相对最后发版的增量才是发版将携带的真实增量，且标签是唯一不可变锚点；② 侵入面「三组归类」**不含 `docs/**`**——technical-design.md 追溯表/对比报告属文档留痕，另列第四「文档留痕（信息组，不计侵入面）」呈现。TC-094/TC-096 已按裁决钉死措辞，核验剧本同步 |
+| 13 | FR-AUI-05③（v0.7） | 宿主 bundle 增量的「基线 = v0.1.7 构建产物 dist/extension.js（实测 459,382 字节）」的**执行口径**未明示产物来源（发版标签检出重建 vs 交付保存产物）；与 §3 第 12 条同构问题（基线锚点唯一性） | TC-107 缺省取 **tag `v0.1.7` 检出同命令构建产物**为基线（与第 12 条裁决同构：以发版标签构建产物为锚），实测值 459,382 字节作校验参考（偏差 >±10% 须留痕说明） | 请总调度确认执行口径（建议同第 12 条：发版标签检出重建）；裁决后核验剧本同步 |
 
 ---
 
@@ -1140,6 +1599,7 @@ mock stub 共同约定：将收到的每条请求（RPC 方法名 + 参数摘要
 | 2026-11-21 | v0.5 | TASK-008 追加（依据三源：需求基线 v0.5 + 设计基线冻结快照 7f4e586 + 其 §11 外部契约清单登记的 pi 1.5.2 随附权威文档；盲写）：① 新增 FR-CHAT-11「用户消息单次展示」（P0）用例 TC-062~TC-075——TC-062/TC-063 判验收标准①（三判定时点恰一条、发送即时不等待回声 / 同文本多次独立发送不跨发送合并，期望值 N 次发送 → N 条 user + N 条 assistant 附推导）、TC-064 golden 回放兜底；TC-065/TC-066/TC-067 判②（steer 轮间注入回声单条 / follow_up 停后注入 + steer·follow_up 混合乱序回声不错换 / abort 后队列保留·迟到回声不污染新发送）、TC-068 golden 兜底；TC-069/TC-070 判③（面板重开 / 会话切换历史重放单条且与会话 JSONL 一致，澄清 #5）；TC-071/TC-072/TC-073 判④（澄清 #16 pi 权威文本单条就地更新 / success:false 受理前拒绝路径 / disposition=handled 无回声路径——均单条且不污染后续关联）；TC-074 判⑤回归边界（assistant 流式/thinking/工具卡不受影响）；TC-075 观感 UI 手工 checklist（由 TC-062~TC-074 自动兜底）；② §0.3 增补 MOCK-ECHO-REWRITE / MOCK-QUEUE-MIX / MOCK-REJECT / MOCK-HANDLED 四行 + v0.5 mock 对齐增补（一切运行链路剧本按 json.md L30–46 补发 user 回声，外部期望源 = 权威文档而非我方 mock）+ golden 回放场景（GOLDEN-BASIC / GOLDEN-MIX，设计 §10.12 D8）说明；③ §2 矩阵更新为 30/30（新增 FR-CHAT-11 行，P0 计 16→17）并同步自检结论（含三处用例侧口径披露）；④ 头部依据声明升级为三源口径（规范第一部分 §5 第 7 条）、盲写声明与写权限声明更新，版本号递增。 |
 | 2026-11-21 | v0.5.1 | 审批点 2 第一轮退回补遗（总调度裁决：澄清 #17 落档需求基线 v0.5.1 §12）：① 新增 TC-076（FR-CHAT-11①④ 不可关联回声·多通道不可判定保守分支——判据依 #17 原文与设计基线 §10.12 D2.2：各条目恒 1 条、文本不错换、不新增 + 权威重建后收敛会话 JSONL；§0.3 MOCK-QUEUE-MIX 增不可关联回声分支）；② FR-CHAT-11 章节口径披露③ 更新为指向已裁决的 #17；③ 头部依据声明 TC 区间 TC-062~TC-075 → TC-062~TC-076、§2 矩阵与自检结论同步（含 TC-075 兜底集合补 TC-076）；④ 版本号 v0.5 → v0.5.1。其余内容零改动。 |
 | 2026-11-21 | v0.6 | TASK-009 阶段①追加（依据三源：需求基线 v0.6 §4.6/澄清 #12/#18/§8-7 + 设计基线冻结快照 `42f5e86`（§10.13 D1–D9/§6/§11 #11–#18）+ @assistant-ui 生态外部权威（npm README/tarball src/官方指南/react 官方文档/theme-defaults）+ golden fixture 文件本体；盲写，实现并行中互不可见）：① 新增「FR-AUI 实验面板共用约定」节（观察契约：判定面 = 通道+数据层、回放注入点低于适配层防自证、MANUAL 四值、阶段①不做项护栏；三处口径披露）；② 新增 FR-AUI-01~06 六节用例 TC-077~TC-096——TC-077（①③注册结构断言，含 retainContextWhenHidden 注册层）/TC-078（②零变更冻结面四项 + git 归组 + 既有套件全绿）/TC-079（真机冒烟 MANUAL）；TC-080（④传输真实性：aui-vscode 通道帧观测）/TC-081（⑤XSS 自动兜底：通道文本保真 + 消毒 API 禁令扫描）/TC-082（⑤DOM 层 MANUAL）/TC-083（⑥双切片共存自动面）/TC-084（⑥切换冒烟 MANUAL）；TC-085/TC-086（03①双切片 golden-prompt-basic 回放，期望消息数 = 2 = user 1 + assistant 1，文本 = fixture message_end 权威文本，逐行推导）/TC-087（03② P1 golden-steer-followup 双切片，消息数 = 6，乱序回声序列完整）/TC-088（03③方法约束：无人值守/可重复/离线）；TC-089（04①②主题审计静态解析层：token 链/WCAG 公式 ≥4.5:1）/TC-090（04③浅深截图 MANUAL）；TC-091（05①版本锁定 JSON 断言）/TC-092（05②CSP 指令集 + 回放运行时证据 + jitless 前置）/TC-093（05②真机零 violation MANUAL）/TC-094（05③字节级预算 3,145,728/1,048,576 + 默认依赖图）/TC-095（05④隐藏再显示 MANUAL，兜底 TC-077(d)）；TC-096（06 报告结构断言：四维各成节/命令+输出/≥5 次中位/三组归类/结论中立/升级评估留痕）；③ 新增 TC-097（§8 第 7 条阶段①出口门禁组合判定）；④ §0.3 增 LAB-XSS 行 + golden fixture 落位 v0.6 注；⑤ §2 矩阵增 FR-AUI 六行 + 「§8 第 7 条」门禁自检行，计数 30+6=36，自检结论同步（第 1/2/3/6/7/8 条更新 + 新增第 11 条阶段①门禁自检）；⑥ §3 新增第 12 条上报（基线提交锚点未钉死）；⑦ 头部依据/盲写声明更新（设计快照双版本 7f4e586/42f5e86 分段；golden fixture 例外披露），版本号 v0.5.1 → v0.6；⑧ 审批点 2 预受理裁决落档（2026-11-21，总调度）：度量基线锚点一律 = v0.1.6 发版标签（tag `v0.1.6`，commit `e9fc9d8`）、侵入面三组归类不含 `docs/**`（docs 变更另列第四「文档留痕（信息组，不计侵入面）」组）——§3 第 12 条补裁决结论，TC-094/TC-096 按裁决钉死措辞，共用口径披露③ 同步。 |
+| 2026-11-22 | v0.7 | TASK-009 切换批次追加（依据三源：需求基线 v0.7（§4 判定载体注记 + §4.6 FR-AUI-02/03/04/05/07/08 修订版与新增 + §5 切换批次不做项 + §8-7 切换批次出口门禁 + 澄清 #5/#12/#16/#17/#18/#19）+ 设计基线冻结快照 `fab4190`（§10.14 D1–D10 / §6 新 UI 消费端契约行 / §11 #19–#23）+ 切换批次外部锚点（`@assistant-ui/core@0.3.37` `thread-message-like.js` 随包源码（#D-06 消费端锚点，行号锚定）/ `@assistant-ui/react-markdown@0.14.26` 导出面 / react-markdown 10.1.0 + remark-gfm/remark-breaks / highlight.js 11.12.0 `lib/common` 36 语言清单 / pi 1.5.2 随附 docs / golden fixture 本体逐行推导）；盲写，实现并行中互不可见）：① 新增「FR-AUI 切换批次共用约定」节（消费端契约判定面 = 真实 ExternalStoreRuntime + 组件 DOM 断言、**禁 store 层驱动绕开**（#D-06 制度化）、消费端锚点行号、回放注入点、等价判定口径、MANUAL 四值与兜底映射、四条口径披露）；② 新增 FR-AUI-02/03/05/07/04（载体平移）修订用例 TC-098~TC-114——TC-098（①路线 A 淘汰 + 路线 B 单实现）/TC-099（②part 化映射消费端契约（#D-06 制度化核心：L47 status throw / L57·L62 空文本丢弃 / L76–95 tool-call 保真 / L112 metadata.custom 透传 / L131–134 user part throw））/TC-100（③传输真实性）/TC-101（④XSS 真实渲染 DOM 断言，自动升格）；TC-102（03①golden-prompt-basic 端到端真实 runtime DOM 断言，消息数 = 2 逐行推导）/TC-103（03② P1 golden-steer-followup，消息数 = 6，乱序不丢不错换）/TC-104（03③方法约束）；TC-105（05①版本锁定修订清单（删 ai/ai-sdk + 增 react-markdown 链）+ 升级评估留痕）/TC-106（05②CSP + 回放运行时证据 + jitless 前置）/TC-107（05③预算 v0.7 口径：默认面板 ≤4,194,304 B / 宿主增量 ≤1,048,576 B（v0.1.7 基线 459,382 B）/ Shiki 不进产物 / 经典面板依赖图无 React）/TC-108（05④retainContextWhenHidden 注册断言 + 真机层 MANUAL）；TC-109（07①④切默认 + 契约零变更：9 命令 5 配置逐项）/TC-110（07②「实验/Lab」命名清零 + #19(b) 定名）/TC-111（07③双面板可切换 + 行为冻结）/TC-112（03④+07③双面板一致快照）；TC-113/TC-114（04①②③主题审计/截图载体平移）；③ 新增 FR-AUI-08 等价域用例 TC-115~TC-136（逐能力：FR-CHAT-01 流式 TC-115 / 02 Markdown+高亮（36 语言集 + 集外回退转义）TC-116 / 03 thinking 折叠 TC-117 / 04 工具卡全要素 TC-118 / 05 中止 TC-119 / 06 steer·followUp TC-120 / 07 错误（含 #14 边界）TC-121 / 08 状态 TC-122 / 09 跟随四款 TC-123 / 10 视觉五子条 TC-124（#19(a) 口径）+ 真机观感 MANUAL TC-125 / 11 单气泡五款 TC-126/TC-127（含 #16 就地更新/#17 保守分支）/ FR-FILE-02 TC-128 / FR-CMD-03 TC-129 / FR-MOD-01③·03·04 TC-130/TC-131 / FR-SESS 系 TC-132~TC-135 / 宿主侧复合重指向 TC-136）；④ 新增 TC-137（§8-7 切换批次出口门禁组合判定）；⑤ §0.3 增切换批次数据源注（LAB-XSS→UI-XSS 改名、等价域 MOCK 复用、golden 期望推导）；⑥ §2.1 矩阵：标题改 38 条 FR 全集、§4.x 各行增等价域 TC、FR-AUI-01/06 标历史使命结束、FR-AUI-02/03/04/05 行修订、新增 FR-AUI-07/08 行与「§8-7 切换批次出口门禁」行、FR 计数核对同步；⑦ §2.3 新增第 12/13 条（切换批次门禁自检 + #D-06 制度化落地核对）；⑧ §3 新增第 13 条上报（FR-AUI-05③ 宿主增量基线执行口径——缺省取 tag `v0.1.7` 检出构建，待裁决确认）；⑨ 头部依据/盲写声明更新（冻结快照 `fab4190` 分段、node_modules 契约面读取披露：「盲实现、不盲契约」），版本号 v0.6 → v0.7。既有 TC-001~TC-097 零改动（TC-097 保留为阶段①历史门禁）。 |
 
 ---
 
