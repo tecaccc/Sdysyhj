@@ -20,6 +20,7 @@
 | R-12 | dismissed | 已复核闭环（2026-11-24 总调度 MCP github 补记：list_pull_requests state=all 全历史 **0 PR**、待合队列空——无一例社区合入，直线历史纯流水线产物，平台侧与本地证据互证；下轮起 D 维度以 MCP 为首要通道，本地 git log 降级预案保留） | 直线历史使本地无法区分 PR 合入与流水线提交；待合 PR 队列不可见（近 24h 零合入已本地可证，无阻塞） |
 | R-13 | open | 待裁决(P2 建议走 GitHub Issue type:feature 备忘;升级立项时作强制输入) | assistant-ui 漂移:react 0.15.37→0.15.38、vscode 0.0.1→0.0.2——后者 patch 位携带 peer 面结构变化(+tap ^0.9.27/+store ^0.3.25 必装,core ^0.3.35→^0.3.38,当前 lock tap 0.9.26/store 0.3.24/core 0.3.37 三包联动);升级窗口=#D-06+R-08 复合风险,须重跑消费端真实 runtime 验证(报告 report-2026-11-25 §6) |
 | R-14 | open | 待裁决(P2,建议与 R-13 升级裁决同批处置;GitHub Issue type:feature 备忘) | R-05 修复批次与 assistant-ui 升级批次时序耦合:批次规划无「依赖升级致性能/行为基线漂移」排序义务——tarball 级实证 react 0.15.38 本体对本仓零运行时影响(esbuild.mjs:48 define 决定性证据)、vscode 0.0.2 dist 字节级一致(纯依赖契约版),真实变更全在强制传递四包 ~111 文件(store 0.3.25 视口滚动跟随/core 0.3.38 external-store 快照簿记恰在 R-05 流式路径上,core 改动文件与 R-05 候选修复面同文件同域);修复中途升级=验收归因污染+#D-06 同构风险放大(报告 report-2026-11-25b §1.4/§5) |
+| R-15 | open | 待裁决(P2 建议走 GitHub Issue type:feature 备忘;发版/升级窗口强制输入) | pi RPC 对端版本契约单向无界:PATH 侧任意 ≥0.84.0 版本直接进入运行时(auto 探测 PATH 优先,bundled 1.5.2 仅兜底),无上限无已验版本清单;验证栈零真实 pi 联跑(golden=冻结 fixture+单测 fake-pi-cli+集成零真实 spawn);对端已两步 minor 漂移(lock 1.5.2 锁于 11-22 时 1.6.0 已存在两天,1.6.1 发布于 11-25 13:41 零通道感知);未知事件类型有 default 日志容错但已知事件语义漂移零防护——#D-06 同类 pi 侧暴露面(报告 report-2026-11-26 §4) |
 
 （R-10、R-11 未启用——C/D 两维度为零发现/零对象，按证据纪律如实记零于报告 §3/§4，不占用编号制造空条目。）
 
@@ -34,6 +35,7 @@
 | P-05 | proposed | 待裁决（用例规范 §5 + 审批点 2 审查项修订） | 第三方 UI 组件「交互消费面」验证义务：UI 批次须指派阅读所引入组件的 .d.ts/默认行为，登记焦点/快捷键/滚动控制权三类清单；golden DOM 测试须含焦点与键盘路径断言（不止渲染断言） | 第三方默认行为无声接管类（§3.3；#D-06 制度化的交互面残余，R-08） | 下一次 UI 批次的 test-cases 含焦点/键盘断言组，且技术设计含组件默认行为登记节 |
 | P-06 | proposed | 待裁决(用例规范或 golden README 覆盖表修订;R-06 去向由「并入 P-01」改挂本条——fixture 类别是常态回归资产,与迁移对比条款不同物) | golden fixture 剧本类别清单制度化:①时序交织类(落盘×watcher×markSynced,回放层现零文件系统面须扩展或走端到端)②会话生命周期类(new/switch/resume)③异常路径类(允许人工构造 synthetic trace,封录制健全性门的制度性豁口)④多轮/中止类;相关批次须声明覆盖或豁免留痕 | R-06 全类(时序/竞态/重启语义,#D-01/#D-02 复发)+ #D-03 类错误通道;G1 证明现有 golden 制度对该类覆盖为零(报告 report-2026-11-25 §1 D①) | 类别清单入规范/README;test/fixtures/golden/ 新增 ≥1 个时序类剧本且回放通道可运行;下轮按 §7 提案闭环回验 |
 | P-07 | proposed | 待裁决(DevelopmentGuidelines 批次规划/升级剧本修订) | 依赖升级批次传递 delta 审查义务+批次排序声明:①凡 direct 依赖跳版(含 patch 位)须附 lockfile 强制联动传递包 tarball 级 delta 清单(文件级+行为级+本仓消费面直击标注,范本=report-2026-11-25b §1.3);②性能/行为修复批次与依赖升级批次显式排序声明,禁同批混行 | patch 位掩盖联动面类(R-13 实证:react/vscode 双本体近 no-op 而传递四包 ~111 文件;现有 ui-versions 门禁只校验 direct 依赖精确版本,传递 delta 零审查)+修复验收基线漂移类(R-14) | 下一次依赖升级批次任务单含「传递 delta」节与「批次排序」声明;本循环下轮按 §7 提案闭环回验 |
+| P-08 | proposed | 待裁决(DevelopmentGuidelines 发版检查单/升级剧本修订) | 运行时对端(非 lockfile 支配面)漂移监视+真实联跑冒烟义务:①发版前对端版本域核对(lock vs registry 最新含发布时间,minor/major 跳变须核对 release notes 事件协议/字段变更面留痕);②至少一条真实 pi 端到端冒烟(非 fixture 回放/非 fake-pi-cli,覆盖 MIN_SUPPORTED 与 registry 最新各一);③MIN_SUPPORTED_PI_VERSION 调整附对端变更依据;与 P-07 分工=P-07 管 lockfile 升级传递 delta(pi 为 direct 依赖已含),本条管 PATH 侧用户面对端+验证栈真实联跑缺口 | 对端契约漂移静默穿透类(#D-06 同构 pi 侧预防位;R-15 实证:lock 锁定晚于对端 minor 发布两天零感知+1.6.1 新漂移零通道+三验证通道零真实联跑) | 发版检查单/CI 含「对端版本核对」与「真实 pi 冒烟 ≥1 场景」步骤;本循环下轮按 §7 提案闭环回验 |
 
 ## 状态说明
 
@@ -51,3 +53,10 @@
 - 新增 R-14(open)、P-07(proposed);R-10/R-11 编号继续保留未占用。
 - open 项跟踪(新证据,不重查不重报):R-01 四组重复键仍在(package.json mtime 未动);R-04 序列仍止于 #D-06(grep 计数自增系第 2 轮报告自身引用所致自指污染,已在报告注明;下轮统计域排除 docs/review/);R-05 修复批次仍未立项(报告 §1.4 三条约束为其立项新增输入);R-13 获 tarball 级补深:react 0.15.38 本体 5 文件近 no-op、vscode 0.0.2 dist 字节级一致(纯依赖契约版),联动面修正为四包(core/store/tap/assistant-stream ~111 文件)且 react/vscode 双路径均强制,本仓消费面直击三处(external-store runtime/契约锚点 thread-message-like/视口自动滚动)。
 - 第 4 轮入口:先读本表 → R-14/P-07 与 R-13 裁决状态 → R-05 修复批次立项后的真机剖析与传递 delta 节回验(P-07 若采纳)→ report-2026-11-25b §6 未查清单。
+
+### 第 4 轮追加(2026-11-26,报告 docs/review/report-2026-11-26.md;本节为纯追加,上文各轮原文未改动)
+
+- 新增 R-15(open)、P-08(proposed);R-10/R-11 编号继续保留未占用。
+- open 项跟踪(新证据,不重查不重报):R-01 四组重复键仍在(package.json mtime 未动);R-04 序列仍止于 #D-06,修正口径(统计域排除 docs/review/)稳定基线首立:#D-04×77/#D-01×64/#D-02×58/#D-06×50/#D-03×46/#D-05×4,下轮直接比对;R-05 修复批次仍未立项(新立项输入=激活路径组件实测 0.27-0.29s×2 串行下限 ≈0.56s + accumulator 不在消费路径佐证升级无隐性收益);R-13/R-14 裁决未落,新证据=core 0.3.38 其余 41 文件定性(本仓零消费 grep 实证+四包联动 core manifest 自证)+useAui 指引(v0-15)无重载移除时间线声明+assistant-stream accumulator 代码级否定在本仓路径(上轮 §1.4 约束 3 待定性→否定);npm 六包最新版与上轮相同,漂移面无扩大。
+- 上轮 §6 未查清单五项全处置(①升级立项回验无对象记零);npm audit 0 漏洞(首例);直接依赖漂移首例全量普查(pi 1.5.2→1.6.1 为唯一发现级,→R-15)。
+- 第 5 轮入口:先读本表 → R-15/P-08 与 R-13/R-14 裁决状态 → R-05 修复批次立项后的真机剖析(组件下限已立)→ report-2026-11-26 §5 未查清单(首位=R-15 对端漂移监视比对,次位=pi 1.5.2→1.6.1 delta 剖析若裁决需要)。
