@@ -10,7 +10,8 @@
 // 断言面：消息条数 = fixture user+assistant 逐行推导值（澄清 #12）、文本逐条一致、
 // FR-CHAT-11 user 气泡三判定时点恒单条（TASK-008 §10.12 口径：乐观即时展示 + 回声就地更新
 // + 终稿后仍恰一条）、时间戳 HH:mm（FR-CHAT-10⑤）、工具卡与 thinking 折叠（fake-pi TOOL
-// 剧本，FR-CHAT-03/04）。
+// 剧本，FR-CHAT-03/04）；时序交织类①（TASK-011 批次 D / Issue #7 R-06 / P-06）：golden-timing-interleave
+// 回放（回放层 fs 面 + 真实 SessionFileWatcher）→ 外部修改横幅出现/消失/零复发（FR-SESS-07）。
 
 // @vitest-environment jsdom
 
@@ -19,12 +20,13 @@ import * as os from "os";
 import * as path from "path";
 import { execFileSync } from "node:child_process";
 import { beforeAll, beforeEach, afterEach, describe, expect, it } from "vitest";
-import { PiBridge, type PiRpcClient } from "../../src/bridge/piBridge";
+import { PiBridge, type PiRpcClient, type SessionWatcherLike } from "../../src/bridge/piBridge";
 import { RpcClient } from "../../src/bridge/rpcClient";
 import { ChatPanel } from "../../src/panel/chatPanel";
 import type { HostToWebview } from "../../src/panel/messages";
 import { DEFAULT_CONFIG, type SdysyhjConfig } from "../../src/util/config";
 import { MemoryLogger } from "../../src/util/log";
+import { SessionFileWatcher } from "../../src/session/sessionStore";
 
 // jsdom 环境内 URL 构造器按 document base 解析、Node fileURLToPath 品牌检查不兼容——
 // 对 import.meta.url（file://）做字符串归一（含 Windows 盘符），fs 路径容忍 /../ 段。
@@ -39,6 +41,9 @@ const FAKE_CLI = path.join(HERE, "..", "helpers", "fake-pi-cli.js");
 const GOLDEN_DIR = path.join(HERE, "..", "fixtures", "golden");
 const PROMPT_BASIC_FIXTURE = path.join(GOLDEN_DIR, "golden-prompt-basic.jsonl");
 const STEER_FOLLOWUP_FIXTURE = path.join(GOLDEN_DIR, "golden-steer-followup.jsonl");
+const TIMING_INTERLEAVE_FIXTURE = path.join(GOLDEN_DIR, "golden-timing-interleave.jsonl");
+/** 时序交织剧本 get_state.sessionFile 占位符：测试物化替换为真实临时会话文件路径。 */
+const TIMING_SESSION_PLACEHOLDER = "GOLDEN-TIMING-SESSION-FILE";
 
 // 冻结 bundle 构建（仓库 esbuild.mjs 同参产出 media/main.js；jsdom 环境内 esbuild JS API
 // 因 realm 混用不可加载——经 node 子进程跑仓库构建脚本产出同一产物，入口零改动）。
@@ -107,7 +112,14 @@ interface ClassicPanelHarness {
 let workDir: string;
 let harness: ClassicPanelHarness | null = null;
 
-function mountClassicPanel(replay: string | undefined): ClassicPanelHarness {
+interface ClassicPanelOpts {
+  /** 追加注入子进程的环境变量（FAKE_PI_SESSION_FILE 等；FAKE_PI_REPLAY 始终由 replay 指定） */
+  env?: NodeJS.ProcessEnv;
+  /** 外部修改监视工厂（时序交织剧本注入真实 SessionFileWatcher 短轮询周期） */
+  createWatcher?: (onExternalChange: () => void) => SessionWatcherLike;
+}
+
+function mountClassicPanel(replay: string | undefined, opts: ClassicPanelOpts = {}): ClassicPanelHarness {
   const posted: HostToWebview[] = [];
   const sent: unknown[] = [];
   // 宿主 → webview：fake webview.postMessage → jsdom window MessageEvent（生产传输通道同构）
@@ -136,11 +148,12 @@ function mountClassicPanel(replay: string | undefined): ClassicPanelHarness {
         command,
         args,
         cwd,
-        env: replay ? { ...process.env, FAKE_PI_REPLAY: replay } : { ...process.env },
+        env: replay ? { ...process.env, ...opts.env, FAKE_PI_REPLAY: replay } : { ...process.env, ...opts.env },
       }) as unknown as PiRpcClient,
     logger: new MemoryLogger(),
     tailLines: 200,
     sendMode: "steer",
+    ...(opts.createWatcher ? { createWatcher: opts.createWatcher } : {}),
   });
   const panel = new ChatPanel(
     { extensionUri: { fsPath: workDir, path: workDir } } as never,
@@ -193,11 +206,24 @@ function mountClassicPanel(replay: string | undefined): ClassicPanelHarness {
   };
 }
 
-async function mountAndReady(replay: string | undefined): Promise<ClassicPanelHarness> {
-  harness = mountClassicPanel(replay);
+async function mountAndReady(replay: string | undefined, opts: ClassicPanelOpts = {}): Promise<ClassicPanelHarness> {
+  harness = mountClassicPanel(replay, opts);
   await harness.bridge.start();
   await waitFor(() => harness!.posted.some((m) => m.kind === "history_loaded"), 10000, "经典面板 ready");
   return harness;
+}
+
+/**
+ * 时序交织剧本物化（与 golden-replay.test.ts 同规则）：get_state.sessionFile 占位符替换为真实
+ * 临时会话文件路径（仅替换带引号的出现——fixture 头注释中占位符不带引号），与 FAKE_PI_SESSION_FILE
+ * 同一路径（回放层 fs 面落盘目标 = watcher 跟踪目标）。
+ */
+function materializeTimingFixture(sessionFile: string): string {
+  const raw = fs.readFileSync(TIMING_INTERLEAVE_FIXTURE, "utf8");
+  const materialized = raw.split(`"${TIMING_SESSION_PLACEHOLDER}"`).join(JSON.stringify(sessionFile));
+  const out = path.join(workDir, "golden-timing-interleave.materialized.jsonl");
+  fs.writeFileSync(out, materialized);
+  return out;
 }
 
 beforeEach(() => {
@@ -282,4 +308,79 @@ describe("FR-CHAT-03/04 工具卡与 thinking 折叠 E2E（经典面板，fake-p
     expect(thinking).not.toBeNull();
     expect(thinking!.open).toBe(false);
   }, 30000);
+});
+
+describe("golden-timing-interleave E2E DOM 回放（时序交织类①，TASK-011 批次 D / Issue #7 R-06 / P-06）", () => {
+  it(
+    "外部修改横幅出现 → 刷新消失 → 零复发；#D-01 窗口（entry_appended 落盘 × 轮询周期）全程无误报",
+    async () => {
+      // 剧本形状自检：prompt + 流式中途 steer（期望值自 fixture 逐行推导，防漂移）
+      const sends = fixtureSends(TIMING_INTERLEAVE_FIXTURE);
+      expect(sends.map((c) => c.type)).toEqual(["prompt", "steer"]);
+
+      // 既有会话（文件已存在）→ 启动即进入跟踪；回放层 fs 面落盘目标 = watcher 跟踪目标 = 同一临时文件
+      const sessionFile = path.join(workDir, "timing-interleave-session.jsonl");
+      fs.writeFileSync(
+        sessionFile,
+        JSON.stringify({ type: "session", version: 3, id: "timing-interleave", timestamp: "1970-01-01T00:00:00.000Z", cwd: workDir }) + "\n"
+      );
+      const replay = materializeTimingFixture(sessionFile);
+
+      const h = await mountAndReady(replay, {
+        env: { FAKE_PI_SESSION_FILE: sessionFile },
+        createWatcher: (cb) => new SessionFileWatcher({ intervalMs: 50, onExternalChange: cb }), // 真实 watcher，生产同检测语义
+      });
+
+      // 主 prompt：turn_start 边界 entry_appended 物理落盘 → 流式打开（乐观 user 气泡即时展示）
+      h.post({ kind: "prompt", text: String(sends[0].message), mode: "auto" });
+      await waitFor(() => document.querySelectorAll(".message-user").length === 1, 5000, "发送即时展示");
+
+      // #D-01 窗口重放：落盘已发生、流未结束，持有窗口 500ms（≥10 个轮询周期）——零误报、无横幅
+      await new Promise((r) => setTimeout(r, 500));
+      expect(h.posted.filter((m) => m.kind === "external_change")).toHaveLength(0);
+      expect(document.getElementById("external-change-banner")).toBeNull();
+
+      // 流式中途 steer（剧本在轮间边界投递：出队 + entry_appended + 回声 → 第二轮 → 终稿落盘）
+      h.post({ kind: "prompt", text: String(sends[1].message), mode: "steer" });
+      await waitFor(() => h.bridge.getRunState() === "idle", 10000, "golden timing settled");
+      expect(h.posted.filter((m) => m.kind === "external_change")).toHaveLength(0); // 全程误报为零
+
+      // 全量消息 = 2 user + 2 assistant（fixture 末条 get_messages 重建前：回声就地更新口径）
+      expect(document.querySelectorAll("#messages-col .message").length).toBe(4);
+
+      // 真实外部写入（无 entry_appended 伴随，模拟终端 pi 追加同一会话）→ 提示出现（FR-SESS-07）
+      fs.appendFileSync(
+        sessionFile,
+        JSON.stringify({
+          type: "message",
+          id: "e-external",
+          parentId: null,
+          timestamp: "1970-01-01T00:00:00.000Z",
+          message: { role: "user", content: "terminal pi", timestamp: 0 },
+        }) + "\n"
+      );
+      await waitFor(() => document.getElementById("external-change-banner") !== null, 5000, "外部修改横幅出现");
+      const banner = document.getElementById("external-change-banner")!;
+      expect(banner.textContent).toContain("插件之外被修改");
+
+      // 点击「刷新」→ 横幅消失 → refresh_session → reloadHistory（fixture 末条 get_messages）→ markSynced 重置基线
+      const refreshBtn = [...banner.querySelectorAll("button")].find((b) => b.textContent === "刷新")!;
+      refreshBtn.click();
+      await waitFor(() => document.getElementById("external-change-banner") === null, 5000, "外部修改横幅消失");
+      await waitFor(
+        () => [...document.querySelectorAll(".toast")].some((t) => t.textContent === "会话已刷新"),
+        5000,
+        "刷新确认 toast"
+      );
+
+      // 刷新后观察 ≥8 个轮询周期：零复发（markSynced 窗口时序——基线已重置，不重报）
+      await new Promise((r) => setTimeout(r, 400));
+      expect(document.getElementById("external-change-banner")).toBeNull();
+      expect(h.posted.filter((m) => m.kind === "external_change")).toHaveLength(1);
+
+      // 刷新后消息仍全量（fixture 末条 get_messages 权威重建）
+      expect(document.querySelectorAll("#messages-col .message").length).toBe(4);
+    },
+    30000
+  );
 });

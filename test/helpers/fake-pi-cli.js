@@ -12,6 +12,9 @@
 //     「Queue and state events」L121–122（queue_update 两字段含完整当前队列）。
 //   - 回放模式 FAKE_PI_REPLAY：按 golden fixture（test/fixtures/golden/*.jsonl，真实 pi 录制）
 //     逐命令回放响应与其后事件行，并对输入命令序列与录制一致性断言（无脚本分支、无时钟）。
+//     文件系统面（TASK-011 批次 D，G1 封堵）：FAKE_PI_SESSION_FILE 设置时，回放的 entry_appended
+//     事件行同步物理落盘（可注入 fs stub = 该环境变量指定路径），时序交织类剧本（#D-01：
+//     pi 落盘 × watcher 轮询 × markSynced 窗口）可在 golden 回放链路复现；未设置时与旧版一致。
 //   - UI-XSS 探针剧本（TASK-009 切换批次 D8 改名，原 LAB-XSS；FR-AUI-02④）：user 回声与 assistant 回复均携带
 //     <script>/<img onerror> 探针文本，事件形状与 runSimpleText 同构（对照 json.md「Event
 //     sequence」L30–46）；断言面 = jsdom 真实渲染下探针文本逐字保真且无新增 script 元素（D8 XSS 探针升格）。
@@ -21,7 +24,9 @@
 //   FAKE_PI_FIXTURE get_messages / switch_session 返回的消息 JSON 文件（数组）
 //   FAKE_PI_SESSION_FILE 会话 JSONL 文件路径；设置后 prompt 接受时物理落盘条目
 //                    并广播 entry_appended 事件（模拟真实 pi 在 turn_start 边界写 user
-//                    条目 / 终稿落盘，Issue #1 #D-01 回归）；未设置时行为与旧版一致
+//                    条目 / 终稿落盘，Issue #1 #D-01 回归）；回放模式下 entry_appended 事件行
+//                    回放时同样物理落盘（golden 时序交织剧本的文件系统面，TASK-011 D）；
+//                    未设置时行为与旧版一致
 //   FAKE_PI_REPLAY  golden fixture 文件路径；设置后启用回放模式（见上）
 //
 // 特殊 prompt 消息（触发脚本化行为）：
@@ -40,6 +45,10 @@
 "use strict";
 
 const fs = require("fs");
+
+// 模拟真实 pi 的会话文件落盘的目标路径（仅 FAKE_PI_SESSION_FILE 设置时启用）；声明前置：
+// 回放层文件系统面（replayOutRecord）在模块初始化期（首个 in 前置事件回放）即可能访问。
+const sessionFilePath = process.env.FAKE_PI_SESSION_FILE || null;
 
 const logPath = process.env.FAKE_PI_LOG;
 function log(entry) {
@@ -91,9 +100,26 @@ if (replayPath) {
     process.exit(2);
   }
   while (replayCursor < replayRecords.length && replayRecords[replayCursor].dir === "out") {
-    send(replayRecords[replayCursor].record);
+    replayOutRecord(replayRecords[replayCursor].record);
     replayCursor += 1;
   }
+}
+
+/**
+ * 回放一条 out 事件行（TASK-011 批次 D，G1 封堵）：entry_appended 且 FAKE_PI_SESSION_FILE 设置时
+ * 同步物理落盘该条目（可注入 fs stub = 环境变量指定路径），使 golden 回放链路具备文件系统面——
+ * #D-01 类时序交织（pi 落盘 × watcher 轮询 × markSynced 窗口）经 golden 通道可复现；
+ * 事件行本身仍逐字回放（未设置 sessionFile 时零行为变化，既有两剧本不受影响）。
+ */
+function replayOutRecord(record) {
+  if (record && record.type === "entry_appended" && record.entry !== undefined && sessionFilePath) {
+    try {
+      fs.appendFileSync(sessionFilePath, JSON.stringify(record.entry) + "\n");
+    } catch {
+      // 忽略：落盘失败不影响事件流回放
+    }
+  }
+  send(record);
 }
 
 function replayFail(detail) {
@@ -119,7 +145,7 @@ function replayCommand(cmd) {
   }
   replayCursor += 1;
   while (replayCursor < replayRecords.length && replayRecords[replayCursor].dir === "out") {
-    send(replayRecords[replayCursor].record);
+    replayOutRecord(replayRecords[replayCursor].record);
     replayCursor += 1;
   }
 }
@@ -154,10 +180,7 @@ function loadFixtureMessages() {
   return defaultMessages();
 }
 
-// 模拟真实 pi 的会话文件落盘（仅 FAKE_PI_SESSION_FILE 设置时启用）
-const sessionFilePath = process.env.FAKE_PI_SESSION_FILE || null;
-
-/** 条目落盘（追加 JSONL 行）并广播 entry_appended（真实 pi：_commitBoundaryDrafts）。 */
+/** 条目落盘（追加 JSONL 行）并广播 entry_appended（真实 pi：_commitBoundaryDrafts；仅脚本化路径调用）。 */
 function commitEntry(entry) {
   if (!sessionFilePath) return;
   try {
