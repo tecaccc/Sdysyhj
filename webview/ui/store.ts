@@ -5,6 +5,9 @@
 //   ② 被动保留——无事件即无操作（#17：不重绑、不追加、不错换）。
 // toolcall_status 按 toolCallId 就地更新（#D-04：终稿后工具卡状态仍可回填）。
 // delta 合批：EventBuffer 每 rAF 至多一次 store 演进（NFR-01 批处理判据），非 delta 事件前强制冲刷零丢失。
+// 通知节流（#D-07/R-05 修复）：流式期间通知合批 ≤1次/300ms（同窗口多次 store 演进仅通知一次），
+// 终态汇合事件（message_final / run_state 终态 / history_loaded / session_reset）立即冲刷——
+// 节流只影响通知时机，不影响状态累积（state 恒为全部已派发事件的按序折叠）。
 // 无 DOM / 无 React 依赖，单测全覆盖（test/unit/ui-store.test.ts）。
 
 import type {
@@ -293,13 +296,43 @@ export function uiReducer(state: UiState, event: UiEvent): UiState {
   }
 }
 
+/** 流式通知节流窗口（#D-07/R-05，≥300ms 量级）：同窗口多次 store 演进仅通知一次。 */
+export const STREAM_NOTIFY_THROTTLE_MS = 300;
+
+/**
+ * 终态汇合事件（通知节流豁免，立即冲刷）：pi 侧 message_end / agent_settled / turn_end
+ * 汇合点的 UI 侧映射——message_final（message_end 权威终稿）、run_state 终态
+ * （agent_settled → idle/aborted/error；starting/streaming 为流生命周期事件非汇合点）、
+ * history_loaded / session_reset（权威重建/会话切换）。abort/急停路径经 run_state
+ * 终态立即冲刷（生产同序：aborted → idle）。
+ */
+function isNotifyFlushEvent(event: UiEvent): boolean {
+  switch (event.kind) {
+    case "message_final":
+    case "history_loaded":
+    case "session_reset":
+      return true;
+    case "run_state":
+      return event.state === "idle" || event.state === "aborted" || event.state === "error";
+    default:
+      return false;
+  }
+}
+
 /**
  * 极简 external store（useSyncExternalStore 目标）：dispatch 即 reducer 演进 + 通知。
- * 状态引用仅在变化时更新（getSnapshot 稳定性）；dispatchMany = 合批演进单次通知。
+ * 状态引用仅在变化时更新（getSnapshot 稳定性）；dispatchMany = 合批演进。
+ * 通知节流（#D-07/R-05 修复）：节流只影响通知时机，不影响状态累积——state 恒为全部
+ * 已派发事件的按序折叠（getSnapshot 即最新累积），通知在流式期间合批为 ≤1次/300ms
+ * （React 全量 reconciliation + Markdown 全文重析的频率上界，终态汇合事件立即冲刷）。
  */
 export class UiStore {
   private state: UiState = initialUiState;
   private readonly listeners = new Set<() => void>();
+  /** 节流窗口起点（上次通知时刻）；窗口内的流式演进由尾随 timer 在窗口终点统一通知。 */
+  private lastNotifyAt = 0;
+  /** 尾随冲刷 timer（立即通知/终态冲刷时清除——不留悬挂）。 */
+  private notifyTimer: ReturnType<typeof setTimeout> | null = null;
 
   getSnapshot(): UiState {
     return this.state;
@@ -311,18 +344,58 @@ export class UiStore {
   }
 
   dispatch(event: UiEvent): void {
+    const wasRunning = this.state.isRunning;
     const next = uiReducer(this.state, event);
     if (next === this.state) return;
     this.state = next;
-    this.notify();
+    this.requestNotify([event], wasRunning);
   }
 
-  /** 合批演进：折叠全部事件后单次通知（每 rAF 至多一次 store 演进，D4）。 */
+  /** 合批演进：折叠全部事件后作一次通知时机决策（EventBuffer rAF 冲刷载体，D4）。 */
   dispatchMany(events: readonly UiEvent[]): void {
+    const wasRunning = this.state.isRunning;
     let next = this.state;
     for (const event of events) next = uiReducer(next, event);
     if (next === this.state) return;
     this.state = next;
+    this.requestNotify(events, wasRunning);
+  }
+
+  /**
+   * 通知时机决策（#D-07 修复核心，三分支）：
+   * - 终态汇合事件（isNotifyFlushEvent）→ 立即冲刷：清尾随 timer + 同步通知——
+   *   message_end/settled 后渲染态与逐事件处理完全一致，abort/急停路径同此；
+   * - 非流式事件（空闲期用户交互/就绪回放，非 delta 且未运行）→ 立即通知
+   *   （与节流前行为一致，零空闲延迟）；
+   * - 流式演进（运行中非终态事件，或纯 delta 合批）→ 节流：距上次通知 ≥300ms 的
+   *   首个演进立即通知（允许首事件立即通知），窗口内后续演进合并、由尾随 timer
+   *   在窗口终点统一通知（频率上界 = 流式期间 ≤1次/300ms + 终态冲刷）。
+   */
+  private requestNotify(events: readonly UiEvent[], wasRunning: boolean): void {
+    const streaming = wasRunning || events.every(isDeltaEvent);
+    const now = Date.now();
+    if (events.some(isNotifyFlushEvent) || !streaming || now - this.lastNotifyAt >= STREAM_NOTIFY_THROTTLE_MS) {
+      this.flushNotify();
+      return;
+    }
+    if (this.notifyTimer === null) {
+      // 窗口内合批：尾随 timer 于窗口终点统一通知（已挂则不重复挂）
+      const delay = STREAM_NOTIFY_THROTTLE_MS - (now - this.lastNotifyAt);
+      this.notifyTimer = setTimeout(() => {
+        this.notifyTimer = null;
+        this.lastNotifyAt = Date.now();
+        this.notify();
+      }, delay);
+    }
+  }
+
+  /** 立即冲刷：清除尾随 timer（即时通知/终态冲刷取代之，不留悬挂）+ 立即通知。 */
+  private flushNotify(): void {
+    if (this.notifyTimer !== null) {
+      clearTimeout(this.notifyTimer);
+      this.notifyTimer = null;
+    }
+    this.lastNotifyAt = Date.now();
     this.notify();
   }
 
@@ -333,7 +406,9 @@ export class UiStore {
 
 /**
  * delta 合批缓冲（D4）：delta 事件按 rAF 合批（schedule 可注入，测试确定性）；
- * 非 delta 事件（含 message_final/history_loaded/session_reset）前强制冲刷 = 零丢失保证。
+ * 非 delta 事件（含 message_final/history_loaded/session_reset）前强制冲刷 = 零丢失保证
+ * （派发顺序：队列 delta 先于非 delta 事件，终态一致性的前置条件）。
+ * 通知频率由 UiStore 通知节流层决定（#D-07/R-05：流式期间 ≤1次/300ms + 终态立即冲刷）。
  */
 export class EventBuffer {
   private queue: UiEvent[] = [];
