@@ -21,6 +21,11 @@
 | R-13 | filed | Issue #11（type:feature 升级备忘;升级立项时强制输入;2026-11-27 v1.2 直接回流,REST 直写） | assistant-ui 漂移:react 0.15.37→0.15.38、vscode 0.0.1→0.0.2——后者 patch 位携带 peer 面结构变化(+tap ^0.9.27/+store ^0.3.25 必装,core ^0.3.35→^0.3.38,当前 lock tap 0.9.26/store 0.3.24/core 0.3.37 三包联动);升级窗口=#D-06+R-08 复合风险,须重跑消费端真实 runtime 验证(报告 report-2026-11-25 §6) |
 | R-14 | filed | Issue #12（type:feature 流程约束;与 R-13 同批;2026-11-27 v1.2 直接回流,REST 直写） | R-05 修复批次与 assistant-ui 升级批次时序耦合:批次规划无「依赖升级致性能/行为基线漂移」排序义务——tarball 级实证 react 0.15.38 本体对本仓零运行时影响(esbuild.mjs:48 define 决定性证据)、vscode 0.0.2 dist 字节级一致(纯依赖契约版),真实变更全在强制传递四包 ~111 文件(store 0.3.25 视口滚动跟随/core 0.3.38 external-store 快照簿记恰在 R-05 流式路径上,core 改动文件与 R-05 候选修复面同文件同域);修复中途升级=验收归因污染+#D-06 同构风险放大(报告 report-2026-11-25b §1.4/§5) |
 | R-15 | filed | Issue #13（type:feature;发版/升级窗口强制输入;2026-11-27 v1.2 直接回流,REST 直写） | pi RPC 对端版本契约单向无界:PATH 侧任意 ≥0.84.0 版本直接进入运行时(auto 探测 PATH 优先,bundled 1.5.2 仅兜底),无上限无已验版本清单;验证栈零真实 pi 联跑(golden=冻结 fixture+单测 fake-pi-cli+集成零真实 spawn);对端已两步 minor 漂移(lock 1.5.2 锁于 11-22 时 1.6.0 已存在两天,1.6.1 发布于 11-25 13:41 零通道感知);未知事件类型有 default 日志容错但已知事件语义漂移零防护——#D-06 同类 pi 侧暴露面(报告 report-2026-11-26 §4) |
+| R-16 | filed | Issue #14（type:feature；2026-11-28 v1.2 直接回流，REST 直写） | NFR-03 消毒路径自动化断言面为零 + fake-pi-cli UI-XSS 探针剧本死代码：经典面板唯一动态 sink = messages.ts:73 → markdown.ts:40-53（marked→DOMPurify）；手工审计当前配置未见绕过，但任何消毒回归对 234 项自动化测试不可见（v0.1.8/9 时代有 ui-xss 断言，还原批次静默丢失） |
+| R-17 | filed | Issue #15（type:feature；2026-11-28 v1.2 直接回流，REST 直写） | TASK-011 还原批次过渡载体该删未删三件套：tsconfig.json:8 jsx（全仓零 .tsx）、.gitignore:5-6 media/chat.*（esbuild 已拆入口、media/ 仅 main.*）、.gitignore 缺 .pi-loop.json 条目（与 .vscodeignore:23 不对称，git add . 误提交风险） |
+| R-18 | filed | Issue #16（type:feature；2026-11-28 v1.2 直接回流，REST 直写） | 基线跨文档还原注记缺失：test-cases.md 仍 v0.7 零还原注记（TC-098~TC-137 双面板断言与单面板现实冲突，requirements §4.6 有注记而 test-cases 无）；technical-design.md:6 头部「对应需求 v0.8」滞后 requirements v0.9 |
+| R-19 | filed | Issue #17（type:feature；2026-11-28 v1.2 直接回流，REST 直写） | ui-versions ⑦ 无用依赖门禁可被注释行满足：独立探针实证 `// import x from "left-pad"` → consumed=true（注释掉 import = 假阳性消费，死依赖恒绿滞留）；文件头自述「防注释自命中」对注释不成立 |
+| R-20 | filed | Issue #18（type:feature；2026-11-28 v1.2 直接回流，REST 直写） | pi-real-smoke「本机 PATH pi」npm 脚本语境下语义自指：npm 前置 node_modules/.bin → spawn("pi") 恒解析锁定依赖 1.5.2（bin symlink 实证），PATH 侧对端（R-15 漂移面）覆盖结构性零；测试自述与 report-t011 表述高估通道漂移暴露能力 |
 
 （R-10、R-11 未启用——C/D 两维度为零发现/零对象，按证据纪律如实记零于报告 §3/§4，不占用编号制造空条目。）
 
@@ -36,6 +41,8 @@
 | P-06 | proposed | 待裁决(用例规范或 golden README 覆盖表修订;R-06 去向由「并入 P-01」改挂本条——fixture 类别是常态回归资产,与迁移对比条款不同物) | golden fixture 剧本类别清单制度化:①时序交织类(落盘×watcher×markSynced,回放层现零文件系统面须扩展或走端到端)②会话生命周期类(new/switch/resume)③异常路径类(允许人工构造 synthetic trace,封录制健全性门的制度性豁口)④多轮/中止类;相关批次须声明覆盖或豁免留痕 | R-06 全类(时序/竞态/重启语义,#D-01/#D-02 复发)+ #D-03 类错误通道;G1 证明现有 golden 制度对该类覆盖为零(报告 report-2026-11-25 §1 D①) | 类别清单入规范/README;test/fixtures/golden/ 新增 ≥1 个时序类剧本且回放通道可运行;下轮按 §7 提案闭环回验 |
 | P-07 | proposed | 待裁决(DevelopmentGuidelines 批次规划/升级剧本修订) | 依赖升级批次传递 delta 审查义务+批次排序声明:①凡 direct 依赖跳版(含 patch 位)须附 lockfile 强制联动传递包 tarball 级 delta 清单(文件级+行为级+本仓消费面直击标注,范本=report-2026-11-25b §1.3);②性能/行为修复批次与依赖升级批次显式排序声明,禁同批混行 | patch 位掩盖联动面类(R-13 实证:react/vscode 双本体近 no-op 而传递四包 ~111 文件;现有 ui-versions 门禁只校验 direct 依赖精确版本,传递 delta 零审查)+修复验收基线漂移类(R-14) | 下一次依赖升级批次任务单含「传递 delta」节与「批次排序」声明;本循环下轮按 §7 提案闭环回验 |
 | P-08 | proposed | 待裁决(DevelopmentGuidelines 发版检查单/升级剧本修订) | 运行时对端(非 lockfile 支配面)漂移监视+真实联跑冒烟义务:①发版前对端版本域核对(lock vs registry 最新含发布时间,minor/major 跳变须核对 release notes 事件协议/字段变更面留痕);②至少一条真实 pi 端到端冒烟(非 fixture 回放/非 fake-pi-cli,覆盖 MIN_SUPPORTED 与 registry 最新各一);③MIN_SUPPORTED_PI_VERSION 调整附对端变更依据;与 P-07 分工=P-07 管 lockfile 升级传递 delta(pi 为 direct 依赖已含),本条管 PATH 侧用户面对端+验证栈真实联跑缺口 | 对端契约漂移静默穿透类(#D-06 同构 pi 侧预防位;R-15 实证:lock 锁定晚于对端 minor 发布两天零感知+1.6.1 新漂移零通道+三验证通道零真实联跑) | 发版检查单/CI 含「对端版本核对」与「真实 pi 冒烟 ≥1 场景」步骤;本循环下轮按 §7 提案闭环回验 |
+| P-09 | proposed | 待裁决(DevelopmentGuidelines 批次规划/任务单模板修订;report-2026-11-28 §5) | 退役/还原/迁移批次收尾门:删除完备性核对清单(配置/helpers 剧本分支/ignore 死模式/目录残留,grep 残留面判据)+ 被删测试的能力去向声明(替代用例或显式豁免+理由)双清单 | 测试能力随退役静默丢失类(R-16:安全断言消失)+ 过渡载体滞留类(R-17:死配置/死剧本/死模式)+ 基线跨文档脱钩类(R-18)——TASK-011 实证:四门禁全绿与 12 条观察项并存,删除动作不在任何门禁验收口径 | 下一次含删除动作的批次任务单出现两清单节;本循环下轮以同款 grep 判据抽查死载体面为零;核验报告对 coverage delta 有「去向声明」而非仅「如实记录」 |
+| P-10 | proposed | 待裁决(DevelopmentGuidelines 用例规范/核验剧本修订;report-2026-11-28 §5) | 新增门禁类测试的「可绕过性自查」义务:每断言 ≥1 假阳性/假阴性反证探针实测(注入演练式)或不可绕论证(字节级比对/字符串感知逐态走查),自查结果落测试注释或核验报告 | 门禁自述与实效不符类(R-19 实证:自述「防注释自命中」而注释恰为豁口,注入演练只测「无注释必红」未测注释假阳性)+ 门禁强度通胀类(门禁存在≠门禁有效) | 下一次新增门禁测试文件含自查节;本循环抽查以探针复测该自查结论(R-19 探针为范本) |
 
 ## 状态说明
 
@@ -95,3 +102,12 @@
 - **TASK-011(人类指令:实现全部 feature + UI 还原)**:v0.1.10 双通道确认(Release run 45994435843 + GitHub Release v0.1.10 附 vsix);**R-01→#3、R-04→#5、R-06→#7、R-07→#8、R-08→#9、R-09→#10、R-15→#13 关闭 completed+agent:done(实现落地);R-03→#4、R-13→#11、R-14→#12 关闭 not_planned(前置失效:assistant-ui 移除,证据 f034515)**——12 项 R 发现全部处置完毕(R-02 本地清理、R-12 dismissed、R-05 经 v0.1.9 缺陷流水线闭环)。
 - 首轮报告的全部 R 系列至此清零;P-01~P-08 提案中 P-02(半)/P-03/P-04/P-05/P-06(类别①)/P-08 已随批次落地,P-01/P-07 仍待人类裁决。
 - 螺旋循环从冷启动(11-24)到发现清零(11-27)历时 3 天、7 轮审查,闭环链:发现→Issue 直建→分诊→实现→核验→发版→回写。
+
+### 第 8 轮追加(2026-11-28,报告 docs/review/report-2026-11-28.md;本节为纯追加,上文各轮原文未改动)
+
+- 本轮为 TASK-011 批次(v0.1.10)圈间审计轮:代码面自第 7 轮结构性变化(近 12h 13 commit、webview/ui 退役、经典面板转正、依赖收缩四件套)。**新增 R-16~R-20(open ×5,全 P2)、P-09/P-10(proposed ×2)**——R-16 编号于本轮启用,R-17~R-20 为新增连续编号;R-10/R-11 继续保留未占用。
+- 发现面:①还原完备性独立复核全部成立(report-t011 A 项结论不采信亲取证:残留 grep 零功能性命中/contributes 与 v0.1.6 逐项一致/CSP 逐字冻结/esbuild 双入口自洽+webview 零 diff+lock 269 包零 react 族+构建字节一致);②t011 观察项 12 条逐条定性升级——O1/O4/O6→R-17、O2/O3→R-16、O5/O8→R-18、O9 归 R-20 澄清、O7/O10 维持观察、O11 附带核验数据质量信号两条(devDeps 计数 7 vs 实 6、/tmp/sdysyhj-probe-qOHDly 残留 vs「探针已全清」自述)。
+- 门禁/资产质量:ui-versions ⑥/pkg-metadata/pi-peer-version 断言强度合格;⑦ 可被注释行满足(独立探针实证)→ R-19;golden-timing-interleave 定性 = 真模拟 #D-01 窗口(真实 watcher×真实 fs×测试持窗,非发现);pi-real-smoke 真跑非 skip 亲验(含无 pi PATH 模拟 skip 分支),但 npm 脚本语境实测对象恒为锁定依赖 bin → R-20。
+- 供应链经典代码面首查零发现(唯一动态 sink = messages.ts:73,DOMPurify 配置覆盖全路径,javascript:/data: 由默认 URI 正则拦);对端漂移监视基线随依赖收缩重立(pi 1.6.1 零新漂移、marked 18.3.0/dompurify 3.5.0 例行 minor 维持、hljs 零漂移、audit 0 连续第五轮);平台 0 PR/0 open/13 closed(注入证据,如实记零)。
+- open 项跟踪:R-01~R-15 全部处置完毕(首轮 R 系清零);P-01~P-08 回验 6 落地(P-02 半/P-03/P-04/P-05/P-06①/P-08,逐条亲证)+ P-01/P-07 仍待裁决(P-07 对象面随框架移除退场,是否同构失效待人类裁决,本轮不代判);R-04 口径基线第五次测量新值 #D-04×79/#D-01×68/#D-02×59/#D-06×52/#D-03×50/#D-08×10/#D-07×8/#D-05×7(序列 #D-01~#D-08 完整,增长全部来自 TASK-010/011 文档)。
+- 第 9 轮入口:先读本表 → R-16~R-20 回流状态(总调度验收后 Issue type:feature)→ P-09/P-10 裁决状态 → report-2026-11-28 §6 未查清单(①R-16 补用例断言质量回验、②R-19 修复后注释语境复测为前两位)。
