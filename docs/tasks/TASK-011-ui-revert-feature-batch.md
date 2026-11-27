@@ -34,3 +34,7 @@ A(UI 还原)→ B/C(小项,可与 A 后半并行评审)→ G → D → H → E/F
 ## 3. 进度日志
 
 - 2026-11-27 17:5x 总调度:人类指令立项;A 项研发子代理派发;
+- 2026-11-27 19:5x 研发全项完成:A(f034515)B/C/G(4b68db9)D/H(67d39d1)E(df252c2)F(本地规范);E/F 两处解释性裁决经总调度采纳(extension_error=toast 生效口径、F 落点第一部分 §5)
+- 2026-11-27 20:0x 独立核验 PASS(docs/verification/report-t011.md:门禁 192/42、A 完备性+CSP 逐字一致+体积 −63%+注入必红+剧本实效+冒烟真跑;观察项 12 条不阻塞)
+- 2026-11-27 20:1x 发版 v0.1.10(release commit 517735d + annotated tag);20:2x **双通道确认**:[Release run 45994435843 success](https://github.com/tecaccc/Sdysyhj/actions/runs/45994435843)(Marketplace OIDC job PASS)+ [GitHub Release v0.1.10](https://github.com/tecaccc/Sdysyhj/releases/tag/v0.1.10)(附 sdysyhj-0.1.10.vsix)
+- 2026-11-27 20:2x **批量回写 10 张 Issue**:#3/#5/#7/#8/#9/#10/#13 关闭 completed+agent:done(终态评论带实现摘要/commit/核验引用);#4/#11/#12 关闭 not_planned(前置失效:框架移除,证据 f034515)。**TASK-011 闭环**
