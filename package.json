@@ -2,7 +2,7 @@
   "name": "sdysyhj",
   "displayName": "Sdysyhj",
   "description": "Chat with the pi coding agent inside VS Code — real tools, your own models & keys, sessions in native pi storage",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "publisher": "tecacc",
   "license": "MIT",
   "repository": {
