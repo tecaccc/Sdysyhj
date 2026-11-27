@@ -1,8 +1,9 @@
-// TASK-009 §10.14 D8 单测：bundle 预算门禁四项之三（FR-AUI-05③ v0.7 口径，D7）。
-// 回归重定向：lab-budget.test.ts → 本文件（预算口径 3 MiB → 4 MiB = 默认面板全链；断言扩容）。
-// ① 默认面板 media/chat.js（入口+全部 chunk，不含 css/map）≤ 4,194,304 字节；
-// ② 宿主 bundle 增量 ≤ 1 MiB（基线 = v0.1.7 构建产物 dist/extension.js 实测 459,382 字节）；
-// ③ 经典面板 media/main.js 依赖图不含 react/react-dom/@assistant-ui（回退保证，冻结入口）。
+// bundle 预算门禁（原 TASK-009 §10.14 D8 单测；TASK-011 批次 A 项同步）。
+// 2026-11-27 人类还原指令后：原①（默认面板 media/chat.js ≤ 4 MiB）随 React 新 UI 入口整体
+// 拆除删除；保留两项仍生效的门禁：
+//   ② 宿主 bundle ≤ 基线 + 1 MiB（基线 = v0.1.7 构建产物 dist/extension.js 实测 459,382 字节）；
+//   ③ 经典面板 media/main.js 依赖图不含 react/react-dom/@assistant-ui——A 项后为唯一 webview
+//      入口，本断言 = 自研实现零框架运行时的回归守护（防 React 链回流经典 bundle）。
 // 构建 = esbuild JS API 同参构建，与 esbuild.mjs 各入口一致。
 
 import * as path from "path";
@@ -10,35 +11,10 @@ import { fileURLToPath } from "url";
 import { describe, expect, it } from "vitest";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
-const CHAT_JS_BUDGET_BYTES = 4 * 1024 * 1024; // 4 MiB = 4,194,304（FR-AUI-05③ v0.7 定值）
-const HOST_BASELINE_BYTES = 459_382; // v0.1.7 dist/extension.js 实测（FR-AUI-05③ 基线）
+const HOST_BASELINE_BYTES = 459_382; // v0.1.7 dist/extension.js 实测
 const HOST_INCREMENT_BUDGET_BYTES = 1 * 1024 * 1024; // 1 MiB
 
-describe("FR-AUI-05③ 预算门禁（v0.7 默认面板口径）", () => {
-  it("① 默认面板 webview/ui/main.tsx（同参 minify）：JS 字节合计 ≤ 4,194,304", async () => {
-    const { build } = await import("esbuild");
-    const result = await build({
-      entryPoints: [path.join(root, "webview/ui/main.tsx")],
-      bundle: true,
-      platform: "browser",
-      format: "iife",
-      target: "es2020",
-      jsx: "automatic",
-      minify: true,
-      define: { "process.env.NODE_ENV": JSON.stringify("production") },
-      sourcemap: true,
-      write: false,
-      outdir: "out",
-      logLevel: "silent",
-    });
-    const jsOutputs = result.outputFiles.filter((f) => f.path.endsWith(".js"));
-    const cssOutputs = result.outputFiles.filter((f) => f.path.endsWith(".css"));
-    expect(jsOutputs.length).toBeGreaterThanOrEqual(1);
-    expect(cssOutputs.length).toBe(1); // theme.css + chat.css 产出存在（CSS 不计入 JS 预算）
-    const totalJs = jsOutputs.reduce((sum, f) => sum + f.contents.byteLength, 0);
-    expect(totalJs, `chat webview JS ${totalJs} 字节 > 预算 ${CHAT_JS_BUDGET_BYTES}`).toBeLessThanOrEqual(CHAT_JS_BUDGET_BYTES);
-  });
-
+describe("bundle 预算门禁（还原后双入口口径）", () => {
   it("② 宿主 bundle 增量 ≤ 1 MiB（vs v0.1.7 基线 459,382 字节）", async () => {
     const { build } = await import("esbuild");
     const result = await build({
@@ -60,7 +36,7 @@ describe("FR-AUI-05③ 预算门禁（v0.7 默认面板口径）", () => {
     expect(totalJs, `宿主 bundle ${totalJs} 字节 > 基线+增量 ${limit}`).toBeLessThanOrEqual(limit);
   });
 
-  it("③ 经典面板 metafile inputs 零 react/react-dom/@assistant-ui 命中（FR-AUI-05③ 回退保证）", async () => {
+  it("③ 经典面板 metafile inputs 零 react/react-dom/@assistant-ui 命中（唯一 webview 入口的零框架守护）", async () => {
     const { build } = await import("esbuild");
     const result = await build({
       entryPoints: [path.join(root, "webview/main.ts")],

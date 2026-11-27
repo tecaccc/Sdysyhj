@@ -1,5 +1,5 @@
-// 宿主共享动作层（TASK-009 §10.14 D3）：chatPanel.ts 的 vscode 交互动作机械提取为共享模块。
-// chatPanel.ts 同名委托（行为零变化）；src/ui/chatController.ts 经 createHostActions 复用同一模块。
+// 宿主动作层（原 ChatPanel 内联 vscode 交互动作机械提取，TASK-009 §10.14 D3）：chatPanel.ts
+// 同名委托，行为零变化；TASK-011 A 项新 UI 退役后由 ChatPanel 独家消费。
 // 动作清单（D3 表）：showHistory/showFilePicker/showModelPicker/showThinkingPicker/showRenameInput/
 // guard/relativePath/copy_output/sendToPi（input_prefill 预填，FR-FILE-03）/open_settings/open_external。
 

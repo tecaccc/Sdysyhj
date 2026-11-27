@@ -1,7 +1,9 @@
-// ChatPanel（经典面板，FR-AUI-07③）：WebviewViewProvider + postMessage 路由。
+// ChatPanel：WebviewViewProvider + postMessage 路由。
 // 宿主侧中介：webview 消息 → PiBridge 操作 / vscode API；PiBridge 事件 → webview。
-// TASK-009 切换批次（§10.14 D1/D3）：viewType 迁移为 sdysyhj.chatViewClassic（旧 vanilla
-// 实现冻结承载回退）；vscode 交互动作机械提取至 hostActions.ts（同名委托，行为零变化）。
+// TASK-011 批次 A 项（2026-11-27 人类指令「还原聊天界面为我们自己编写的版本，去掉外部引入
+// 的框架」）：viewType 回迁 sdysyhj.chatView——本面板即唯一聊天面板（v0.1.6 时代形态，
+// assistant-ui 新 UI 与 chatViewClassic 双轨注册随批次退役）；vscode 交互动作仍经
+// hostActions.ts 同名委托（TASK-009 D3 机械提取，行为零变化）。
 
 import * as crypto from "crypto";
 import * as path from "path";
@@ -15,7 +17,7 @@ import { isHostToWebview, type HostToWebview, type WebviewToHost } from "./messa
 export type { StartupError } from "./hostActions";
 
 export class ChatPanel implements vscode.WebviewViewProvider {
-  public static readonly viewType = "sdysyhj.chatViewClassic";
+  public static readonly viewType = "sdysyhj.chatView";
 
   private view: vscode.WebviewView | null = null;
   private readonly disposables: vscode.Disposable[] = [];

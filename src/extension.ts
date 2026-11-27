@@ -7,7 +7,6 @@ import { PiBridge } from "./bridge/piBridge";
 import { RpcClient } from "./bridge/rpcClient";
 import { PiRuntimeError, resolvePiRuntime, type ResolvedRuntime } from "./bridge/rpcTransport";
 import { ChatPanel, type StartupError } from "./panel/chatPanel";
-import { ChatViewProvider } from "./ui/chatViewProvider";
 import { mostRecentSession } from "./session/sessionStore";
 import { DEFAULT_CONFIG, readConfig, type SdysyhjConfig } from "./util/config";
 import { createRedactingLogger, type Logger } from "./util/log";
@@ -88,18 +87,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   }
 
-  // 默认聊天面板 = 新 UI（TASK-009 切换批次，FR-AUI-07①）： viewType sdysyhj.chatView 转正；
-  // 经典面板（旧 vanilla）保留为回退载体（FR-AUI-07③），ChatPanel 自注册于 chatViewClassic；
-  // 两面板共享同一 PiBridge（同源数据零副本）；retainContextWhenHidden = true 显式声明（FR-AUI-05④）
-  const chatView = new ChatViewProvider(context, bridge, logger, getConfig, cwd, noWorkspace, undefined, () => startupError);
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(ChatViewProvider.viewType, chatView, {
-      webviewOptions: { retainContextWhenHidden: true },
-    }),
-    chatView
-  );
-  const newUiActions = chatView.hostActions;
-
+  // 聊天面板 = 自研经典实现（TASK-011 批次 A 项，2026-11-27 人类指令「还原聊天界面为我们
+  // 自己编写的版本，去掉外部引入的框架」）：ChatPanel 自注册于 viewType sdysyhj.chatView
+  // （v0.1.6 时代形态；assistant-ui 新 UI 与 chatViewClassic 双轨注册随批次退役）；
+  // retainContextWhenHidden = true 显式声明（注册历史值不变）
   const panel = new ChatPanel(
     context,
     bridge,
@@ -128,28 +119,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   refreshStatusBar();
   bridge.onAny(() => refreshStatusBar());
 
-  // 命令面板（FR-CMD-01）：默认入口面向新 UI（用户无感切换）；openChatClassic 为回退入口
+  // 命令面板（FR-CMD-01）：唯一聊天面板（自研经典实现）为对象
   context.subscriptions.push(
-    vscode.commands.registerCommand("sdysyhj.openChat", () => chatView.reveal()),
-    vscode.commands.registerCommand("sdysyhj.openChatClassic", () => panel.reveal()),
+    vscode.commands.registerCommand("sdysyhj.openChat", () => panel.reveal()),
     vscode.commands.registerCommand("sdysyhj.newSession", async () => {
-      chatView.reveal();
+      panel.reveal();
       await guardCommand(() => bridge!.newSession(), logger);
     }),
     vscode.commands.registerCommand("sdysyhj.abort", async () => {
       await guardCommand(() => bridge!.abort(), logger);
     }),
     vscode.commands.registerCommand("sdysyhj.showHistory", async () => {
-      chatView.reveal();
-      await newUiActions.showHistory();
+      panel.reveal();
+      await panel.showHistory();
     }),
     vscode.commands.registerCommand("sdysyhj.reportIssue", () => {
       void vscode.env.openExternal(vscode.Uri.parse(REPORT_ISSUE_URL));
     }),
-    vscode.commands.registerCommand("sdysyhj.renameSession", () => newUiActions.showRenameInput()),
-    vscode.commands.registerCommand("sdysyhj.switchModel", () => newUiActions.showModelPicker()),
-    vscode.commands.registerCommand("sdysyhj.switchThinking", () => newUiActions.showThinkingPicker()),
-    vscode.commands.registerCommand("sdysyhj.sendToPi", (uri?: vscode.Uri) => chatView.sendToPi(uri))
+    vscode.commands.registerCommand("sdysyhj.renameSession", () => panel.showRenameInput()),
+    vscode.commands.registerCommand("sdysyhj.switchModel", () => panel.showModelPicker()),
+    vscode.commands.registerCommand("sdysyhj.switchThinking", () => panel.showThinkingPicker()),
+    vscode.commands.registerCommand("sdysyhj.sendToPi", (uri?: vscode.Uri) => panel.sendToPi(uri))
   );
 
   logger.info("Sdysyhj 已激活");

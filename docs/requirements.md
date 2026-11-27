@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**待评审** ｜ 版本：v0.7 ｜ 更新日期：2026-11-22
+> 状态：**待评审** ｜ 版本：v0.8 ｜ 更新日期：2026-11-27
 
 ---
 
@@ -40,13 +40,15 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 | 路线 A（fetch-bridge） | assistant-ui 官方 fetch 桥接路线：宿主侧 route handler 适配 PiBridge + webview 侧 useChatRuntime/vscodeFetch（`@assistant-ui/vscode`）；**v0.7 起淘汰**（#D-06：真机无法回复消息，总调度裁决 2026-11-22） |
 | 路线 B（ExternalStoreRuntime） | 保留现有 postMessage 协议的路线：webview 侧 UiMessage→ThreadMessageLike 映射至 `@assistant-ui/react` ExternalStoreRuntime |
 | golden fixture | 真实 pi 事件序列录制而成的静态回放文件（`test/fixtures/golden/`，TASK-008 落地），作离线验收数据源 |
-| 新 UI（默认聊天面板） | assistant-ui（路线 B）实现的聊天面板；切换批次（0.1.8）起注册于 viewType `sdysyhj.chatView`，为默认聊天面板（FR-AUI-07①） |
-| 经典面板 | 旧 vanilla（零依赖 TypeScript）聊天面板实现；切换批次起以 viewType `sdysyhj.chatViewClassic` 保留为回退载体一个版本周期，0.2.x 前删除（FR-AUI-07③） |
+| 新 UI（历史术语） | assistant-ui（路线 B）实现的聊天面板；0.1.8~0.1.9 注册于 viewType `sdysyhj.chatView` 为默认聊天面板（FR-AUI-07①）；0.1.10 起随人类还原决策整体退役（见 §4.6 废止注记） |
+| 经典面板（历史术语） | 旧 vanilla（零依赖 TypeScript）聊天面板实现；0.1.8~0.1.9 以 viewType `sdysyhj.chatViewClassic` 保留为回退载体；0.1.10 起回迁 viewType `sdysyhj.chatView` 为唯一聊天面板（自研还原，FR-AUI-07③ 退役计划反向失效，见 §4.6 废止注记） |
 | 切换批次 | TASK-009 阶段②③④经人类指令（2026-11-22）压缩而成的单一切换批次（发版 0.1.8）：功能等价迁移 + 切默认面板 + 旧面板退役过渡（#D-06 路线 A 淘汰随批次执行） |
 
 ## 4. 功能需求（MVP）
 
 > **判定载体注记（v0.7 切换批次，统一注记）**：TASK-009 切换批次（发版 0.1.8）后，§4.1–§4.5 全部 FR 的**判定载体**由旧 vanilla 实现平移为新 UI 实现（assistant-ui，路线 B，FR-AUI-08）——各 FR 验收标准文本与语义不变（含 P0/P1/P2），仅判定执行面平移；旧 vanilla 实现（经典面板）在退役前（FR-AUI-07③）为等价回退载体，按同一验收标准判定。FR-CHAT-10 与新 UI 默认视觉冲突处的取舍 = 全部维持既有口径（澄清 #19(a)）。
+>
+> **v0.8 还原注记（2026-11-27，统一注记）**：人类指令「还原聊天界面为我们自己编写的版本，去掉外部引入的框架」（任务单 docs/tasks/TASK-011-ui-revert-feature-batch.md 批次 A 项）——**0.1.10 起 §4.1–§4.5 全部 FR 的判定载体回归自研经典实现**（唯一聊天面板，viewType `sdysyhj.chatView`，v0.1.6 时代形态），各 FR 验收标准文本与语义不变，仅判定执行面回归；v0.1.8~0.1.9 为 assistant-ui（新 UI）载体时期，该时期历史判定留痕有效。
 
 ### 4.1 聊天（P0）
 
@@ -103,7 +105,9 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 | FR-CMD-04 | MCP | P2 | 复用 pi 的 MCP 配置自动生效；UI 无专门管理界面（MVP） |
 | FR-CMD-05 | pi 运行时来源 | P0 | 自动模式下：PATH 中存在可用 pi 时优先使用；PATH 无可用 pi 时使用插件内置运行时并能正常对话（开箱即用）；设置中可显式指定 pi 路径，指定后按该路径启动；显式路径无效或启动失败时展示含错误详情的可行动指引 |
 
-### 4.6 assistant-ui 新 UI 切换批次（TASK-009，发版 0.1.8）
+### 4.6 assistant-ui 新 UI 切换批次（TASK-009，发版 0.1.8）——已废止（v0.8）
+
+> **废止注记（v0.8，2026-11-27）**：人类指令「还原聊天界面为我们自己编写的版本，去掉外部引入的框架」（任务单 docs/tasks/TASK-011-ui-revert-feature-batch.md 批次 A 项）——**本节 FR-AUI 系列条目（FR-AUI-01~08）整体废止，不再产生新判定项**：v0.1.8~0.1.9 为 assistant-ui 时代（新 UI = 默认聊天面板，经典面板以 `sdysyhj.chatViewClassic` 双轨回退），该时期交付判定留痕有效；**0.1.10 起回归自研**——经典实现回迁 viewType `sdysyhj.chatView` 为唯一聊天面板，`chatViewClassic`/`openChatClassic` 双轨注册、assistant-ui 框架与 `@assistant-ui/*` 依赖族整体移除；FR-AUI-07③「经典面板 0.2.x 前删除」计划反向失效（删除对象改为新 UI，任务单 §0 I/J 挂赅项 Issue #4/#11/#12 随证据关闭）。本节表格文本保留为历史基线（废止留痕），后续引用以本注记与 §4 头部 v0.8 还原注记为准。
 
 > 来源：通道 A TODO-List 条目②（任务单 docs/tasks/TASK-009-assistantui-migration.md，人类确认启动 2026-11-21）。**v0.7 起本段为切换批次口径**：人类指令（2026-11-22）「直接切换到新的 UI 界面，不要使用这种实验性的内容」+ 真机反馈路线 A 无法回复消息；总调度 #D-06 裁决（路线 A 淘汰）与计划修订（阶段②③④压缩为单一切换批次，发版 0.1.8 = 功能等价迁移 + 切默认面板 + 旧面板退役过渡）。**核心口径：用户可见行为零回退**——§4.1–§4.5 全部 FR 在新 UI（assistant-ui，路线 B）上等价满足（判定载体平移见 FR-AUI-08 与 §4 判定载体注记），新 UI 成为默认聊天面板，「实验」命名移除。**优先级口径**：本段「P0（切换批次）/P1（切换批次）」为切换批次出口门禁口径（P0 = 0.1.8 发版阻塞项、逐条可判定；P1 = 尽力），不进入 §8-5 MVP P0 门禁（见 §8 第 7 条与澄清 #18/#19）；「P0（阶段①，已完结）」为历史条款（阶段①判定已交付，不再产生新判定项）。**外部事实锚点**（2026-11-21 实测，登记于任务书 §5）：`@assistant-ui/vscode@0.0.1`（vscodeFetch / serveWebviewRoutes / serveWebviewHost / installLinkInterceptor / createVSCodeStorage；theme.css 将 shadcn token 映射 --vscode-* 变量）、官方指南 assistant-ui.com/docs/guides/vscode、官方测试床 github.com/assistant-ui/assistant-ui `examples/with-vscode`、`@assistant-ui/react@0.15.37`（peer react ^18||^19、直依 zod ^4.6.7）。
 
@@ -181,9 +185,9 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 2. 流式输出、工具卡片、thinking 折叠均符合第 7 节约定
 3. 会话关闭 VS Code 重开后可从历史恢复，上下文完整
 4. 三平台冒烟通过；`pi --mode rpc` 子进程崩溃可恢复并提示
-5. 所有 P0 需求验收标准逐条勾选通过（口径 = §4.1–§4.5 MVP 功能需求的 P0 项，判定载体 = 新 UI 实现（§4 判定载体注记 / FR-AUI-08）；§4.6 FR-AUI 段为 TASK-009 出口优先级，不入本条，见第 7 条与澄清 #18/#19）
+5. 所有 P0 需求验收标准逐条勾选通过（口径 = §4.1–§4.5 MVP 功能需求的 P0 项，判定载体 = 当前聊天面板实现（v0.8 起 = 自研经典实现，见 §4 判定载体 v0.8 还原注记；v0.1.8~0.1.9 历史判定载体 = 新 UI）；§4.6 FR-AUI 段已废止（v0.8），不入本条）
 6. 发送 prompt（含运行中 steer / follow-up 插话）后，用户消息在聊天区各判定时点恰好一条；面板重开 / 会话切换的历史重放无重复用户气泡（FR-CHAT-11）
-7. TASK-009 切换批次出口门禁（独立于第 1–6 条 MVP 门禁，0.1.8 发版阻塞项）：① §4.6 全部「P0（切换批次）」项逐条通过；② 功能等价 = §4.1–§4.5 全部 FR（含 P0/P1）在新 UI 实现上按各自验收标准逐条通过（判定载体 = 新 UI，FR-AUI-08），其中 FR-CHAT-11 五款与 FR-CHAT-10 五子条（维持既有口径，澄清 #19(a)）逐款判定；③ 双面板可切换且行为一致快照（FR-AUI-07③）；④ 对外契约零变更（viewType `sdysyhj.chatView`、既有命令名、配置项，FR-AUI-07④）且「实验」命名清零（FR-AUI-07②）；⑤ 既有 verify 套件回归全绿 + 第 1–6 条 MVP 门禁在新 UI 载体复验通过。FR-AUI-06 双切片对比报告不再要求（使命结束）
+7. TASK-009 切换批次出口门禁（独立于第 1–6 条 MVP 门禁，0.1.8 发版阻塞项）：① §4.6 全部「P0（切换批次）」项逐条通过；② 功能等价 = §4.1–§4.5 全部 FR（含 P0/P1）在新 UI 实现上按各自验收标准逐条通过（判定载体 = 新 UI，FR-AUI-08），其中 FR-CHAT-11 五款与 FR-CHAT-10 五子条（维持既有口径，澄清 #19(a)）逐款判定；③ 双面板可切换且行为一致快照（FR-AUI-07③）；④ 对外契约零变更（viewType `sdysyhj.chatView`、既有命令名、配置项，FR-AUI-07④）且「实验」命名清零（FR-AUI-07②）；⑤ 既有 verify 套件回归全绿 + 第 1–6 条 MVP 门禁在新 UI 载体复验通过。FR-AUI-06 双切片对比报告不再要求（使命结束）。（v0.8 废止注记：本条为 0.1.8 发版历史条款，已随 0.1.10 还原批次失效——双面板/新 UI 载体不复存在，不再适用）
 
 ## 9. 里程碑
 
@@ -215,6 +219,7 @@ Sdysyhj 是一个 VS Code 插件，将 Pi 编程智能体（coding agent）带�
 | 2026-11-21 | v0.5.1 | 验收口径澄清 #17，总调度裁决（审批点 2，TASK-008）：不可关联回声（多通道不可判定）为 #16 受控例外——恒单条、不错换、不新增，实时保留原文，权威重建后收敛 JSONL；纯澄清，无 FR 范围/优先级变化。 |
 | 2026-11-21 | v0.6 | 新增 §4.6「实验面板：assistant-ui 迁移试点（TASK-009 阶段①）」FR-AUI-01~06（来源：通道 A TODO-List 条目②，任务单 docs/tasks/TASK-009-assistantui-migration.md，人类确认启动 2026-11-21；外部生态事实为当日实测、登记于任务书 §5）：FR-AUI-01 独立实验面板 + 默认面板零变更；FR-AUI-02 路线 A（fetch-bridge）/ B（ExternalStoreRuntime）双切片最小垂直切片（回放注入须经各自真实传输通道，防自证）；FR-AUI-03 golden fixture 回放数据源（golden-prompt-basic 双切片 P0；golden-steer-followup 双切片 P1）；FR-AUI-04 主题映射验证（--vscode-* 浅/深主题：采样断言 + 对比度 ≥4.5:1 自动兜底 + UI checklist）；FR-AUI-05 风险门禁判定证据（依赖精确版本锁定 + 升级策略留痕 / zod jitless（CSP 无 unsafe-eval + 回放运行时证据）/ bundle 预算（webview JS ≤3 MiB 含 chunk、宿主增量 ≤1 MiB）/ retainContextWhenHidden 核对）；FR-AUI-06 双切片对比报告（bundle 体积、首帧/首条消息渲染、代码侵入面、PiBridge 事件契合度四维度，结论中立供总调度裁决）。§3 术语表增 4 条；§5 增补阶段①不做项与②③④路线图注记；§8 第 5 条补门禁口径括注、新增第 7 条「阶段①出口门禁」；§12 新增 #18（阶段①优先级与门禁归属）。FR-AUI 优先级为阶段①出口口径、不入 §8-5 MVP P0 门禁；既有 FR（含 FR-CHAT-11）与澄清 #1–#17 语义未动。语义变更（新增 FR 范围），版本 v0.5.1 → v0.6。 |
 | 2026-11-22 | v0.7 | TASK-009 切换批次基线修订（来源：人类指令 2026-11-22「直接切换到新的 UI 界面，不要使用这种实验性的内容」+ 真机反馈路线 A 无法回复；总调度 #D-06 裁决（路线 A 淘汰）与计划修订（阶段②③④压缩为单一切换批次，发版 0.1.8），任务单 docs/tasks/TASK-009-assistantui-migration.md）：① FR-AUI-02 修订为路线 B 单实现（路线 A 淘汰、#D-06 注记，双切片口径终止，原阶段②③范围并入）；② FR-AUI-03 沿用（golden 回放 = 切换批次验收依据，并作双面板一致快照数据源）；③ FR-AUI-05③ 预算口径切换：实验面板 3 MiB → 默认面板 webview JS 产物 ≤4 MiB（定值理由入条款），经典面板产物依赖图不含 React（回退保证）；④ FR-AUI-01/06 使命结束（历史条款：阶段①判定已交付，technical-design.md §10.13 / report-f7a3518，本批次不再双切片对比）；⑤ 新增 FR-AUI-07「切换与旧面板退役」（默认面板 = 新 UI 沿用 viewType sdysyhj.chatView 与既有命令入口；去「实验」命名；经典面板 sdysyhj.chatViewClassic 保留一个版本周期、0.2.x 前删除；外部契约零变更）；⑥ 新增 FR-AUI-08「功能等价口径」（§4.1–§4.5 全部 FR 判定载体平移至新 UI，验收语义不变）；⑦ §4 头部增判定载体统一注记；⑧ §5「阶段①不做项」改写为「切换批次不做项」；⑨ §8 第 5 条判定载体括注、第 7 条改写为切换批次出口门禁；⑩ §3 术语表（实验面板→历史术语，新增 新 UI / 经典面板 / 切换批次）；⑪ §12 新增 #19（视觉口径取舍（FR-CHAT-10 五子条全部维持既有口径 + FR-CHAT-02 高亮语言集边界）/ 命名定值 / 退役节奏）。既有 FR-CHAT/SESS/FILE/MOD/CMD 验收标准语义与澄清 #1–#18 零改动。语义变更（FR 范围与口径修订），版本 v0.6 → v0.7。 |
+| 2026-11-27 | v0.8 | 聊天界面还原自研实现（TASK-011 批次 A 项，人类指令 2026-11-27「还原聊天界面为我们自己编写的版本，去掉外部引入的框架」，任务单 docs/tasks/TASK-011-ui-revert-feature-batch.md）：① §4.6 FR-AUI 系列条目（FR-AUI-01~08）整体**废止**（不再产生新判定项）——v0.1.8~0.1.9 为 assistant-ui 时代（新 UI = 默认聊天面板 + 经典面板双轨回退，该时期判定留痕有效），0.1.10 起回归自研：经典实现回迁 viewType `sdysyhj.chatView` 为唯一聊天面板（v0.1.6 时代形态），`chatViewClassic`/`openChatClassic` 双轨注册与 assistant-ui 框架、`@assistant-ui/*` 依赖族整体移除（对外契约零变更：viewType/命令/配置项不变）；② FR-AUI-07③「经典面板 0.2.x 前删除」计划反向失效（删除对象 = 新 UI；Issue #4/#11/#12 随证据关闭，见任务单 §0）；③ §4 头部增 v0.8 还原注记（§4.1–§4.5 判定载体 0.1.10 起回归自研经典实现，验收标准文本与语义不变）；④ §8 第 5 条判定载体括注改当前口径、第 7 条标注历史条款失效；⑤ §3 术语表：新 UI / 经典面板转历史术语并注时代区间。既有 FR-CHAT/SESS/FILE/MOD/CMD 验收标准语义与澄清 #1–#19 零改动。语义变更（FR 段废止 + 判定载体回归），版本 v0.7 → v0.8。 |
 
 ## 12. 验收标准澄清（历次裁决）
 

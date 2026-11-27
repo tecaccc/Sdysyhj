@@ -2,7 +2,7 @@
 
 > Sdysyhj（山巅一石一壶酒）— Pi Agent for VS Code
 >
-> 状态：**已实现（MVP）**；TASK-008（FR-CHAT-11 用户消息单次展示）已实现（§10.12）；TASK-009 阶段①（FR-AUI-01~06）已实现并闭环（v0.1.7 + report-f7a3518，§10.13 + §10.5.1 追溯行）；TASK-009 **切换批次**（新 UI 转正默认 + 旧面板退役，FR-AUI-02/03/05/07/08）：**已实现（0.1.8 交付，§10.14 交付小节）** ｜ 版本：v0.7 ｜ 对应需求：docs/requirements.md v0.7（2026-11-22 冻结）｜ 修订日期：2026-11-22
+> 状态：**已实现（MVP）**；TASK-008（FR-CHAT-11 用户消息单次展示）已实现（§10.12）；TASK-009 阶段①（FR-AUI-01~06）已实现并闭环（v0.1.7 + report-f7a3518，§10.13 + §10.5.1 追溯行）；TASK-009 **切换批次**（新 UI 转正默认 + 旧面板退役，FR-AUI-02/03/05/07/08）：已实现（0.1.8 交付，§10.14 交付小节；**0.1.10 起随 TASK-011 批次 A 项还原退役，历史留痕**）；TASK-011 **批次 A 项**（聊天界面还原自研实现 + assistant-ui 框架整体移除，需求基线 v0.8 §4.6 废止注记）：**已实现（§10.15）** ｜ 版本：v0.8 ｜ 对应需求：docs/requirements.md v0.8（2026-11-27 修订）｜ 修订日期：2026-11-27
 
 ---
 
@@ -922,6 +922,49 @@ FR 追溯表（§10.1）将在实现交付时新增 FR-CHAT-11 行（状态、�
 **设计偏差清单**：① **无功能偏差**。② 实现口径注记：raw-HTML 降级为文本节点（`markdown.tsx` `remarkRawHtmlAsText`）——D2 XSS 口径「无 raw HTML 通道 + 探针文本逐字为文本节点」的实现机制（react-markdown 默认丢弃 raw HTML 会使探针文本丢失、违反 FR-CHAT-11④ 文本保真；降级为文本节点同时满足保真与安全，MarkdownTextPrimitive 构造性转义呈现）；旧面板同场景经 DOMPurify 丢弃 script 内容，本实现按 D2 钉死的断言口径呈现原文，属安全面收紧。③ `MarkdownText` 取 `smooth={false}`（对齐旧面板无打字动画口径）。④ 新增工程文件 `vitest.config.ts`（'vscode' 模块测试桩 alias，承载 D9 经典侧 chatPanel HTML 模板提取；devDeps 不进产物）——研发角色工程文件权限矩阵覆盖，任务书枚举未含，披露留痕。⑤ jsdom 测试基建 = D8 已批准选型（jsdom 31.0.1 / @testing-library/react 16.3.3 / @testing-library/dom 10.4.2，均 devDeps）。
 
 **自测计数**：`npm run typecheck` 0 错；`npm run build` 三入口（dist/extension.js + media/chat.js + media/main.js）全出；`verify:unit` 21 文件 229 用例 ✅；`verify:integration` 9 文件 41 用例 ✅；时序断言并行负载 10 连跑（unit ∥ integration 并发）全绿。
+
+---
+
+### 10.15 TASK-011 批次 A 项设计记录（聊天界面还原自研实现 + assistant-ui 框架整体移除，需求基线 v0.8 §4.6 废止注记）
+
+> 来源：人类指令（2026-11-27）「还原聊天界面为我们自己编写的版本，去掉外部引入的框架」（任务单 docs/tasks/TASK-011-ui-revert-feature-batch.md 批次 A 项）。需求基线 v0.8：§4.6 FR-AUI 系列条目整体废止；§4 头部 v0.8 还原注记——§4.1–§4.5 判定载体 0.1.10 起回归自研经典实现，验收标准文本与语义不变。**本节为还原实现记录；§10.13/§10.14 全部 FR-AUI 实现行与交付小节随批次转为历史留痕（不再判定）**。
+
+#### A1 还原面（wiring 单面板化，v0.1.6 时代形态）
+
+- **回归点**：`src/panel/chatPanel.ts` `viewType` 回迁 `sdysyhj.chatView`（唯一聊天面板 = 自研经典实现，ChatPanel 构造器自注册 + `retainContextWhenHidden: true` 不变）；`src/extension.ts` 回归单面板接线（新 UI ChatViewProvider/ChatController 拆除，命令入口 openChat/newSession/showHistory/renameSession/switchModel/switchThinking/sendToPi 全部指向 ChatPanel，与 v0.1.6 同形）；`package.json` contributes 双轨收敛（views 仅 `sdysyhj.chatView`「Chat」；`chatViewClassic` 视图与 `sdysyhj.openChatClassic` 命令、`onView:sdysyhj.chatViewClassic` activation 移除；既有 9 命令 + 5 配置零变更——对外契约零变更）。历史参考 = v0.1.6 tag wiring（只读核对）。
+- **拆除面**：`webview/ui/**`（React 新 UI 全部源码）与 `src/ui/**`（chatViewProvider 薄壳 + chatController vscode-free 面板核心）删除；`esbuild.mjs` 第三入口（jsx automatic + NODE_ENV define + minify 的 React 构建链）拆除，回归宿主 + 经典面板双入口。
+- **冻结面（行为零变化）**：经典实现 `webview/main.ts` + `webview/render/**` + `webview/styles/styles.css` 与 CSP meta 模板（`default-src 'none'` + `script-src` 仅 nonce，无 `unsafe-eval`——CSP 不降级，ui-isolation③ 冻结断言）零改动；`src/panel/hostActions.ts`（TASK-009 D3 机械提取的 vscode 交互动作层）保留为 ChatPanel 独家消费，同名委托零变化。
+
+#### A2 依赖清理（grep 实证消费方为零后删除）
+
+| 处置 | 依赖 | grep 证据（移除前唯一消费方） |
+|---|---|---|
+| 删除 | `@assistant-ui/react`、`@assistant-ui/react-markdown`、`@assistant-ui/vscode` | `webview/ui/{threadMessageLike,toolCard,composer,shell,markdown}.tsx`、`src/ui/chatViewProvider.ts`、`test/unit/ui-csp.test.ts`/`ui-theme.test.ts`（均随 A 项删除） |
+| 删除 | `react`、`react-dom`、`@types/react`、`@types/react-dom` | `webview/ui/*.tsx` + 新 UI 集成测试（均随 A 项删除）；经典实现与宿主零引用 |
+| 删除 | `remark-gfm`、`remark-breaks`（R-01 ×2 重复键随删消除） | `webview/ui/markdown.tsx`（随 A 项删除）；经典 Markdown = marked `gfm:true, breaks:true`（内置，无 remark 依赖） |
+| 删除 | `zod` | `webview/ui/zod-jitless.ts`（随 A 项删除）；v0.1.6 时代本无 zod，src/webview/test 零其他引用 |
+| 删除 | `@testing-library/react`、`@testing-library/dom` | 新 UI React 组件渲染测试（随 A 项删除）；经典面板 DOM 断言用原生 querySelector + 自带 waitFor |
+| 去重保留 | `jsdom`（R-01 ×2 重复键去重为单条） | 经典面板 golden DOM 集成测试环境（`@vitest-environment jsdom`） |
+| 保留 | `marked` / `highlight.js` / `dompurify` / `@earendil-works/pi-coding-agent` | 经典实现 `webview/render/markdown.ts`、`webview/main.ts`、宿主运行时（冻结，严禁误删） |
+
+package-lock.json 同步（`npm install --package-lock-only`，离线剪枝；`npm ci` 一致性复验）。门禁 = `test/unit/ui-versions.test.ts`（还原后依赖表同步 + 新 UI 依赖族删除断言 + R-01 重复键消除断言）。
+
+#### A3 测试外科（判定载体回经典面板）
+
+| 处置 | 用例 | 说明 |
+|---|---|---|
+| 删除 | `test/unit/ui-store.test.ts`、`ui-composer.test.ts`、`ui-mapping.test.ts`、`ui-theme.test.ts`、`ui-csp.test.ts` | 新 UI 专属（store/composer/fileRefTrigger/threadMessageLike 映射/theme.css 审计/@assistant-ui host CSP），对象随源码删除 |
+| 删除 | `test/integration/ui-dual-panel.test.ts`、`test/integration/ui-xss.test.ts`；`test/helpers/ui-harness.tsx`；`test/fixtures/vscode-theme-defaults-palette.json` | 双面板一致快照（双轨注册不存在）、React runtime XSS 探针（React 渲染链不存在）、React 测试机架与主题 fixture（无消费方） |
+| 回经典版 | `test/integration/ui-golden-dom.test.ts` | 判定对象改回经典面板：机架 = 原 ui-dual-panel 经典侧链路（ChatPanel 真实 `resolveWebviewView`/`onDidReceiveMessage` 消息路由 + `media/main.js` 冻结 bundle 原样 eval + jsdom window MessageEvent）；断言面 = golden 回放消息条数/文本、FR-CHAT-11 user 气泡三判定时点恒单条、HH:mm 时间戳、TOOL 剧本工具卡/thinking 折叠 |
+| 同步 | `test/unit/ui-versions.test.ts`（A2 门禁）、`test/unit/ui-isolation.test.ts`（单面板结构/冻结面/框架移除残留扫描/esbuild 双入口）、`test/unit/ui-budget.test.ts`（原① chat.js 预算随入口删除；保留宿主增量 + 经典零框架两项） | 门禁依赖表与结构断言随还原同步，无放宽 |
+| 保留零改动 | 经典面板测试全集：unit（commandMenu/followState/format/…12 文件）+ integration（golden-replay/user-echo/defects-regression/pi-bridge/rpc-client/runtime-resolve） | 宿主与经典实现零改动 = 用例零改动 |
+
+#### A4 交付证据（四门禁 + 零残留 + 体积对比，2026-11-27 实测）
+
+- **四门禁**：`npm run typecheck` 0 错；`npm run build` 双入口全出；`npm run verify:unit` 16 文件 185 用例 ✅；`npm run verify:integration` 7 文件 39 用例 ✅（含经典面板 golden DOM 回放 3 用例）。
+- **零残留**：`src/**`、`webview/**`、`esbuild.mjs`、`package.json` grep 零 `@assistant-ui` / `webview/ui` 引用（ui-isolation⑤ 结构化断言固化；残留面仅历史文档留痕）。
+- **体积对比（还原前 HEAD vs 还原后，同参构建）**：webview JS 产物 1,587,511 B（main.js 586,752 + chat.js 1,000,759）→ 586,752 B（**净减 1,000,759 B，−63.1%**，React 链整体退场）；宿主 `dist/extension.js` 104,278 B → 92,366 B（−11,912 B，新 UI 宿主薄壳/控制器拆除）；经典面板 `media/main.js`/`main.css` 字节不变（实现零改动）。
+- **CSP 不降级**：经典面板 CSP meta 模板逐字冻结（ui-isolation③；`default-src 'none'` + `script-src` 仅 nonce + 无 `unsafe-eval`），较新 UI 时代的差异仅 style-src（经典为 cspSource + `'unsafe-inline'` 样式白名单，v0.1.6 以来冻结值）与 img-src 允许 https: 远程图——均属经典实现历史口径，本次零改动零放宽。
 
 ---
 

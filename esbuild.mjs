@@ -1,8 +1,7 @@
 // esbuild 打包：宿主（dist/extension.js，cjs，external vscode + pi 运行时包）
 // 与 webview（media/main.js，iife，含 marked/dompurify/highlight.js；CSS 同名输出 media/main.css）。
-// TASK-009 切换批次（D1/D7）：默认面板 webview 入口（media/chat.js + chat.css，React + assistant-ui，
-// jsx automatic + NODE_ENV define + minify——预算必要手段；官方指南「Bundle both sides」）。
-// 宿主与经典面板（media/main.js）入口配置冻结不变（§10.14 D1 冻结面）。
+// TASK-011 批次 A 项（2026-11-27 人类还原指令）：React 新 UI 面板构建入口整体拆除
+// （jsx/NODE_ENV define/minify 链随之退役），回归宿主 + 经典面板双入口（v0.1.6 时代形态）。
 
 import { build, context } from "esbuild";
 import { mkdirSync } from "fs";
@@ -36,31 +35,13 @@ const webviewOptions = {
   logLevel: "info",
 };
 
-// 默认面板 webview（TASK-009 切换批次转正，FR-AUI-07①）
-const chatWebviewOptions = {
-  entryPoints: ["webview/ui/main.tsx"],
-  bundle: true,
-  platform: "browser",
-  format: "iife",
-  target: "es2020",
-  jsx: "automatic",
-  minify: true,
-  define: { "process.env.NODE_ENV": JSON.stringify("production") },
-  outfile: "media/chat.js",
-  sourcemap: true,
-  logLevel: "info",
-};
-
 if (watch) {
   const a = await context(extensionOptions);
   const b = await context(webviewOptions);
-  const c = await context(chatWebviewOptions);
   await a.watch();
   await b.watch();
-  await c.watch();
   console.log("watching…");
 } else {
   await build(extensionOptions);
   await build(webviewOptions);
-  await build(chatWebviewOptions);
 }
