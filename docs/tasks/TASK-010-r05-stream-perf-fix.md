@@ -29,3 +29,4 @@
 - 2026-11-27 16:2x 总调度交付验收 PASS:改动面合规(仅 store.ts + 测试)、亲复跑三门禁全绿、diff 审阅(节流仅作用通知时机,状态累积不受影响)
 - 2026-11-27 16:3x 独立核验 PASS(report-ea0d0e51):四条硬约束独立验证成立(49 项探针断言:600 delta 零丢失、终态逐字节等价、abort 无悬挂、频率实测 3.33Hz);对抗性七项全立;观察项六条不阻塞(真机感知级流畅度仍非门禁,P-01/P-02 提案跟进)
 - 2026-11-27 16:4x 发版执行(versioning.md §5):自测四门禁全绿、五处一致(①package.json 0.1.9 ②CHANGELOG 置顶 ③v0.1.9 annotated tag ④⑤CI 承接)、密钥扫描 CLEAN → fix commit + release commit + tag 推送,CI 双通道发布触发;CI 回查排定
+- 2026-11-27 16:2x 发版双通道确认 + **TASK-010 闭环**:Release workflow run 45962480391 success(Marketplace OIDC job PASS + GitHub Release v0.1.9 附 sdysyhj-0.1.9.vsix);Issue #6 打标 agent:done + 关闭 completed(终态评论 issuecomment-7213579821,带双通道链接);#D-07 缺陷闭环
