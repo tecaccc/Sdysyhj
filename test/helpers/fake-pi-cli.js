@@ -17,7 +17,9 @@
 //     pi 落盘 × watcher 轮询 × markSynced 窗口）可在 golden 回放链路复现；未设置时与旧版一致。
 //   - UI-XSS 探针剧本（TASK-009 切换批次 D8 改名，原 LAB-XSS；FR-AUI-02④）：user 回声与 assistant 回复均携带
 //     <script>/<img onerror> 探针文本，事件形状与 runSimpleText 同构（对照 json.md「Event
-//     sequence」L30–46）；断言面 = jsdom 真实渲染下探针文本逐字保真且无新增 script 元素（D8 XSS 探针升格）。
+//     sequence」L30–46）；断言面 = jsdom 真实渲染下无新增 script 元素 + 探针消毒后保义可见
+//     （TASK-012 批次 A 复活，消费方 = test/integration/ui-golden-dom.test.ts UI-XSS 用例；
+//     D8 时代 React 链口径为构造性转义逐字保真，经典链 marked→DOMPurify 为保义口径）。
 //
 // 环境变量：
 //   FAKE_PI_LOG     追加记录 spawn/命令的 JSONL 日志文件（测试断言用）

@@ -1,6 +1,10 @@
 // TASK-011 批次 H（Issue #13 / R-15 / P-08）：真实 pi 冒烟——D8 三源锚点的「真实 runtime」通道，
 // 目的 = 暴露对端契约漂移。**禁 mock/fake 基建**：本文件不 import fake-pi-cli、不设任何 FAKE_* 环境，
 // raw spawn 本机 PATH 的真实 pi 二进制。
+// R-20 注记（TASK-012 批次 E / Issue #18）：npm 脚本语境（npm run verify:integration → vitest）下
+//   PATH 前置 node_modules/.bin——spawn("pi") 与 `pi --version` 探测的实测对象为锁定依赖 bin
+//   （@earendil-works/pi-coding-agent@1.5.2 的 bin symlink；which/实路径控制台留痕）；PATH 侧对端
+//   （本机真实安装 pi，如全局 1.7.0）的漂移不由本冒烟暴露——该面由螺旋周期轮 npm view 监视承担。
 // 通道（grep src/bridge/piBridge.ts buildArgs 实证）：生产 spawn = `<pi> --mode rpc [--session <path>]`；
 //   本冒烟采 rpc.md「Start RPC Mode」文档范式 `pi --mode rpc --no-session`（文档范式的最小通道；
 //   --no-session 免向本机真实会话目录写入）+ 临时 cwd 隔离。
@@ -13,7 +17,7 @@
 // 探测拿不到 PATH pi → describe.skip + console.warn 留痕（不红）；冒烟超时 30s；不发送 prompt
 // （避免真实模型调用/网络）。
 
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { execFileSync, spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -115,17 +119,43 @@ function waitForResponse(child: ChildProcessWithoutNullStreams, id: string): Pro
 
 // 采集期探测（本机 PATH）：拿不到 → 整套 describe.skip 并留痕（不红；真实 runtime 通道按环境存在性门控）
 const probe = await probePathPiVersion();
+
+/**
+ * R-20 解析路径留痕（TASK-012 批次 E）：`which pi` 输出与 bin symlink 实路径——npm 脚本语境下
+ * 实路径落入 node_modules/@earendil-works/pi-coding-agent（锁定依赖 bin）即为「实测对象 = 锁定
+ * 依赖 1.5.2」的直接证据。best-effort（which 非POSIX不可用/realpath 失败均降级留痕），零行为变化。
+ */
+function resolvePathPiTrace(): { which?: string; real?: string; note?: string } {
+  try {
+    const which = execFileSync("which", ["pi"], { encoding: "utf8" }).trim();
+    try {
+      return { which, real: fs.realpathSync(which) };
+    } catch {
+      return { which, note: "实路径解析失败" };
+    }
+  } catch {
+    return { note: "which 不可用（非 POSIX 环境）" };
+  }
+}
+const piPathTrace = resolvePathPiTrace();
+
 const suite = probe.ok ? describe : describe.skip;
 if (!probe.ok) {
   console.warn(`[pi-real-smoke] 跳过：本机 PATH 无可用 pi（${probe.error ?? "未知原因"}）——Issue #13 真实 pi 冒烟未执行，留痕不红`);
 }
 
-suite("真实 pi 冒烟（本机 PATH pi，禁 mock/fake 基建；TASK-011 H / Issue #13 R-15 / P-08）", () => {
+suite("真实 pi 冒烟（npm 脚本语境实测对象 = 锁定依赖 bin 1.5.2，PATH 侧对端漂移由螺旋周期轮 npm view 承担；禁 mock/fake 基建；TASK-011 H / Issue #13 R-15 / P-08、TASK-012 E / Issue #18 R-20）", () => {
   it(
     "pi --version 版本字段 + pi --mode rpc get_state 协议握手（30s 超时）",
     async () => {
       // 版本字段：`pi --version` 探测输出携带版本号（实测记录入测试输出）
       console.log(`[pi-real-smoke] 本机 pi --version 实测：${probe.version ?? "(未知)"}`);
+      // R-20 留痕：解析路径（which/实路径）——npm 脚本语境下实路径 = 锁定依赖 bin，PATH 侧对端
+      // 漂移不由本冒烟暴露（螺旋周期轮 npm view 监视承担）
+      console.log(
+        `[pi-real-smoke] pi 解析路径（which pi）：${piPathTrace.which ?? piPathTrace.note ?? "(未知)"}` +
+          `${piPathTrace.real ? ` → 实路径：${piPathTrace.real}` : ""}`
+      );
       expect(probe.version).toBeDefined();
       // 生产「可用 pi」判据（rpcTransport defaultProbe）：PATH pi 版本 ≥ 插件最低支持
       expect(isVersionAtLeast(probe.version ?? "", MIN_SUPPORTED_PI_VERSION)).toBe(true);

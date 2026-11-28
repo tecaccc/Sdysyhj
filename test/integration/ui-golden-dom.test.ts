@@ -11,7 +11,10 @@
 // FR-CHAT-11 user 气泡三判定时点恒单条（TASK-008 §10.12 口径：乐观即时展示 + 回声就地更新
 // + 终稿后仍恰一条）、时间戳 HH:mm（FR-CHAT-10⑤）、工具卡与 thinking 折叠（fake-pi TOOL
 // 剧本，FR-CHAT-03/04）；时序交织类①（TASK-011 批次 D / Issue #7 R-06 / P-06）：golden-timing-interleave
-// 回放（回放层 fs 面 + 真实 SessionFileWatcher）→ 外部修改横幅出现/消失/零复发（FR-SESS-07）。
+// 回放（回放层 fs 面 + 真实 SessionFileWatcher）→ 外部修改横幅出现/消失/零复发（FR-SESS-07）；
+// UI-XSS 探针（TASK-012 批次 A / Issue #14 R-16 / NFR-03）：fake-pi UI-XSS 剧本复活（旧
+// ui-xss.test.ts 断言面随还原批次静默丢失）→ 零新增 script 元素 + img 事件属性消毒 + 正文
+// 逐字保义可见 + 哨兵无副作用（marked→DOMPurify 消毒链回归可见化）。
 
 // @vitest-environment jsdom
 
@@ -307,6 +310,64 @@ describe("FR-CHAT-03/04 工具卡与 thinking 折叠 E2E（经典面板，fake-p
     const thinking = document.querySelector("details.thinking-details") as HTMLDetailsElement | null;
     expect(thinking).not.toBeNull();
     expect(thinking!.open).toBe(false);
+  }, 30000);
+});
+
+// ---------- UI-XSS 探针（TASK-012 批次 A / Issue #14 / R-16 / NFR-03） ----------
+// 复活 fake-pi-cli.js UI-XSS 剧本（prompt "UI-XSS" → runLabXss 分发：user 回声与 assistant 终稿
+// 均携带 <script>alert(1)</script> 与 <img src=x onerror=alert(2)> 探针文本）——v0.1.8/9 时代
+// ui-xss.test.ts（React 链构造性转义）断言面随还原批次静默丢失（R-16），本用例经同构通道重建：
+// fake-pi 子进程 → RpcClient → PiBridge → ChatPanel → jsdom MessageEvent → 冻结 bundle → DOM 断言。
+// 经典链（marked→DOMPurify，webview/render/markdown.ts:40-53）消毒语义：探针标记被移除
+//（script 连内容、img 仅剩惰性 src）、正文字符逐字零改写、零执行。主判据 = 结构性断言
+//（jsdom 不执行注入脚本，哨兵仅辅助）：script 元素计数 + onerror 属性剥除 + .md 文本逐字
+// 等值——消毒链任何回归（DOMPurify 移除/配置漂移/marked 文本改写）必红。
+
+describe("UI-XSS 探针 E2E DOM（经典面板，fake-pi UI-XSS 剧本；TASK-012 A / Issue #14 R-16 / NFR-03）", () => {
+  it("探针渲染：DOM 零新增 script 元素、img 事件属性消毒、正文逐字保义可见、哨兵无副作用", async () => {
+    // 执行性哨兵：alert 一旦被执行即记录（旧 ui-xss.test.ts 同源做法；jsdom 辅助判据）
+    let sentinelFired = false;
+    window.alert = () => {
+      sentinelFired = true;
+    };
+
+    const h = await mountAndReady(undefined); // fake-pi 脚本化通道（TOOL 剧本同构，无 FAKE_PI_REPLAY）
+    const scriptsBefore = document.querySelectorAll("script").length;
+
+    h.post({ kind: "prompt", text: "UI-XSS", mode: "auto" });
+    await waitFor(() => h.bridge.getRunState() === "idle", 10000, "UI-XSS settled");
+    // 探针气泡渲染到位（回声就地更新 + assistant 终稿；fake-pi 脚本化通道带默认历史 hello/hi
+    // there 两条，探针消息为各自角色的第 2 条）
+    await waitFor(
+      () => [...document.querySelectorAll(".message-user .md")].some((el) => (el.textContent ?? "").includes("UI-XSS probe")),
+      5000,
+      "探针 user 气泡渲染"
+    );
+    const userMds = [...document.querySelectorAll(".message-user .md")];
+    const assistantMds = [...document.querySelectorAll(".message-assistant .md")];
+    expect(userMds.length).toBe(2); // 历史 hello + 探针回声（FR-CHAT-11 ①②就地更新，不新增第二条）
+    expect(assistantMds.length).toBe(2); // 历史 hi there + 探针终稿
+    const probeUser = userMds.find((el) => (el.textContent ?? "").includes("UI-XSS probe"))!;
+    const probeAssistant = assistantMds.find((el) => (el.textContent ?? "").includes("probe reply"))!;
+
+    // ① DOM 零新增 script 元素（R-16：消毒回归对自动化测试可见化——DOMPurify 链被绕过/移除必红）
+    expect(document.querySelectorAll("script").length).toBe(scriptsBefore);
+
+    // ② 探针 img 消毒为惰性元素：onerror 剥除（不执行）、src 保义（元素仍可见，消毒后可见但不执行）
+    const imgs = [...document.querySelectorAll("#messages-col img")];
+    expect(imgs.length).toBe(2); // user 回声 + assistant 终稿各携带 1 个探针 img
+    for (const img of imgs) {
+      expect(img.getAttribute("onerror")).toBeNull();
+      expect(img.getAttribute("src")).toBe("x");
+    }
+
+    // ③ 正文逐字保义可见：消毒仅移除探针标记，剧本正文前缀逐字零改写——script 内容回归为可见
+    //    文本 / 正文被消毒吃掉，两种回归方向均使逐字等值断言红
+    expect((probeUser.textContent ?? "").trim()).toBe("UI-XSS probe");
+    expect((probeAssistant.textContent ?? "").trim()).toBe("probe reply");
+
+    // ④ 哨兵无副作用（探针内联脚本/事件从未执行）
+    expect(sentinelFired).toBe(false);
   }, 30000);
 });
 

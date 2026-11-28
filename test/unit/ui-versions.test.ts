@@ -13,7 +13,10 @@
 // ⑦ 无用依赖检测（dependencies+devDependencies 每键须在 src/ webview/ test/ esbuild.mjs 有
 //    ≥1 语法锚定消费：import/export from、副作用 import、动态 import()、require/require.resolve、
 //    vitest 文件级环境注解指令（注解值为环境包名，jsdom 的消费形态；工具链类豁免——清单与理由见
-//    UNUSED_DEP_EXEMPTIONS）。
+//    UNUSED_DEP_EXEMPTIONS））。TASK-012 批次 D 项（Issue #17/R-19，P-03+P-10）修复：①~④ 的
+//    匹配面先经 stripComments 剥离 // 行注释与 /* */ 块注释段再匹配（修复前注释态 import 即
+//    满足门禁——死依赖恒绿滞留）；⑤ 注解指令为注释形态的编译器指令，匹配面保留原文；
+// ⑧ R-19 反证探针（P-10 自查：注释态零消费/真实语句消费/剥离边界不误伤/⑤ 例外——锁进套件防回退）。
 
 import * as fs from "fs";
 import * as path from "path";
@@ -140,25 +143,178 @@ const SCAN_SURFACE: { file: string; text: string }[] = [
 
 const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/**
- * ⑦ 依赖消费检测（语法锚定，防注释/字符串常量自命中）：
- * ① import/export … from "N[/子路径]"；② 副作用 import "N[/子路径]"；③ 动态 import("N…")；
- * ④ require / require.resolve("N…")；⑤ vitest 文件级环境注解指令（值为环境包名，jsdom 的消费形态）。
- * 注：⑤ 的注解标记以字符串拼接构造，避免本门禁文件自身携带该标记被 vitest 环境解析器误读
- * （同源纪律：扫描类断言杜绝自命中）。返回命中文件相对路径列表（空 = 零消费 = 无用依赖）。
- */
 const VITEST_ENV_DIRECTIVE = "@vitest" + "-environment";
 
-function consumptionFiles(name: string): string[] {
+/** 正则字面量起始判据：关键字（return/typeof/…）或正则友好标点之后；标识符/数字/）/]/./++/-- 之后为除法。 */
+const REGEX_PRECEDING_KEYWORDS = new Set([
+  "return", "typeof", "instanceof", "in", "of", "new", "delete", "void", "throw", "case", "do", "else", "yield", "await",
+]);
+
+/** 判定 text[at] 处的 `/` 是否正则字面量起始（回看非空白有效字符；关键字/标点后 → 正则）。 */
+function regexLiteralAllowed(text: string, at: number): boolean {
+  let j = at - 1;
+  while (j >= 0 && /\s/.test(text[j]!)) j--;
+  if (j < 0) return true; // 文件起始
+  const ch = text[j]!;
+  if (/[A-Za-z0-9_$]/.test(ch)) {
+    let k = j;
+    while (k >= 0 && /[A-Za-z0-9_$]/.test(text[k]!)) k--;
+    return REGEX_PRECEDING_KEYWORDS.has(text.slice(k + 1, j + 1));
+  }
+  if (ch === ")" || ch === "]" || ch === ".") return false; // 除法
+  if ((ch === "+" || ch === "-") && j > 0 && text[j - 1] === ch) return false; // ++/-- 后缀后为除法
+  return true; // 其余标点（含 => 的 >、{、}、;、:、,、(、[、!、&、|、?、=、+、-）后为正则
+}
+
+/**
+ * R-19 修复（Issue #17）：⑦ 匹配前先剥离注释段——字符级扫描状态机（代码 / 行注释 / 块注释 /
+ * 单双引号字符串 / 模板字面量 / 正则字面量），注释段替换为等长空白（保留换行与行结构）。
+ * 防误剥（假阴性方向）：字符串/模板/正则内的 `//` 与 `/*` 不视为注释（⑧ 反证探针锁定：
+ * `/^file:\/\//`、`"https://…"`、模板内 `//` 其后的真实 import 不丢）；模板 `${…}` 插值段按
+ * 代码态扫描（花括号平衡栈回填，嵌套模板不发散）；正则字面量按 regexLiteralAllowed 启发式判定。
+ */
+function stripComments(text: string): string {
+  const out: string[] = [];
+  let state: "code" | "line" | "block" | "sq" | "dq" | "tpl" | "regex" = "code";
+  const tplBraceDepth: number[] = []; // 模板插值嵌套：每层 `${` 的花括号平衡计数
+  let inClass = false; // 正则字符类 [...] 内
+  let i = 0;
+  while (i < text.length) {
+    const c = text[i]!;
+    switch (state) {
+      case "line":
+        if (c === "\n") state = "code";
+        out.push(c === "\n" ? c : " ");
+        i += 1;
+        break;
+      case "block":
+        if (c === "*" && text[i + 1] === "/") {
+          state = "code";
+          out.push("  ");
+          i += 2;
+        } else {
+          out.push(c === "\n" ? c : " ");
+          i += 1;
+        }
+        break;
+      case "sq":
+      case "dq": {
+        out.push(c);
+        if (c === "\\") {
+          out.push(text[i + 1] ?? "");
+          i += 2;
+        } else {
+          if (c === (state === "sq" ? "'" : '"')) state = "code";
+          i += 1;
+        }
+        break;
+      }
+      case "tpl":
+        if (c === "\\") {
+          out.push(c, text[i + 1] ?? "");
+          i += 2;
+        } else if (c === "`") {
+          state = "code";
+          out.push(c);
+          i += 1;
+        } else if (c === "$" && text[i + 1] === "{") {
+          state = "code";
+          tplBraceDepth.push(0);
+          out.push(c, "{");
+          i += 2;
+        } else {
+          out.push(c);
+          i += 1;
+        }
+        break;
+      case "regex":
+        out.push(c);
+        if (c === "\\") {
+          out.push(text[i + 1] ?? "");
+          i += 2;
+        } else if (c === "[") {
+          inClass = true;
+          i += 1;
+        } else if (c === "]") {
+          inClass = false;
+          i += 1;
+        } else if (c === "/" && !inClass) {
+          state = "code";
+          i += 1;
+        } else {
+          i += 1;
+        }
+        break;
+      case "code":
+      default:
+        if (c === "/" && text[i + 1] === "/") {
+          state = "line";
+          out.push("  ");
+          i += 2;
+        } else if (c === "/" && text[i + 1] === "*") {
+          state = "block";
+          out.push("  ");
+          i += 2;
+        } else if (c === "/" && regexLiteralAllowed(text, i)) {
+          state = "regex";
+          inClass = false;
+          out.push(c);
+          i += 1;
+        } else if (c === "'") {
+          state = "sq";
+          out.push(c);
+          i += 1;
+        } else if (c === '"') {
+          state = "dq";
+          out.push(c);
+          i += 1;
+        } else if (c === "`") {
+          state = "tpl";
+          out.push(c);
+          i += 1;
+        } else if (c === "{" && tplBraceDepth.length > 0) {
+          tplBraceDepth[tplBraceDepth.length - 1] += 1;
+          out.push(c);
+          i += 1;
+        } else if (c === "}" && tplBraceDepth.length > 0 && tplBraceDepth[tplBraceDepth.length - 1] === 0) {
+          tplBraceDepth.pop();
+          state = "tpl";
+          out.push(c);
+          i += 1;
+        } else {
+          out.push(c);
+          i += 1;
+        }
+        break;
+    }
+  }
+  return out.join("");
+}
+
+/**
+ * ⑦ 依赖消费检测（语法锚定）：
+ * ① import/export … from "N[/子路径]"；② 副作用 import "N[/子路径]"；③ 动态 import("N…")；
+ * ④ require / require.resolve("N…")；⑤ vitest 文件级环境注解指令（值为环境包名，jsdom 的消费形态）。
+ * R-19 修复（Issue #17）：①~④ 匹配面 = stripComments 剥离注释后的代码文本——注释态
+ * import/require 不再计消费（修复前注释行即满足门禁，死依赖恒绿滞留；⑧ 反证探针锁定）；
+ * ⑤ 例外：注解本身是注释形态的编译器指令（vitest 环境解析器消费，非 JS 语法），匹配面保留
+ * 原文——若入剥离面会连指令一起剔成空白，jsdom 恒假阴性。
+ * 注：⑤ 的注解标记以字符串拼接构造，避免本门禁文件自身携带该标记被 vitest 环境解析器误读
+ * （同源纪律：扫描类断言杜绝自命中）。返回命中文件相对路径列表（空 = 零消费 = 无用依赖）；
+ * surface 参数：⑧ 反证探针注入合成样本用（默认 = 真实扫描面）。
+ */
+function consumptionFiles(name: string, surface: { file: string; text: string }[] = SCAN_SURFACE): string[] {
   const spec = `${escapeRegExp(name)}(?:/[^"']+)?`;
-  const patterns = [
+  const codePatterns = [
     new RegExp(`\\bfrom\\s+["']${spec}["']`),
     new RegExp(`\\bimport\\s+["']${spec}["']`),
     new RegExp(`\\bimport\\s*\\(\\s*["']${spec}["']`),
     new RegExp(`\\brequire(?:\\.resolve)?\\(\\s*["']${spec}["']`),
-    new RegExp(`${escapeRegExp(VITEST_ENV_DIRECTIVE)}\\s+${escapeRegExp(name)}\\b`),
   ];
-  return SCAN_SURFACE.filter(({ text }) => patterns.some((re) => re.test(text))).map(({ file }) => file);
+  const directivePattern = new RegExp(`${escapeRegExp(VITEST_ENV_DIRECTIVE)}\\s+${escapeRegExp(name)}\\b`);
+  return surface
+    .filter(({ text }) => codePatterns.some((re) => re.test(stripComments(text))) || directivePattern.test(text))
+    .map(({ file }) => file);
 }
 
 describe("依赖精确版本锁定（零 ^ / ~ / >= 前缀）", () => {
@@ -228,7 +384,7 @@ describe("依赖精确版本锁定（零 ^ / ~ / >= 前缀）", () => {
     ).toBe(rawKeyTotal(raw));
   });
 
-  it("⑦ P-03 无用依赖检测：dependencies+devDependencies 每键在 src/ webview/ test/ esbuild.mjs 有 ≥1 消费（豁免清单见 UNUSED_DEP_EXEMPTIONS）", () => {
+  it("⑦ P-03 无用依赖检测：dependencies+devDependencies 每键在 src/ webview/ test/ esbuild.mjs 有 ≥1 消费（R-19 修复后：①~④ 匹配面 = 剥离行/块注释后的代码文本；豁免清单见 UNUSED_DEP_EXEMPTIONS）", () => {
     for (const [name, reason] of Object.entries(UNUSED_DEP_EXEMPTIONS)) {
       expect(
         pkg.devDependencies[name],
@@ -244,5 +400,27 @@ describe("依赖精确版本锁定（零 ^ / ~ / >= 前缀）", () => {
         `依赖 ${name} 在 src/ webview/ test/ esbuild.mjs 零消费——无用依赖应删除；若属测试/构建类用途，请在 UNUSED_DEP_EXEMPTIONS 登记豁免并注明理由`,
       ).toBeGreaterThan(0);
     }
+  });
+
+  // R-19 反证探针（P-10 语义：门禁类断言附可绕过性自查——假阳性/假阴性双方向各 ≥1 实测锁进套件）。
+  // 样本名 left-pad 非真实依赖（同源纪律：杜绝扫描类断言自命中）；⑤ 探针经 VITEST_ENV_DIRECTIVE
+  // 拼接构造，本文件不携带连续注解标记原文。
+  it("⑧ R-19 反证探针（P-10 自查）：注释态 import/require 零消费、真实语句消费、字符串/正则/模板内 // 不误剥、⑤ 注解指令仍计消费", () => {
+    const probe = (text: string): { file: string; text: string }[] => [{ file: "<probe>.ts", text }];
+    // 假阳性反证（修复豁口——修复前注释态即满足门禁，consumed=true）
+    expect(consumptionFiles("left-pad", probe('// import x from "left-pad";\n'))).toEqual([]);
+    expect(consumptionFiles("left-pad", probe('/* import "left-pad" */\n'))).toEqual([]);
+    expect(consumptionFiles("left-pad", probe('/*\n  import x from "left-pad";\n*/\n'))).toEqual([]);
+    expect(consumptionFiles("left-pad", probe('const a = 1; // require("left-pad");\n'))).toEqual([]);
+    // 假阴性反证（真实消费语句在剥离后仍命中）
+    expect(consumptionFiles("left-pad", probe('import x from "left-pad";\n'))).toEqual(["<probe>.ts"]);
+    expect(consumptionFiles("left-pad", probe('const x = require("left-pad");\n'))).toEqual(["<probe>.ts"]);
+    expect(consumptionFiles("left-pad", probe('const x = await import("left-pad");\n'))).toEqual(["<probe>.ts"]);
+    // 剥离边界反证（注释剔除不误伤：字符串/正则/模板内的 // 与其后真实消费不丢）
+    expect(consumptionFiles("left-pad", probe('const u = "https://example.com/"; import x from "left-pad";\n'))).toEqual(["<probe>.ts"]);
+    expect(consumptionFiles("left-pad", probe('const re = /^file:\\/\\//; import x from "left-pad";\n'))).toEqual(["<probe>.ts"]);
+    expect(consumptionFiles("left-pad", probe('const t = `http://a // b`; import x from "left-pad";\n'))).toEqual(["<probe>.ts"]);
+    // ⑤ 例外反证：注释形态的环境注解指令仍计消费（jsdom 的合法消费形态）
+    expect(consumptionFiles("jsdom", probe(`// ${VITEST_ENV_DIRECTIVE} jsdom\n`))).toEqual(["<probe>.ts"]);
   });
 });

@@ -2,12 +2,11 @@ node_modules/
 dist/
 media/main.js
 media/main.css
-media/chat.js
-media/chat.css
 media/*.map
 *.vsix
 .DS_Store
 *.log
+.pi-loop.json
 .pi-loop.json.lock
 DevelopmentGuidelines/
 
